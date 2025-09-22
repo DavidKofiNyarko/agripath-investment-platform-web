@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard-layout';
 import UserHeader from '@/components/user-header';
 import { useProjects } from '@/contexts/ProjectsContext';
+import { useUser } from '@/contexts/UserContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -149,6 +150,7 @@ const progressVariants = {
 
 
 const InvestmentsPage = () => {
+  const { user } = useUser();
   const { 
     projects, 
     loading, 
@@ -339,21 +341,124 @@ const InvestmentsPage = () => {
     setSelectedPaymentMethod(method);
   };
 
-  const handleInvestmentSubmit = () => {
+  const handleInvestmentSubmit = async () => {
+    if (!selectedInvestment || !user) {
+      console.error('Missing investment or user data');
+      return;
+    }
+
+    // Validate payment details based on selected method
+    if (selectedPaymentMethod === 'mobile') {
+      if (!paymentDetails.mobileNumber || !paymentDetails.provider) {
+        alert('Please fill in all mobile money details');
+        return;
+      }
+    } else if (selectedPaymentMethod === 'card') {
+      if (!paymentDetails.cardName || !paymentDetails.cardNumber || !paymentDetails.expiryDate || !paymentDetails.cvv) {
+        alert('Please fill in all card details');
+        return;
+      }
+    } else {
+      alert('Please select a payment method');
+      return;
+    }
+
     setCurrentStep('process');
     setIsProcessing(true);
     
-    // Simulate processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      if (Math.random() > 0.3) { // 70% success rate
+    try {
+      const totalAmount = selectedInvestment.price * quantity;
+      const projectId = selectedInvestment.id;
+      const userId = user.id;
+      
+      let paymentPayload;
+      let paymentUrl;
+      
+      if (selectedPaymentMethod === 'mobile') {
+        // Mobile Money Payment
+        paymentUrl = 'https://infra.agripath.co/api/payments/momo/payin';
+        paymentPayload = {
+          user_id: userId,
+          project_id: projectId,
+          subscriber_number: paymentDetails.mobileNumber,
+          network: paymentDetails.provider,
+          description: `Investment in ${selectedInvestment.name}`,
+          amount: totalAmount,
+          unit: quantity
+        };
+      } else if (selectedPaymentMethod === 'card') {
+        // Card Payment
+        paymentUrl = 'https://infra.agripath.co/api/payments/card/payin';
+        paymentPayload = {
+          user_id: userId,
+          project_id: projectId,
+          amount: totalAmount,
+          unit: quantity,
+          desc: `Investment in ${selectedInvestment.name}`,
+          pan: paymentDetails.cardNumber.replace(/\s/g, ''),
+          exp_month: paymentDetails.expiryDate.split('/')[0],
+          exp_year: paymentDetails.expiryDate.split('/')[1],
+          cvv: paymentDetails.cvv,
+          card_holder: paymentDetails.cardName,
+          user_email: user.email || '',
+          redirect_url: `${window.location.origin}/dashboard`
+        };
+      } else {
+        throw new Error('Invalid payment method selected');
+      }
+      
+      console.log('Payment URL:', paymentUrl);
+      console.log('Payment Payload:', paymentPayload);
+      
+      // Make the payment API call
+      const response = await fetch(paymentUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(paymentPayload)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Payment failed: ${response.status} ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      console.log('Payment result:', result);
+      
+      // Simulate processing delay
+      setTimeout(() => {
+        setIsProcessing(false);
         setCurrentStep('success');
         setShowSuccess(true);
-      } else {
+        // Reset form after successful payment
+        resetForm();
+      }, 2000);
+      
+    } catch (error) {
+      console.error('Payment error:', error);
+      setTimeout(() => {
+        setIsProcessing(false);
         setCurrentStep('error');
         setShowError(true);
-      }
-    }, 3000);
+      }, 2000);
+    }
+  };
+
+  const resetForm = () => {
+    setQuantity(1);
+    setSelectedPaymentMethod('');
+    setPaymentDetails({
+      mobileNumber: '',
+      provider: 'MTN',
+      cardName: '',
+      cardNumber: '',
+      expiryDate: '',
+      cvv: '',
+      savePayment: false
+    });
+    setPin(['', '', '', '']);
+    setAgreedToTerms(false);
   };
 
   const handlePinChange = (index: number, value: string) => {
@@ -1148,9 +1253,16 @@ const InvestmentsPage = () => {
                       <Button 
                         className="flex-1 bg-green-600 hover:bg-green-700"
                         onClick={handleInvestmentSubmit}
-                        disabled={!selectedPaymentMethod}
+                        disabled={!selectedPaymentMethod || isProcessing}
                       >
-                        Invest Now
+                        {isProcessing ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          'Invest Now'
+                        )}
                       </Button>
                     </div>
                   </motion.div>
