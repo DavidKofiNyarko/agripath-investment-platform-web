@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
-import { useUser } from './UserContext';
 
 export interface ProjectUpdate {
   id: string;
@@ -21,11 +20,37 @@ export interface ProjectUpdate {
   farm_location?: string;
 }
 
+interface UpdateRow {
+  id: string;
+  project_id: string;
+  update_text: string;
+  created_at: string;
+  created_by: string | null;
+  title: string;
+  description: string;
+  image_url: string | null;
+  update_type: string;
+  status: string;
+  updated_at: string;
+  projects: {
+    project_name: string | null;
+    project_type: string | null;
+    farm_location: string | null;
+  }[];
+}
+
 interface UpdateFilters {
   search: string;
   updateType: string;
   projectId: string;
   dateRange: string;
+}
+
+interface Pagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
 }
 
 interface UpdatesContextType {
@@ -35,13 +60,8 @@ interface UpdatesContextType {
   filters: UpdateFilters;
   setFilters: (filters: UpdateFilters) => void;
   refreshUpdates: () => Promise<void>;
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-  };
-  setPagination: (pagination: Partial<typeof pagination>) => void;
+  pagination: Pagination;
+  setPagination: React.Dispatch<React.SetStateAction<Pagination>>;
 }
 
 const UpdatesContext = createContext<UpdatesContextType | undefined>(undefined);
@@ -55,7 +75,6 @@ export const useUpdates = () => {
 };
 
 export const UpdatesProvider = ({ children }: { children: React.ReactNode }) => {
-  const { user } = useUser();
   const [updates, setUpdates] = useState<ProjectUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -154,7 +173,7 @@ export const UpdatesProvider = ({ children }: { children: React.ReactNode }) => 
       }
 
       // Format updates data
-      const formattedUpdates = data?.map((item: any) => ({
+      const formattedUpdates = data?.map((item: UpdateRow) => ({
         id: item.id,
         project_id: item.project_id,
         update_text: item.update_text,
@@ -163,12 +182,12 @@ export const UpdatesProvider = ({ children }: { children: React.ReactNode }) => 
         title: item.title,
         description: item.description,
         image_url: item.image_url,
-        update_type: item.update_type,
-        status: item.status,
+        update_type: item.update_type as 'Progress' | 'Milestone' | 'Issue' | 'Completion',
+        status: item.status as 'Draft' | 'Published' | 'Archived',
         updated_at: item.updated_at,
-        project_name: item.projects?.project_name || 'Unknown Project',
-        project_type: item.projects?.project_type || 'CROP',
-        farm_location: item.projects?.farm_location || 'Unknown Location'
+        project_name: item.projects?.[0]?.project_name || 'Unknown Project',
+        project_type: item.projects?.[0]?.project_type || 'CROP',
+        farm_location: item.projects?.[0]?.farm_location || 'Unknown Location'
       })) || [];
 
       setUpdates(formattedUpdates);

@@ -1,11 +1,11 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
 
-const VerifyEmailPage = () => {
+const VerifyEmailContent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [isVerified, setIsVerified] = useState(false);
@@ -117,7 +117,7 @@ const VerifyEmailPage = () => {
           <div className="space-y-2">
             <h1 className="text-4xl font-bold text-gray-900">Verify Your Email</h1>
             <p className="text-gray-600">
-              We've sent a verification link to <span className="font-medium">{user?.email || 'your email'}</span>. 
+              We&apos;ve sent a verification link to <span className="font-medium">{user?.email || 'your email'}</span>. 
               {isLoading ? ' Checking verification...' : ' Click the link in your email to continue.'}
             </p>
           </div>
@@ -150,7 +150,7 @@ const VerifyEmailPage = () => {
                 Check your email and click the verification link to activate your account.
               </p>
               <p className="text-sm text-gray-500">
-                Didn't receive the email? Check your spam folder or resend it.
+                Didn&apos;t receive the email? Check your spam folder or resend it.
               </p>
             </div>
 
@@ -213,6 +213,21 @@ const VerifyEmailPage = () => {
         </div>
       </div>
     </div>
+  );
+};
+
+const VerifyEmailPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   );
 };
 

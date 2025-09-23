@@ -132,10 +132,44 @@ const SignupPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-white">
+    <div className="min-h-screen flex flex-col lg:flex-row relative">
+      {/* Enhanced Background image and overlay for mobile/small screens */}
+      <div
+        className="absolute inset-0 block lg:hidden z-0"
+        aria-hidden="true"
+      >
+        <img
+          src="/bg-2.jpg"
+          alt="Beautiful farm landscape with green fields"
+          className="w-full h-full object-cover"
+        />
+        {/* Multi-layer overlay for better contrast and visual depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-green-900/85 via-emerald-800/80 to-green-700/75" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+        {/* Subtle pattern overlay for texture */}
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
+      </div>
+
+      {/* Left side - Form with enhanced mobile styling */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-white/95 backdrop-blur-sm lg:bg-opacity-100 relative z-10">
         <div className="w-full max-w-md space-y-4 sm:space-y-6">
+          {/* Mobile header with logo */}
+          <div className="block lg:hidden text-center mb-6">
+            <Image src="/y-logo.png" alt="AgriPath" width={60} height={60} className="mx-auto mb-4" />
+            <div className="text-white/90 text-sm">
+              {new Date().toLocaleString('en-GB', {
+                weekday: 'long',
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: 'GMT',
+                timeZoneName: 'short'
+              }).replace('GMT', 'GMT')}
+            </div>
+          </div>
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Create Your Account</h1>
             <p className="text-sm sm:text-base text-gray-600">Start your journey with AgriPath by entering your details.</p>
@@ -369,6 +403,19 @@ const SignupPage = () => {
               </a>
             </p>
           </form>
+
+          {/* Mobile footer */}
+          <div className="block lg:hidden text-center mt-8">
+            <h2 className="text-lg font-bold text-white/90 mb-2">Invest in Real Farms. From Anywhere.</h2>
+            <p className="text-sm text-white/70 mb-4">
+              Invest in real farms growing food crops like cassava, tomatoes, and maize — all from your phone.
+            </p>
+            <div className="flex justify-center space-x-2">
+              <div className="w-6 h-1 bg-white/60 rounded"></div>
+              <div className="w-1 h-1 bg-white/40 rounded"></div>
+              <div className="w-1 h-1 bg-white/40 rounded"></div>
+            </div>
+          </div>
         </div>
       </div>
       {/* Right side - Image */}

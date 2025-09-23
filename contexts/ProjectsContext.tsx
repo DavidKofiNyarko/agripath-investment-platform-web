@@ -34,6 +34,37 @@ export interface Project {
   payout_type: 'MONTHLY' | 'QUARTERLY' | 'ANNUAL' | 'END_OF_PROJECT';
 }
 
+interface ProjectRow {
+  id: string;
+  project_code: string;
+  project_name: string;
+  project_date: string;
+  description: string | null;
+  project_type: string | null;
+  farm_location: string | null;
+  total_units: number | null;
+  unit_price: number | null;
+  total_value: number | null;
+  expected_return_rate: number | null;
+  duration_months: number | null;
+  status: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  image: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  cover_image_url: string | null;
+  max_expected_return_rate: number | null;
+  available_unit: number | null;
+  purchased_unit: number | null;
+  project_stages: string | null;
+  is_high_ticket: boolean | null;
+  min_investment_amount: number | null;
+  max_investment_amount: number | null;
+  payout_type: string | null;
+}
+
 interface ProjectFilters {
   search: string;
   category: string;
@@ -44,6 +75,13 @@ interface ProjectFilters {
   returnRate: string;
 }
 
+interface Pagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+}
+
 interface ProjectsContextType {
   projects: Project[];
   loading: boolean;
@@ -51,13 +89,8 @@ interface ProjectsContextType {
   filters: ProjectFilters;
   setFilters: (filters: ProjectFilters) => void;
   refreshProjects: () => Promise<void>;
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-  };
-  setPagination: (pagination: Partial<typeof pagination>) => void;
+  pagination: Pagination;
+  setPagination: React.Dispatch<React.SetStateAction<Pagination>>;
 }
 
 const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
@@ -168,20 +201,20 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
       }
 
       // Format projects data
-      const formattedProjects = data?.map((item: any) => ({
+      const formattedProjects = data?.map((item: ProjectRow) => ({
         id: item.id,
         project_code: item.project_code,
         project_name: item.project_name,
         project_date: item.project_date,
         description: item.description || '',
-        project_type: item.project_type || 'CROP',
+        project_type: (item.project_type as 'CROP' | 'LIVESTOCK' | 'FISHERY' | 'OTHER') || 'CROP',
         farm_location: item.farm_location || '',
         total_units: item.total_units || 0,
         unit_price: item.unit_price || 0,
         total_value: item.total_value || 0,
         expected_return_rate: item.expected_return_rate || 0,
         duration_months: item.duration_months || 0,
-        status: item.status || 'Active',
+        status: (item.status as 'Active' | 'Inactive' | 'Completed' | 'Cancelled') || 'Active',
         created_by: item.created_by || '',
         created_at: item.created_at,
         updated_at: item.updated_at,
@@ -192,11 +225,11 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
         max_expected_return_rate: item.max_expected_return_rate || 0,
         available_unit: item.available_unit || 0,
         purchased_unit: item.purchased_unit || 0,
-        project_stages: item.project_stages || 'PLANNING',
+        project_stages: (item.project_stages as 'PLANNING' | 'PREPARATION' | 'PLANTING' | 'GROWTH' | 'HARVEST' | 'COMPLETED') || 'PLANNING',
         is_high_ticket: item.is_high_ticket || false,
         min_investment_amount: item.min_investment_amount || 0,
         max_investment_amount: item.max_investment_amount || 0,
-        payout_type: item.payout_type || 'END_OF_PROJECT'
+        payout_type: (item.payout_type as 'MONTHLY' | 'QUARTERLY' | 'ANNUAL' | 'END_OF_PROJECT') || 'END_OF_PROJECT'
       })) || [];
 
       setProjects(formattedProjects);

@@ -26,11 +26,42 @@ export interface Transaction {
   project_name?: string;
 }
 
+interface TransactionRow {
+  id: string;
+  transaction_id: string;
+  user_id: string;
+  project_id: string;
+  type: string;
+  amount: number;
+  unit: number;
+  status: string;
+  fees: number;
+  net_amount: number;
+  description: string | null;
+  processed_at: string | null;
+  created_at: string;
+  updated_at: string;
+  channel: string;
+  external_id: string | null;
+  network: string | null;
+  account_number: string;
+  projects: {
+    project_name: string | null;
+  }[];
+}
+
 interface TransactionFilters {
   type: string;
   status: string;
   search: string;
   dateRange: string;
+}
+
+interface Pagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
 }
 
 interface TransactionsContextType {
@@ -40,13 +71,8 @@ interface TransactionsContextType {
   filters: TransactionFilters;
   setFilters: (filters: TransactionFilters) => void;
   refreshTransactions: () => Promise<void>;
-  pagination: {
-    currentPage: number;
-    totalPages: number;
-    totalItems: number;
-    itemsPerPage: number;
-  };
-  setPagination: (pagination: Partial<typeof pagination>) => void;
+  pagination: Pagination;
+  setPagination: React.Dispatch<React.SetStateAction<Pagination>>;
 }
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
@@ -163,26 +189,26 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
       }
 
       // Format transactions data
-      const formattedTransactions = data?.map((item: any) => ({
+      const formattedTransactions = data?.map((item: TransactionRow) => ({
         id: item.id,
         transaction_id: item.transaction_id,
         user_id: item.user_id,
         project_id: item.project_id,
-        type: item.type,
+        type: item.type as 'Payin' | 'Payout' | 'Refund',
         amount: item.amount,
         unit: item.unit,
-        status: item.status,
+        status: item.status as 'Pending' | 'Completed' | 'Failed' | 'Cancelled',
         fees: item.fees || 0,
         net_amount: item.net_amount,
-        description: item.description,
+        description: item.description || '',
         processed_at: item.processed_at,
         created_at: item.created_at,
         updated_at: item.updated_at,
-        channel: item.channel,
+        channel: item.channel as 'momo' | 'bank' | 'card',
         external_id: item.external_id,
         network: item.network,
         account_number: item.account_number,
-        project_name: item.projects?.project_name || 'Unknown Project'
+        project_name: item.projects?.[0]?.project_name || 'Unknown Project',
       })) || [];
 
       setTransactions(formattedTransactions);

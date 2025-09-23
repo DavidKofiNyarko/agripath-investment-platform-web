@@ -97,10 +97,44 @@ const SignInPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row">
-      {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-white">
+    <div className="min-h-screen flex flex-col lg:flex-row relative">
+      {/* Enhanced Background image and overlay for mobile/small screens */}
+      <div
+        className="absolute inset-0 block lg:hidden z-0"
+        aria-hidden="true"
+      >
+        <img
+          src="/bg-1.jpg"
+          alt="Golden wheat field at sunset"
+          className="w-full h-full object-cover"
+        />
+        {/* Multi-layer overlay for better contrast and visual depth */}
+        <div className="absolute inset-0 bg-gradient-to-br from-slate-900/85 via-slate-800/80 to-orange-900/75" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+        {/* Subtle pattern overlay for texture */}
+        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_50%_50%,rgba(255,255,255,0.1),transparent_50%)]" />
+      </div>
+
+      {/* Left side - Form with enhanced mobile styling */}
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-white/95 backdrop-blur-sm lg:bg-opacity-100 relative z-10">
         <div className="w-full max-w-md space-y-4 sm:space-y-6">
+          {/* Mobile header with logo */}
+          <div className="block lg:hidden text-center mb-6">
+            <Image src="/y-logo.png" alt="AgriPath" width={60} height={60} className="mx-auto mb-4" />
+            <div className="text-white/90 text-sm">
+              {new Date().toLocaleString('en-GB', {
+                weekday: 'long',
+                day: '2-digit',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                hour12: false,
+                timeZone: 'GMT',
+                timeZoneName: 'short'
+              }).replace('GMT', 'GMT')}
+            </div>
+          </div>
           <div className="space-y-2">
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Welcome back!</h1>
           </div>
@@ -149,7 +183,7 @@ const SignInPage = () => {
                   ) : (
                     <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268-2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                     </svg>
                   )}
                 </button>
@@ -209,6 +243,19 @@ const SignInPage = () => {
               </a>
             </p>
           </form>
+
+          {/* Mobile footer */}
+          <div className="block lg:hidden text-center mt-8">
+            <h2 className="text-lg font-bold text-white/90 mb-2">Invest in Real Farms. From Anywhere.</h2>
+            <p className="text-sm text-white/70 mb-4">
+              Invest in real farms growing food crops like cassava, tomatoes, and maize — all from your phone.
+            </p>
+            <div className="flex justify-center space-x-2">
+              <div className="w-6 h-1 bg-white/60 rounded"></div>
+              <div className="w-1 h-1 bg-white/40 rounded"></div>
+              <div className="w-1 h-1 bg-white/40 rounded"></div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -241,8 +288,6 @@ const SignInPage = () => {
         {/* Logo */}
         <div className="absolute top-6 right-6 z-10">
           <Image src="/y-logo.png" alt="AgriPath" width={60} height={60} className="sm:w-20 sm:h-20" />
-         
-
         </div>
 
         {/* Bottom Content */}

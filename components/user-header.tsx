@@ -63,32 +63,40 @@ const UserHeader: React.FC<UserHeaderProps> = ({
   };
 
   return (
-    <div className={`flex items-center justify-between ${className}`}>
+    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 ${className}`}>
       <div className="flex items-center gap-3">
-        <Avatar className="h-12 w-12">
+        <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
           <AvatarImage 
             src={getUserAvatar()} 
             alt={getUserName()} 
           />
-          <AvatarFallback>
+          <AvatarFallback className="text-sm sm:text-base">
             {getUserInitials()}
           </AvatarFallback>
         </Avatar>
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">
+        <div className="min-w-0 flex-1">
+          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
             {title || `Hi, ${getUserName()} 👋`}
           </h1>
           {showDate && (
-            <p className="text-gray-600">
+            <p className="text-sm text-gray-600">
               {getGreeting()}
             </p>
           )}
         </div>
       </div>
       {showDate && (
-        <div className="flex items-center gap-4">
-          <div className="text-right text-sm text-gray-600">
-            {getCurrentDate()} • {getCurrentTime()}
+        <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
+          <div className="text-left sm:text-right text-xs sm:text-sm text-gray-600">
+            <div className="sm:hidden">
+              {getCurrentDate()}
+            </div>
+            <div className="hidden sm:block">
+              {getCurrentDate()} • {getCurrentTime()}
+            </div>
+            <div className="sm:hidden text-gray-500">
+              {getCurrentTime()}
+            </div>
           </div>
         </div>
       )}
