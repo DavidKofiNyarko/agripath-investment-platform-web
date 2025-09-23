@@ -132,18 +132,18 @@ const SignupPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md space-y-6">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-white">
+        <div className="w-full max-w-md space-y-4 sm:space-y-6">
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-gray-900">Create Your Account</h1>
-            <p className="text-gray-600">Start your journey with AgriPath by entering your details.</p>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Create Your Account</h1>
+            <p className="text-sm sm:text-base text-gray-600">Start your journey with AgriPath by entering your details.</p>
           </div>
 
           <form onSubmit={handleEmailSignUp} className="space-y-4">
             {/* First Name & Last Name */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
                   First Name <span className="text-red-500">*</span>
@@ -155,7 +155,7 @@ const SignupPage = () => {
                   value={formData.firstName}
                   onChange={handleInputChange}
                   placeholder="Enter name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
                 />
               </div>
               <div>
@@ -169,7 +169,7 @@ const SignupPage = () => {
                   value={formData.lastName}
                   onChange={handleInputChange}
                   placeholder="Enter name"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
                 />
               </div>
             </div>
@@ -255,7 +255,7 @@ const SignupPage = () => {
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Create a strong password"
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 sm:py-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
                 />
                 <button
                   type="button"
@@ -326,7 +326,7 @@ const SignupPage = () => {
             <button
               type="submit"
               disabled={isLoading || !isPasswordValid || !passwordsMatch}
-              className={`w-full py-3 px-4 rounded-md font-medium transition duration-200 ${
+              className={`w-full py-2 sm:py-3 px-4 rounded-md font-medium transition duration-200 text-sm sm:text-base ${
                 isLoading || !isPasswordValid || !passwordsMatch
                   ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   : 'bg-green-600 text-white hover:bg-green-700'
@@ -350,7 +350,7 @@ const SignupPage = () => {
               type="button"
               onClick={handleGoogleSignUp}
               disabled={isLoading}
-              className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center px-4 py-2 sm:py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -372,7 +372,7 @@ const SignupPage = () => {
         </div>
       </div>
       {/* Right side - Image */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative hidden lg:block">
         <img
           src="/bg-2.jpg"
           alt="Beautiful farm landscape with green fields"

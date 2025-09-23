@@ -97,12 +97,12 @@ const SignInPage = () => {
   }
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md space-y-6">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-white">
+        <div className="w-full max-w-md space-y-4 sm:space-y-6">
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-gray-900">Welcome back!</h1>
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Welcome back!</h1>
           </div>
 
           <form onSubmit={handleEmailSignIn} className="space-y-4">
@@ -118,7 +118,7 @@ const SignInPage = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 placeholder="Enter email"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
               />
             </div>
 
@@ -135,7 +135,7 @@ const SignInPage = () => {
                   value={formData.password}
                   onChange={handleInputChange}
                   placeholder="Enter password"
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 sm:py-3 pr-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
                 />
                 <button
                   type="button"
@@ -160,7 +160,7 @@ const SignInPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 transition duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full bg-green-600 text-white py-2 sm:py-3 px-4 rounded-md hover:bg-green-700 transition duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
@@ -190,7 +190,7 @@ const SignInPage = () => {
               type="button"
               onClick={handleGoogleSignIn}
               disabled={isLoading}
-              className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full flex items-center justify-center px-4 py-2 sm:py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition duration-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
             >
               <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -213,7 +213,7 @@ const SignInPage = () => {
       </div>
 
       {/* Right side - Image */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative hidden lg:block">
         <img
           src="/bg-1.jpg"
           alt="Golden wheat field at sunset"
@@ -223,7 +223,7 @@ const SignInPage = () => {
         
         {/* Date/Time Badge */}
         <div className="absolute top-6 left-1/2 transform -translate-x-1/2">
-          <div className="bg-black bg-opacity-50 text-white px-4 py-2 rounded-full text-sm">
+          <div className="bg-black bg-opacity-50 text-white px-3 sm:px-4 py-2 rounded-full text-xs sm:text-sm">
             {new Date().toLocaleString('en-GB', {
               weekday: 'long',
               day: '2-digit',
@@ -240,15 +240,15 @@ const SignInPage = () => {
 
         {/* Logo */}
         <div className="absolute top-6 right-6 z-10">
-          <Image src="/y-logo.png" alt="AgriPath" width={80} height={80} />
+          <Image src="/y-logo.png" alt="AgriPath" width={60} height={60} className="sm:w-20 sm:h-20" />
          
 
         </div>
 
         {/* Bottom Content */}
         <div className="absolute bottom-8 left-8 right-8 text-white">
-          <h2 className="text-3xl font-bold mb-2">Invest in Real Farms. From Anywhere.</h2>
-          <p className="text-lg mb-4">
+          <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold mb-2">Invest in Real Farms. From Anywhere.</h2>
+          <p className="text-sm sm:text-base lg:text-lg mb-4">
             Invest in real farms growing food crops like cassava, tomatoes, and maize — all from your phone.
           </p>
           <div className="flex space-x-2">

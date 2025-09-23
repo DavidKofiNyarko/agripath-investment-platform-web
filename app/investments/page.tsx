@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard-layout';
 import UserHeader from '@/components/user-header';
-import { useProjects } from '@/contexts/ProjectsContext';
+import { useProjects, Project } from '@/contexts/ProjectsContext';
 import { useUser } from '@/contexts/UserContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -36,7 +36,7 @@ import {
 } from 'lucide-react';
 
 interface Investment {
-  id: number;
+  id: string;
   name: string;
   image: string;
   price: number;
@@ -49,7 +49,7 @@ interface Investment {
 
 const investments: Investment[] = [
   {
-    id: 1,
+    id: '1',
     name: 'Tomatoes',
     image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=300&fit=crop',
     price: 3000,
@@ -60,7 +60,7 @@ const investments: Investment[] = [
     description: 'Tomatoes are a fast-growing and high-demand crop with a market cycle of 6 months. Our farms in Akuse use climate-smart techniques to ensure maximum yields. Your investment supports sustainable agriculture practices.'
   },
   {
-    id: 2,
+    id: '2',
     name: 'Habanero',
     image: 'https://images.unsplash.com/photo-1583281629203-ca8b80e96f01?w=400&h=300&fit=crop',
     price: 3000,
@@ -71,7 +71,7 @@ const investments: Investment[] = [
     description: 'Premium habanero peppers with excellent market demand. These spicy peppers are grown using organic methods and have a consistent market price.'
   },
   {
-    id: 3,
+    id: '3',
     name: 'Bell Pepper',
     image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400&h=300&fit=crop',
     price: 3000,
@@ -82,7 +82,7 @@ const investments: Investment[] = [
     description: 'Colorful bell peppers with high nutritional value and strong market demand. Grown in controlled environments for optimal yield.'
   },
   {
-    id: 4,
+    id: '4',
     name: 'Bell Pepper',
     image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400&h=300&fit=crop',
     price: 3000,
@@ -93,7 +93,7 @@ const investments: Investment[] = [
     description: 'Another variety of bell peppers with different growing conditions and harvest times for diversified returns.'
   },
   {
-    id: 5,
+    id: '5',
     name: 'Broiler Chicken',
     image: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400&h=300&fit=crop',
     price: 1500,
@@ -104,7 +104,7 @@ const investments: Investment[] = [
     description: 'Fast-growing broiler chickens with a quick turnaround time. Raised in modern facilities with proper veterinary care.'
   },
   {
-    id: 6,
+    id: '6',
     name: 'Pigs',
     image: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&h=300&fit=crop',
     price: 3000,
@@ -264,7 +264,7 @@ const InvestmentsPage = () => {
     );
   }
 
-  const handleInvestmentClick = (project: any) => {
+  const handleInvestmentClick = (project: Project) => {
     // Convert project to investment format for the existing flow
     const investment = {
       id: project.id,
@@ -492,7 +492,7 @@ const InvestmentsPage = () => {
           {filters.search && (
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="bg-green-100 text-green-800">
-                Search: "{filters.search}"
+                Search: &quot;{filters.search}&quot;
               </Badge>
               <Button
                 onClick={handleClearSearch}
@@ -1087,7 +1087,7 @@ const InvestmentsPage = () => {
 
                       <div className="text-center">
                         <h2 className="text-xl font-semibold">Choose Your Payment Method</h2>
-                        <p className="text-gray-600 text-sm mt-1">Select how you'd like to pay for this investment.</p>
+                        <p className="text-gray-600 text-sm mt-1">Select how you&apos;d like to pay for this investment.</p>
                         <p className="text-gray-600 text-sm">All payments are processed securely.</p>
                       </div>
                     </div>
@@ -1309,7 +1309,7 @@ const InvestmentsPage = () => {
                       <div>
                         <h2 className="text-2xl font-semibold mb-2">Processing...</h2>
                         <p className="text-gray-600 mb-4">
-                          Hang tight! We're confirming your payment with your provider. This usually takes a few seconds.
+                            Hang tight! We&apos;re confirming your payment with your provider. This usually takes a few seconds.
                         </p>
                         <p className="text-sm text-gray-500">
                           You will receive a USSD prompt in <span className="font-medium">00:30s</span>
@@ -1507,7 +1507,7 @@ const InvestmentsPage = () => {
                       >
                         <h2 className="text-2xl font-semibold mb-2">Oops!</h2>
                         <p className="text-gray-600">
-                          We couldn't complete your payment.
+                          We couldn&apos;t complete your payment.
                         </p>
                         <p className="text-gray-600">
                           Try again or use a different account.

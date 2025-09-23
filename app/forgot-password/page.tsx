@@ -47,10 +47,10 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex flex-col lg:flex-row">
       {/* Left side - Form */}
-      <div className="flex-1 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md space-y-6">
+      <div className="flex-1 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-white">
+        <div className="w-full max-w-md space-y-4 sm:space-y-6">
           {/* Back Button */}
           <a href="/signin" className="flex items-center text-gray-600 hover:text-gray-800 mb-4 transition-colors">
             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,8 +60,8 @@ const ForgotPasswordPage = () => {
           </a>
 
           <div className="space-y-2">
-            <h1 className="text-4xl font-bold text-gray-900">Forgot your password?</h1>
-            <p className="text-gray-600">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900">Forgot your password?</h1>
+            <p className="text-sm sm:text-base text-gray-600">
               {isEmailSent 
                 ? "Check your email for password reset instructions." 
                 : "Enter your email address and we'll send you a link to reset your password."
@@ -92,7 +92,7 @@ const ForgotPasswordPage = () => {
               
               <button
                 onClick={() => router.push('/signin')}
-                className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 transition duration-200 font-medium"
+                className="w-full bg-green-600 text-white py-2 sm:py-3 px-4 rounded-md hover:bg-green-700 transition duration-200 font-medium text-sm sm:text-base"
               >
                 Back to Sign In
               </button>
@@ -112,7 +112,7 @@ const ForgotPasswordPage = () => {
                   onChange={handleInputChange}
                   placeholder="Enter your email address"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                  className="w-full px-3 py-2 sm:py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent text-sm sm:text-base"
                 />
               </div>
 
@@ -126,7 +126,7 @@ const ForgotPasswordPage = () => {
               <button
                 type="submit"
                 disabled={isLoading || !formData.email}
-                className={`w-full py-3 px-4 rounded-md font-medium transition duration-200 ${
+                className={`w-full py-2 sm:py-3 px-4 rounded-md font-medium transition duration-200 text-sm sm:text-base ${
                   isLoading || !formData.email
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-green-600 text-white hover:bg-green-700'
@@ -140,7 +140,7 @@ const ForgotPasswordPage = () => {
       </div>
 
       {/* Right side - Image */}
-      <div className="flex-1 relative">
+      <div className="flex-1 relative hidden lg:block">
         <img
           src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&h=1200&fit=crop&crop=center"
           alt="Vibrant cassava field with blue sky"
