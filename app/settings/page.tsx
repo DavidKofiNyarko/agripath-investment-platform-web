@@ -15,6 +15,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import DashboardLayout from '@/components/dashboard-layout';
 import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
+import PasswordChange from '@/components/password-change';
+import PinChange from '@/components/pin-change';
 import { 
   User, 
   Shield, 
@@ -37,12 +39,36 @@ const SettingsPage = () => {
   const { profile, updateProfile, loading: profileLoading } = useProfile();
   const [activeTab, setActiveTab] = useState('profile');
   const [activeSubTab, setActiveSubTab] = useState('personal');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  // Reset sub-tab when main tab changes
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    
+    // Set default sub-tab for each main tab
+    switch (tabId) {
+      case 'profile':
+        setActiveSubTab('personal');
+        break;
+      case 'security':
+        setActiveSubTab('password');
+        break;
+      case 'notifications':
+        setActiveSubTab('notifications');
+        break;
+      case 'payment':
+        setActiveSubTab('payment');
+        break;
+      default:
+        setActiveSubTab('personal');
+    }
+  };
+
   const [showCurrentPin, setShowCurrentPin] = useState(false);
   const [showNewPin, setShowNewPin] = useState(false);
   const [showConfirmPin, setShowConfirmPin] = useState(false);
+  const [pin, setPin] = useState(['', '', '', '']);
+  const [newPin, setNewPin] = useState(['', '', '', '']);
+  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
   const [isAddWalletOpen, setIsAddWalletOpen] = useState(false);
   const [isPinConfirmOpen, setIsPinConfirmOpen] = useState(false);
   const [isPinSetOpen, setIsPinSetOpen] = useState(false);
@@ -97,9 +123,6 @@ const SettingsPage = () => {
     expiryDate: '',
     cvv: ''
   });
-  const [pin, setPin] = useState(['', '', '', '']);
-  const [newPin, setNewPin] = useState(['', '', '', '']);
-  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
 
   const settingsTabs = [
     { id: 'profile', label: 'Profile & KYC', icon: User },
@@ -255,7 +278,7 @@ const SettingsPage = () => {
               <Button
                 key={tab.id}
                 variant={activeTab === tab.id ? 'default' : 'ghost'}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 className={`px-6 py-3 ${
                   activeTab === tab.id 
                     ? 'bg-green-600 text-white' 
@@ -296,7 +319,22 @@ const SettingsPage = () => {
                         : 'Member'
                       }
                     </p>
-                    <Badge variant="destructive" className="mt-2">KYC Incomplete</Badge>
+                    <Badge 
+                      variant={
+                        profile?.kyc_status === 'verified' ? 'default' : 
+                        profile?.kyc_status === 'pending' ? 'secondary' : 
+                        'destructive'
+                      }
+                      className={`mt-2 ${
+                        profile?.kyc_status === 'verified' ? 'bg-green-600 hover:bg-green-700' : 
+                        profile?.kyc_status === 'pending' ? 'bg-yellow-600 hover:bg-yellow-700' : 
+                        'bg-red-600 hover:bg-red-700'
+                      }`}
+                    >
+                      {profile?.kyc_status === 'verified' ? 'KYC Verified' : 
+                       profile?.kyc_status === 'pending' ? 'KYC Pending' : 
+                       'KYC Incomplete'}
+                    </Badge>
                   </div>
 
                   {/* Sub Navigation */}
@@ -401,37 +439,168 @@ const SettingsPage = () => {
 
                   {/* KYC Verification */}
                   {activeSubTab === 'kyc' && (
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="idType">ID Type</Label>
-                        <Select>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="passport">Passport</SelectItem>
-                            <SelectItem value="drivers-license">Driver&apos;s License</SelectItem>
-                            <SelectItem value="national-id">National ID</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label htmlFor="idNumber">ID Number</Label>
-                        <Input id="idNumber" placeholder="Enter name" />
-                      </div>
-                      <div>
-                        <Label>Upload ID</Label>
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-gray-400 transition-colors cursor-pointer">
-                          <Upload className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                          <p className="text-gray-600 mb-2">Choose a file or drag & drop it here</p>
-                          <p className="text-sm text-gray-500">JPEG, PDF, PNG formats, up to 50MB</p>
+                    <div className="space-y-6">
+                      {/* KYC Status Overview */}
+                      <div className="bg-gray-50 rounded-lg p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-gray-900">Identity Verification Status</h3>
+                          <div className="flex items-center gap-2">
+                            {profile?.kyc_status === 'verified' ? (
+                              <div className="flex items-center gap-2 text-green-600">
+                                <Check className="h-5 w-5" />
+                                <span className="text-sm font-medium">Verified</span>
+                              </div>
+                            ) : profile?.kyc_status === 'pending' ? (
+                              <div className="flex items-center gap-2 text-yellow-600">
+                                <AlertTriangle className="h-5 w-5" />
+                                <span className="text-sm font-medium">Under Review</span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2 text-red-600">
+                                <X className="h-5 w-5" />
+                                <span className="text-sm font-medium">Not Started</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-start">
-                        <AlertTriangle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
-                        <p className="text-yellow-800 text-sm">
-                          Complete your KYC to unlock full access to investments and payouts.
+                        
+                        <p className="text-gray-600 mb-4">
+                          {profile?.kyc_status === 'verified' 
+                            ? 'Your identity has been successfully verified. You can now make investments and withdrawals.'
+                            : profile?.kyc_status === 'pending'
+                            ? 'Your documents are being reviewed by our team. This usually takes 1-2 business days.'
+                            : 'Complete your identity verification to unlock full access to investments and payouts.'
+                          }
                         </p>
+
+                        {/* KYC Documents Status */}
+                        {profile?.kyc_documents && (
+                          <div className="space-y-3">
+                            <h4 className="text-sm font-medium text-gray-900">Uploaded Documents</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                              <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                  profile.kyc_documents.id_front ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                                }`}>
+                                  <Check className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">National ID Front</p>
+                                  <p className="text-xs text-gray-500">
+                                    {profile.kyc_documents.id_front ? 'Uploaded' : 'Not uploaded'}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                  profile.kyc_documents.id_back ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                                }`}>
+                                  <Check className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">National ID Back</p>
+                                  <p className="text-xs text-gray-500">
+                                    {profile.kyc_documents.id_back ? 'Uploaded' : 'Not uploaded'}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-2 p-3 bg-white rounded-lg border">
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                                  profile.kyc_documents.selfie ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-400'
+                                }`}>
+                                  <Check className="h-4 w-4" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-medium text-gray-900">Selfie</p>
+                                  <p className="text-xs text-gray-500">
+                                    {profile.kyc_documents.selfie ? 'Uploaded' : 'Not uploaded'}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-3">
+                        {profile?.kyc_status !== 'verified' && (
+                          <Button
+                            onClick={() => {
+                              if (profile?.kyc_status === 'pending') {
+                                // For pending status, just scroll to KYC section or stay on profile
+                                setActiveSubTab('kyc');
+                              } else {
+                                // For not started, go to verification page
+                                window.location.href = '/kyc-verification';
+                              }
+                            }}
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                          >
+                            {profile?.kyc_status === 'pending' ? 'View Verification Status' : 'Start Verification'}
+                          </Button>
+                        )}
+                        
+                        {profile?.kyc_status === 'verified' && (
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              window.location.href = '/kyc-verification';
+                            }}
+                            className="flex-1"
+                          >
+                            View Documents
+                          </Button>
+                        )}
+                      </div>
+
+                      {/* Information Box */}
+                      <div className={`rounded-lg p-4 flex items-start ${
+                        profile?.kyc_status === 'verified' 
+                          ? 'bg-green-50 border border-green-200' 
+                          : profile?.kyc_status === 'pending'
+                          ? 'bg-yellow-50 border border-yellow-200'
+                          : 'bg-blue-50 border border-blue-200'
+                      }`}>
+                        <AlertTriangle className={`h-5 w-5 mt-0.5 mr-3 ${
+                          profile?.kyc_status === 'verified' 
+                            ? 'text-green-600' 
+                            : profile?.kyc_status === 'pending'
+                            ? 'text-yellow-600'
+                            : 'text-blue-600'
+                        }`} />
+                        <div>
+                          <p className={`text-sm font-medium ${
+                            profile?.kyc_status === 'verified' 
+                              ? 'text-green-800' 
+                              : profile?.kyc_status === 'pending'
+                              ? 'text-yellow-800'
+                              : 'text-blue-800'
+                          }`}>
+                            {profile?.kyc_status === 'verified' 
+                              ? 'Verification Complete'
+                              : profile?.kyc_status === 'pending'
+                              ? 'Verification in Progress'
+                              : 'Verification Required'
+                            }
+                          </p>
+                          <p className={`text-sm ${
+                            profile?.kyc_status === 'verified' 
+                              ? 'text-green-700' 
+                              : profile?.kyc_status === 'pending'
+                              ? 'text-yellow-700'
+                              : 'text-blue-700'
+                            }`}>
+                            {profile?.kyc_status === 'verified' 
+                              ? 'You can now make investments and withdrawals without restrictions.'
+                              : profile?.kyc_status === 'pending'
+                              ? 'We are reviewing your documents. You will be notified once verification is complete.'
+                              : 'Complete your identity verification to unlock full access to investments and payouts.'
+                            }
+                          </p>
+                        </div>
                       </div>
                     </div>
                   )}
@@ -469,141 +638,12 @@ const SettingsPage = () => {
 
               {/* Password Section */}
               {activeSubTab === 'password' && (
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Password</h3>
-                    <div className="space-y-4">
-                      <div>
-                        <Label htmlFor="currentPassword">Current Password</Label>
-                        <div className="relative">
-                          <Input
-                            id="currentPassword"
-                            type={showPassword ? 'text' : 'password'}
-                            placeholder="Enter current password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3"
-                            onClick={() => setShowPassword(!showPassword)}
-                          >
-                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="newPassword">New Password</Label>
-                        <div className="relative">
-                          <Input
-                            id="newPassword"
-                            type={showNewPassword ? 'text' : 'password'}
-                            placeholder="Enter new password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3"
-                            onClick={() => setShowNewPassword(!showNewPassword)}
-                          >
-                            {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                        <p className="text-sm text-gray-500 mt-1">
-                          8+ characters, Number, Symbol, Lowercase, Uppercase
-                        </p>
-                      </div>
-                      <div>
-                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                        <div className="relative">
-                          <Input
-                            id="confirmPassword"
-                            type={showConfirmPassword ? 'text' : 'password'}
-                            placeholder="Confirm new password"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-0 top-0 h-full px-3"
-                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          >
-                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                          </Button>
-                        </div>
-                      </div>
-                      <Button className="bg-green-600 hover:bg-green-700">
-                        Save New Password
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <PasswordChange />
               )}
 
               {/* Transaction PIN Section */}
               {activeSubTab === 'pin' && (
-                <Card>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-semibold mb-4">Change Transaction PIN</h3>
-                    <p className="text-gray-600 mb-6">
-                      This PIN is required when making withdrawals or sensitive account actions.
-                    </p>
-                    <div className="space-y-6">
-                      <div>
-                        <Label>Current PIN</Label>
-                        <div className="flex space-x-2 mt-2">
-                          {pin.map((digit, index) => (
-                            <Input
-                              key={index}
-                              id={`pin-${index}`}
-                              type="password"
-                              value={digit}
-                              onChange={(e) => handlePinChange(index, e.target.value, 'pin')}
-                              className="w-12 text-center text-lg"
-                              maxLength={1}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <Label>New PIN</Label>
-                        <div className="flex space-x-2 mt-2">
-                          {newPin.map((digit, index) => (
-                            <Input
-                              key={index}
-                              id={`newPin-${index}`}
-                              type="password"
-                              value={digit}
-                              onChange={(e) => handlePinChange(index, e.target.value, 'newPin')}
-                              className="w-12 text-center text-lg"
-                              maxLength={1}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <div>
-                        <Label>Confirm New PIN</Label>
-                        <div className="flex space-x-2 mt-2">
-                          {confirmPin.map((digit, index) => (
-                            <Input
-                              key={index}
-                              id={`confirmPin-${index}`}
-                              type="password"
-                              value={digit}
-                              onChange={(e) => handlePinChange(index, e.target.value, 'confirmPin')}
-                              className="w-12 text-center text-lg"
-                              maxLength={1}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                      <Button className="bg-green-600 hover:bg-green-700">
-                        Save New PIN
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
+                <PinChange />
               )}
 
               {/* Logout All Devices Section */}

@@ -9,6 +9,7 @@ import UserHeader from '@/components/user-header';
 import { usePortfolio } from '@/contexts/PortfolioContext';
 import { useProjects } from '@/contexts/ProjectsContext';
 import { useUpdates } from '@/contexts/UpdatesContext';
+import { useTransactions } from '@/contexts/TransactionsContext';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { 
@@ -38,6 +38,7 @@ import {
   Info,
   X
 } from 'lucide-react';
+import PinValidationModal from '@/components/pin-validation-modal';
 
 const DashboardPage = () => {
   const router = useRouter();
@@ -46,10 +47,13 @@ const DashboardPage = () => {
   const { metrics, loading: portfolioLoading } = usePortfolio();
   const { projects, loading: projectsLoading } = useProjects();
   const { updates, loading: updatesLoading } = useUpdates();
+  const { transactions, loading: transactionsLoading } = useTransactions();
   const [isTopUpOpen, setIsTopUpOpen] = useState(false);
   const [isWithdrawOpen, setIsWithdrawOpen] = useState(false);
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [isTopUpPinModalOpen, setIsTopUpPinModalOpen] = useState(false);
+  const [isWithdrawPinModalOpen, setIsWithdrawPinModalOpen] = useState(false);
   const [amount, setAmount] = useState('3,000.00');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('');
@@ -57,9 +61,6 @@ const DashboardPage = () => {
   const [savePaymentMethod, setSavePaymentMethod] = useState(true);
   const [currentStep, setCurrentStep] = useState('amount'); // 'amount', 'payment', 'pin', 'success', 'error'
   const [withdrawStep, setWithdrawStep] = useState('amount'); // 'amount', 'method', 'pin', 'success', 'error'
-  const [pin, setPin] = useState(['', '', '', '']);
-  const [withdrawPin, setWithdrawPin] = useState(['', '', '', '']);
-  const [balancePin, setBalancePin] = useState(['', '', '', '']);
   const [paymentDetails, setPaymentDetails] = useState({
     networkProvider: '',
     phoneNumber: '',
@@ -80,66 +81,35 @@ const DashboardPage = () => {
     if (currentStep === 'amount') {
       // If payment method is selected, go to PIN confirmation
       if (paymentMethod) {
-        setCurrentStep('pin');
+        setIsTopUpPinModalOpen(true);
       }
-    } else if (currentStep === 'pin') {
-      // Simulate success/error randomly
-      const isSuccess = Math.random() > 0.3; // 70% success rate
-      setCurrentStep(isSuccess ? 'success' : 'error');
     }
+  };
+
+  const handleTopUpPinSuccess = () => {
+    setIsTopUpPinModalOpen(false);
+    // Simulate success/error randomly
+    const isSuccess = Math.random() > 0.3; // 70% success rate
+    setCurrentStep(isSuccess ? 'success' : 'error');
   };
 
   const handleWithdraw = () => {
     if (withdrawStep === 'amount') {
       // If withdrawal method is selected, go to PIN confirmation
       if (withdrawMethod) {
-        setWithdrawStep('pin');
+        setIsWithdrawPinModalOpen(true);
       }
-    } else if (withdrawStep === 'pin') {
-      // Simulate success/error randomly
-      const isSuccess = Math.random() > 0.2; // 80% success rate
-      setWithdrawStep(isSuccess ? 'success' : 'error');
     }
   };
 
-  const handlePinChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    
-    const newPin = [...pin];
-    newPin[index] = value;
-    setPin(newPin);
-    
-    if (value && index < 3) {
-      const nextInput = document.getElementById(`pin-${index + 1}`);
-      if (nextInput) nextInput.focus();
-    }
+  const handleWithdrawPinSuccess = () => {
+    setIsWithdrawPinModalOpen(false);
+    // Simulate success/error randomly
+    const isSuccess = Math.random() > 0.2; // 80% success rate
+    setWithdrawStep(isSuccess ? 'success' : 'error');
   };
 
-  const handleWithdrawPinChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    
-    const newPin = [...withdrawPin];
-    newPin[index] = value;
-    setWithdrawPin(newPin);
-    
-    if (value && index < 3) {
-      const nextInput = document.getElementById(`withdraw-pin-${index + 1}`);
-      if (nextInput) nextInput.focus();
-    }
-  };
 
-  const handleBalancePinChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    
-    const newPin = [...balancePin];
-    newPin[index] = value;
-    setBalancePin(newPin);
-    
-    if (value && index < 3) {
-      const nextInput = document.getElementById(`balance-pin-${index + 1}`);
-      if (nextInput) nextInput.focus();
-    }
-  };
 
   const handleBalanceToggle = () => {
     if (isBalanceVisible) {
@@ -149,37 +119,25 @@ const DashboardPage = () => {
     }
   };
 
-  const handleBalancePinSubmit = () => {
-    // Simulate PIN verification
-    const isPinValid = balancePin.every(digit => digit !== '');
-    if (isPinValid) {
-      setIsBalanceVisible(true);
-      setIsPinModalOpen(false);
-      setBalancePin(['', '', '', '']);
-    }
-  };
-
-  const handleBalancePinCancel = () => {
+  const handleBalancePinSuccess = () => {
+    setIsBalanceVisible(true);
     setIsPinModalOpen(false);
-    setBalancePin(['', '', '', '']);
   };
 
   const resetTopUp = () => {
     setCurrentStep('amount');
     setPaymentMethod('');
-    setPin(['', '', '', '']);
     setIsTopUpOpen(false);
   };
 
   const resetWithdraw = () => {
     setWithdrawStep('amount');
     setWithdrawMethod('');
-    setWithdrawPin(['', '', '', '']);
     setWithdrawAmount('');
     setIsWithdrawOpen(false);
   };
 
-  if (loading || profileLoading || portfolioLoading || projectsLoading || updatesLoading) {
+  if (loading || profileLoading || portfolioLoading || projectsLoading || updatesLoading || transactionsLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
@@ -405,13 +363,132 @@ const DashboardPage = () => {
 
         {/* Bottom Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-          {/* Empty Section */}
+          {/* Recent Transactions */}
           <Card>
-            <CardContent className="p-4 sm:p-6">
-              <h4 className="font-semibold text-gray-900 mb-3 sm:mb-4 text-sm sm:text-base">Empty</h4>
-              <div className="h-24 sm:h-32 flex items-center justify-center text-gray-400">
-                <p className="text-xs sm:text-sm">No data available</p>
+            <CardHeader className="pb-2 sm:pb-3">
+              <div className="flex items-center justify-between">
+                <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Recent Transactions</h4>
+                <Button 
+                  variant="ghost" 
+                  className="text-gray-600 hover:text-gray-900 text-xs sm:text-sm"
+                  onClick={() => router.push('/transactions')}
+                >
+                  View all
+                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
+                </Button>
               </div>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-3 sm:space-y-4">
+              {transactions && transactions.length > 0 ? (
+                <div className="space-y-3">
+                  {transactions.slice(0, 4).map((transaction) => {
+                    const getTransactionIcon = (type: string) => {
+                      switch (type) {
+                        case 'Payin':
+                          return <Upload className="h-4 w-4 text-green-600" />;
+                        case 'Payout':
+                          return <TrendingUp className="h-4 w-4 text-green-600" />;
+                        case 'Refund':
+                          return <Download className="h-4 w-4 text-orange-600" />;
+                        default:
+                          return <Activity className="h-4 w-4 text-gray-600" />;
+                      }
+                    };
+
+                    const getTransactionColor = (type: string) => {
+                      switch (type) {
+                        case 'Payin':
+                          return 'bg-green-50 border-green-200';
+                        case 'Payout':
+                          return 'bg-green-50 border-green-200';
+                        case 'Refund':
+                          return 'bg-orange-50 border-orange-200';
+                        default:
+                          return 'bg-gray-50 border-gray-200';
+                      }
+                    };
+
+                    const getAmountColor = (type: string) => {
+                      switch (type) {
+                        case 'Payin':
+                          return 'text-green-600';
+                        case 'Payout':
+                          return 'text-green-600';
+                        case 'Refund':
+                          return 'text-orange-600';
+                        default:
+                          return 'text-gray-600';
+                      }
+                    };
+
+                    const formatAmount = (amount: number, type: string) => {
+                      const prefix = type === 'Payin' ? '+' : '-';
+                      return `${prefix}GHS ${amount.toLocaleString()}`;
+                    };
+
+                    const formatDate = (dateString: string) => {
+                      const date = new Date(dateString);
+                      const now = new Date();
+                      const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+                      
+                      if (diffInHours < 1) return 'Just now';
+                      if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+                      const diffInDays = Math.floor(diffInHours / 24);
+                      if (diffInDays < 7) return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+                      return date.toLocaleDateString();
+                    };
+
+                    return (
+                      <div 
+                        key={transaction.id} 
+                        className={`flex items-center justify-between p-3 rounded-lg border ${getTransactionColor(transaction.type)}`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`p-2 rounded-full ${
+                            transaction.type === 'Payin' ? 'bg-green-100' :
+                            transaction.type === 'Payout' ? 'bg-green-100' :
+                            transaction.type === 'Refund' ? 'bg-orange-100' :
+                            'bg-gray-100'
+                          }`}>
+                            {getTransactionIcon(transaction.type)}
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium text-gray-900 capitalize">
+                              {transaction.type.replace('_', ' ')}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {transaction.project_name || transaction.description || 'Transaction'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className={`text-sm font-semibold ${getAmountColor(transaction.type)}`}>
+                            {formatAmount(transaction.amount, transaction.type)}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {formatDate(transaction.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Activity className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-900 mb-1">No Recent Transactions</h3>
+                  <p className="text-xs text-gray-500 mb-3">Your transaction history will appear here</p>
+                  <Button 
+                    size="sm" 
+                    className="bg-green-600 hover:bg-green-700 text-xs"
+                    onClick={() => router.push('/investments')}
+                  >
+                    Start Investing
+                  </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -700,33 +777,6 @@ const DashboardPage = () => {
                   </div>
                 )}
 
-                {/* PIN Confirmation Step */}
-                {currentStep === 'pin' && (
-                  <div className="flex flex-col items-center justify-center h-full space-y-6">
-                    <div className="text-center">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm with Transaction PIN</h3>
-                      <p className="text-sm text-gray-600">Enter your 4-digit PIN to confirm this action.</p>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      {pin.map((digit, index) => (
-                        <Input
-                          key={index}
-                          id={`pin-${index}`}
-                          type="password"
-                          value={digit}
-                          onChange={(e) => handlePinChange(index, e.target.value)}
-                          className="w-12 h-12 text-center text-lg font-semibold"
-                          maxLength={1}
-                        />
-                      ))}
-                    </div>
-                    
-                    <p className="text-sm text-red-600 text-center">
-                      This extra step helps keep your payment methods secure.
-                    </p>
-                  </div>
-                )}
 
                 {/* Success Step */}
                 {currentStep === 'success' && (
@@ -819,24 +869,6 @@ const DashboardPage = () => {
                 </div>
               )}
               
-              {currentStep === 'pin' && (
-                <div className="flex space-x-3">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setCurrentStep('amount')}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    onClick={handleTopUp}
-                    disabled={pin.some(digit => !digit)}
-                  >
-                    Confirm
-                  </Button>
-                </div>
-              )}
               
               {(currentStep === 'success' || currentStep === 'error') && (
                 <Button
@@ -1032,33 +1064,6 @@ const DashboardPage = () => {
                   </div>
                 )}
 
-                {/* PIN Confirmation Step */}
-                {withdrawStep === 'pin' && (
-                  <div className="flex flex-col items-center justify-center h-full space-y-6">
-                    <div className="text-center">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm with Transaction PIN</h3>
-                      <p className="text-sm text-gray-600">Enter your 4-digit PIN to confirm this withdrawal.</p>
-                    </div>
-                    
-                    <div className="flex space-x-2">
-                      {withdrawPin.map((digit, index) => (
-                        <Input
-                          key={index}
-                          id={`withdraw-pin-${index}`}
-                          type="password"
-                          value={digit}
-                          onChange={(e) => handleWithdrawPinChange(index, e.target.value)}
-                          className="w-12 h-12 text-center text-lg font-semibold"
-                          maxLength={1}
-                        />
-                      ))}
-                    </div>
-                    
-                    <p className="text-sm text-red-600 text-center">
-                      This extra step helps keep your withdrawal secure.
-                    </p>
-                  </div>
-                )}
 
                 {/* Success Step */}
                 {withdrawStep === 'success' && (
@@ -1151,24 +1156,6 @@ const DashboardPage = () => {
                 </div>
               )}
               
-              {withdrawStep === 'pin' && (
-                <div className="flex space-x-3">
-                  <Button
-                    variant="outline"
-                    className="flex-1"
-                    onClick={() => setWithdrawStep('amount')}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    onClick={handleWithdraw}
-                    disabled={withdrawPin.some(digit => !digit)}
-                  >
-                    Confirm
-                  </Button>
-                </div>
-              )}
               
               {(withdrawStep === 'success' || withdrawStep === 'error') && (
                 <Button
@@ -1184,53 +1171,34 @@ const DashboardPage = () => {
       </Sheet>
 
       {/* Balance PIN Modal */}
-      <Dialog open={isPinModalOpen} onOpenChange={setIsPinModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="text-center text-xl font-bold text-gray-900">
-              Enter PIN to View Balance
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-6 py-6">
-            <div className="text-center">
-              <p className="text-gray-600 mb-6">
-                Enter your 4-digit PIN to view your account balance
-              </p>
-              
-              <div className="flex justify-center space-x-3 mb-6">
-                {balancePin.map((digit, index) => (
-                  <Input
-                    key={index}
-                    id={`balance-pin-${index}`}
-                    type="password"
-                    value={digit}
-                    onChange={(e) => handleBalancePinChange(index, e.target.value)}
-                    className="w-12 h-12 text-center text-xl font-bold border-2 focus:border-green-500"
-                    maxLength={1}
-                  />
-                ))}
-              </div>
-              
-              <div className="flex space-x-3">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={handleBalancePinCancel}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex-1 bg-green-600 hover:bg-green-700"
-                  onClick={handleBalancePinSubmit}
-                  disabled={balancePin.some(digit => !digit)}
-                >
-                  Verify PIN
-                </Button>
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PinValidationModal
+        isOpen={isPinModalOpen}
+        onClose={() => setIsPinModalOpen(false)}
+        onSuccess={handleBalancePinSuccess}
+        title="Enter PIN to View Balance"
+        description="Please enter your 4-digit PIN to view your account balance"
+        action="View Balance"
+      />
+
+      {/* Top Up PIN Modal */}
+      <PinValidationModal
+        isOpen={isTopUpPinModalOpen}
+        onClose={() => setIsTopUpPinModalOpen(false)}
+        onSuccess={handleTopUpPinSuccess}
+        title="Confirm Top Up"
+        description="Enter your 4-digit PIN to confirm this top up transaction"
+        action="Confirm Top Up"
+      />
+
+      {/* Withdraw PIN Modal */}
+      <PinValidationModal
+        isOpen={isWithdrawPinModalOpen}
+        onClose={() => setIsWithdrawPinModalOpen(false)}
+        onSuccess={handleWithdrawPinSuccess}
+        title="Confirm Withdrawal"
+        description="Enter your 4-digit PIN to confirm this withdrawal transaction"
+        action="Confirm Withdrawal"
+      />
     </DashboardLayout>
   );
 };

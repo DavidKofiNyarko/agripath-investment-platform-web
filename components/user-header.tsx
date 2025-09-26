@@ -30,7 +30,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({
     return user?.user_metadata?.picture || 
            user?.user_metadata?.avatar_url || 
            profile?.avatar_url ||
-           "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face";
+           null; // Return null to use fallback avatar
   };
 
   const getUserInitials = () => {

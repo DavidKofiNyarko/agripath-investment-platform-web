@@ -8,10 +8,19 @@ interface Profile {
   id: string;
   first_name: string | null;
   last_name: string | null;
-  email: string;
+  email: string | null;
   avatar_url: string | null;
   country: string | null;
   phone_number: string | null;
+  pin: string | null;
+  kyc_status: 'pending' | 'verified' | 'rejected' | null;
+  kyc_documents: {
+    id_front?: string;
+    id_back?: string;
+    selfie?: string;
+  } | null;
+  user_id: string | null;
+  transaction_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -78,6 +87,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
           id: user.id,
           first_name: user.user_metadata?.full_name?.split(' ')[0] || user.user_metadata?.first_name || '',
           last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || user.user_metadata?.last_name || '',
+          email: user.email || '',
           country: user.user_metadata?.country || 'Ghana',
           phone_number: user.user_metadata?.phone_number || '',
         })

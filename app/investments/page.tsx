@@ -6,6 +6,10 @@ import DashboardLayout from '@/components/dashboard-layout';
 import UserHeader from '@/components/user-header';
 import { useProjects, Project } from '@/contexts/ProjectsContext';
 import { useUser } from '@/contexts/UserContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import KycModal from '@/components/kyc-modal';
+import PinValidationModal from '@/components/pin-validation-modal';
+import { createClient } from '@/app/utils/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -151,6 +155,8 @@ const progressVariants = {
 
 const InvestmentsPage = () => {
   const { user } = useUser();
+  const { profile } = useProfile();
+  const supabase = createClient();
   const { 
     projects, 
     loading, 
@@ -192,6 +198,55 @@ const InvestmentsPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showError, setShowError] = useState(false);
+  const [showKycModal, setShowKycModal] = useState(false);
+  const [showPinModal, setShowPinModal] = useState(false);
+
+  // Update project units in database
+  const updateProjectUnits = async (projectId: string, quantity: number, totalAmount: number) => {
+    try {
+      // Get current project data first
+      const { data: projectData, error: fetchError } = await supabase
+        .from('projects')
+        .select('available_unit, purchased_unit')
+        .eq('id', projectId)
+        .single();
+
+      if (fetchError) throw fetchError;
+
+      // Update available_unit and purchased_unit in projects table
+      const { error: projectError } = await supabase
+        .from('projects')
+        .update({
+          available_unit: projectData.available_unit - quantity,
+          purchased_unit: projectData.purchased_unit + quantity
+        })
+        .eq('id', projectId);
+
+      if (projectError) throw projectError;
+
+      // Create transaction record
+      const { error: transactionError } = await supabase
+        .from('transactions')
+        .insert({
+          user_id: user?.id,
+          project_id: projectId,
+          type: 'Payin',
+          amount: totalAmount,
+          unit: quantity,
+          status: 'Completed',
+          fees: 0,
+          net_amount: totalAmount,
+          description: `Investment in project ${projectId}`,
+          channel: 'momo',
+          account_number: paymentDetails.mobileNumber || 'N/A'
+        });
+
+      if (transactionError) throw transactionError;
+    } catch (error) {
+      console.error('Failed to update project units:', error);
+      throw error;
+    }
+  };
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: string) => {
@@ -265,6 +320,12 @@ const InvestmentsPage = () => {
   }
 
   const handleInvestmentClick = (project: Project) => {
+    // Check KYC status before allowing investment
+    if (profile?.kyc_status !== 'verified') {
+      setShowKycModal(true);
+      return;
+    }
+
     // Convert project to investment format for the existing flow
     const investment = {
       id: project.id,
@@ -305,6 +366,11 @@ const InvestmentsPage = () => {
     setIsProcessing(false);
     setShowSuccess(false);
     setShowError(false);
+  };
+
+  const handleCompleteKyc = () => {
+    setShowKycModal(false);
+    window.location.href = '/kyc-verification';
   };
 
   const calculateTotal = () => {
@@ -363,6 +429,14 @@ const InvestmentsPage = () => {
       return;
     }
 
+    // Show PIN modal for validation
+    setShowPinModal(true);
+  };
+
+  const handleInvestmentPinSuccess = async () => {
+    if (!selectedInvestment || !user) return;
+    
+    setShowPinModal(false);
     setCurrentStep('process');
     setIsProcessing(true);
     
@@ -425,6 +499,9 @@ const InvestmentsPage = () => {
       
       const result = await response.json();
       console.log('Payment result:', result);
+      
+      // Update project units in database
+      await updateProjectUnits(projectId, quantity, totalAmount);
       
       // Simulate processing delay
       setTimeout(() => {
@@ -1532,6 +1609,23 @@ const InvestmentsPage = () => {
             )}
           </SheetContent>
         </Sheet>
+
+        {/* KYC Modal */}
+        <KycModal
+          isOpen={showKycModal}
+          onClose={() => setShowKycModal(false)}
+          onCompleteKyc={handleCompleteKyc}
+        />
+
+        {/* PIN Validation Modal */}
+        <PinValidationModal
+          isOpen={showPinModal}
+          onClose={() => setShowPinModal(false)}
+          onSuccess={handleInvestmentPinSuccess}
+          title="Confirm Investment"
+          description="Enter your 4-digit PIN to confirm this investment transaction"
+          action="Confirm Investment"
+        />
       </div>
     </DashboardLayout>
   );

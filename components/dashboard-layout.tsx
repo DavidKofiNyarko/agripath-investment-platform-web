@@ -1,9 +1,11 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Sidebar, MobileSidebar, SidebarProvider, useSidebar } from './sidebar';
 import { cn } from '@/lib/utils';
+import { useProfileCompletion } from '@/hooks/useProfileCompletion';
+import PinSetupModal from './pin-setup-modal';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -12,6 +14,18 @@ interface DashboardLayoutProps {
 
 const DashboardContent = ({ children, className }: DashboardLayoutProps) => {
   const { isCollapsed } = useSidebar();
+  const { needsProfileSetup, isLoading } = useProfileCompletion();
+  const [showPinSetup, setShowPinSetup] = useState(false);
+
+  useEffect(() => {
+    if (!isLoading && needsProfileSetup) {
+      setShowPinSetup(true);
+    }
+  }, [needsProfileSetup, isLoading]);
+
+  const handleProfileComplete = () => {
+    setShowPinSetup(false);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50/50">
@@ -41,6 +55,12 @@ const DashboardContent = ({ children, className }: DashboardLayoutProps) => {
           </div>
         </main>
       </div>
+
+      {/* Profile Completion Modal */}
+      <PinSetupModal
+        isOpen={showPinSetup}
+        onComplete={handleProfileComplete}
+      />
     </div>
   );
 };

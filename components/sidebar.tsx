@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useUser } from '@/contexts/UserContext';
+import { useProfile } from '@/contexts/ProfileContext';
 import {
   LayoutDashboard,
   PiggyBank,
@@ -97,6 +98,7 @@ const SidebarContent = ({ className }: SidebarProps) => {
   const router = useRouter();
   const { isCollapsed, setIsCollapsed } = useSidebar();
   const { signOut } = useUser();
+  const { profile } = useProfile();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const handleLogout = async () => {
@@ -154,13 +156,14 @@ const SidebarContent = ({ className }: SidebarProps) => {
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
+              const showKycBadge = item.title === 'Settings' && profile?.kyc_status !== 'verified';
               
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-none transition-colors duration-150',
+                    'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-none transition-colors duration-150 relative',
                     isCollapsed ? 'justify-center' : 'justify-start',
                     isActive
                       ? 'bg-green-50 text-green-700 border-r-2 border-green-600'
@@ -174,6 +177,14 @@ const SidebarContent = ({ className }: SidebarProps) => {
                   )} />
                   {!isCollapsed && (
                     <span className="truncate">{item.title}</span>
+                  )}
+                  {showKycBadge && !isCollapsed && (
+                    <div className="ml-auto">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    </div>
+                  )}
+                  {showKycBadge && isCollapsed && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
                   )}
                 </Link>
               );
