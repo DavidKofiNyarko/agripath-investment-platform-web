@@ -7,7 +7,7 @@ import { useUser } from './UserContext';
 export interface Transaction {
   id: string;
   transaction_id: string;
-  user_id: string;
+  profiles_id: string;
   project_id: string;
   type: 'Payin' | 'Payout' | 'Refund';
   amount: number;
@@ -29,7 +29,7 @@ export interface Transaction {
 interface TransactionRow {
   id: string;
   transaction_id: string;
-  user_id: string;
+  profiles_id: string;
   project_id: string;
   type: string;
   amount: number;
@@ -121,7 +121,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
         .select(`
           id,
           transaction_id,
-          user_id,
+          profiles_id,
           project_id,
           type,
           amount,
@@ -139,7 +139,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
           account_number,
           projects!inner(project_name)
         `)
-        .eq('user_id', user.id)
+        .eq('profiles_id', user.id)
         .order('created_at', { ascending: false });
 
       // Apply type filter
@@ -192,7 +192,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
       const formattedTransactions = data?.map((item: TransactionRow) => ({
         id: item.id,
         transaction_id: item.transaction_id,
-        user_id: item.user_id,
+        profiles_id: item.profiles_id,
         project_id: item.project_id,
         type: item.type as 'Payin' | 'Payout' | 'Refund',
         amount: item.amount,

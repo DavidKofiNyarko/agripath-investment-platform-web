@@ -2,9 +2,9 @@
 
 import React, { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Card, CardContent } from '@/components/ui/card'; // CardHeader, CardTitle unused
+// import { Input } from '@/components/ui/input'; // Unused import
+// import { Label } from '@/components/ui/label'; // Unused import
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -17,7 +17,7 @@ import {
   ArrowRight,
   FileText,
   User,
-  CreditCard,
+  // CreditCard, // Unused import
   Shield
 } from 'lucide-react';
 import { createClient } from '@/app/utils/supabase/client';
@@ -75,7 +75,7 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
 
   const uploadFile = async (file: File, path: string): Promise<string | null> => {
     try {
-      const { data, error } = await supabase.storage
+      const { data, error: _error } = await supabase.storage
         .from('project-images')
         .upload(path, file, {
           cacheControl: '3600',
@@ -84,7 +84,12 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
 
       if (error) {
         console.error('Upload error:', error);
-        setError(`Failed to upload file: ${error.message}`);
+        setError(`Failed to upload file: ${error}`);
+        return null;
+      }
+
+      if (!data) {
+        setError('Upload failed: No data returned');
         return null;
       }
 
@@ -169,7 +174,7 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
     setError('');
 
     try {
-      const { error } = await supabase
+      const { error: _error } = await supabase
         .from('profiles')
         .update({
           kyc_status: 'pending',
@@ -580,7 +585,7 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
               {/* Progress Steps */}
               <div className="mb-8">
                 <div className="flex items-center justify-between mb-4">
-                  {steps.map((step, index) => (
+                  {steps.map((step, _index) => (
                     <div key={step.id} className="flex flex-col items-center">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
                         currentStep >= step.id 

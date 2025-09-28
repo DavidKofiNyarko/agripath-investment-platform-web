@@ -10,8 +10,8 @@ import {
   Check, 
   X,
   ArrowRight,
-  FileText,
-  User
+  // FileText, // Unused import
+  // User // Unused import
 } from 'lucide-react';
 import { useProfile } from '@/contexts/ProfileContext';
 

@@ -9,9 +9,9 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Switch } from '@/components/ui/switch';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'; // DialogTrigger unused
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion'; // AnimatePresence unused
 import DashboardLayout from '@/components/dashboard-layout';
 import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
@@ -22,14 +22,14 @@ import {
   Shield, 
   Bell, 
   CreditCard, 
-  ChevronDown, 
+  // ChevronDown, // Unused import 
   Key, 
-  Eye, 
-  EyeOff,
+  // Eye, // Unused import 
+  // EyeOff, // Unused import
   Trash2,
   Check,
   X,
-  Upload,
+  // Upload, // Unused import
   AlertTriangle,
   PartyPopper
 } from 'lucide-react';
@@ -63,9 +63,9 @@ const SettingsPage = () => {
     }
   };
 
-  const [showCurrentPin, setShowCurrentPin] = useState(false);
-  const [showNewPin, setShowNewPin] = useState(false);
-  const [showConfirmPin, setShowConfirmPin] = useState(false);
+  // const [showCurrentPin, setShowCurrentPin] = useState(false); // Unused
+  // const [showNewPin, setShowNewPin] = useState(false); // Unused
+  // const [showConfirmPin, setShowConfirmPin] = useState(false); // Unused
   const [pin, setPin] = useState(['', '', '', '']);
   const [newPin, setNewPin] = useState(['', '', '', '']);
   const [confirmPin, setConfirmPin] = useState(['', '', '', '']);

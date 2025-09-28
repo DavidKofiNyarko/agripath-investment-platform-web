@@ -4,8 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Eye, EyeOff, AlertTriangle, Check, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion'; // Check unused
+import { Shield, Eye, EyeOff, AlertTriangle, Loader2 } from 'lucide-react'; // Check unused
 import { useProfile } from '@/contexts/ProfileContext';
 
 interface PinValidationModalProps {

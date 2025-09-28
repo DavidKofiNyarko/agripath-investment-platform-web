@@ -117,7 +117,7 @@ const InvestmentsPage = () => {
     cvv: '',
     savePayment: false
   });
-  const [pin, setPin] = useState(['', '', '', '']);
+  const [pin, setPin] = useState(['', '', '', '']); // Keep for potential future use
   const [isProcessing, setIsProcessing] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
@@ -149,7 +149,7 @@ const InvestmentsPage = () => {
       const { error: transactionError } = await supabase
         .from('transactions')
         .insert({
-          user_id: user?.id, // Use auth user ID
+          profiles_id: profile?.id, // Use profile ID instead of user_id
           project_id: projectId,
           type: 'Payin',
           amount: totalAmount,
@@ -159,8 +159,7 @@ const InvestmentsPage = () => {
           net_amount: totalAmount,
           description: `Investment in project ${projectId}`,
           channel: selectedPaymentMethod === 'mobile' ? 'momo' : 'card', // Ensure it's a string
-          account_number: paymentDetails.mobileNumber || paymentDetails.cardNumber || 'N/A',
-          redirect_url: `${window.location.origin}/dashboard` // Add required redirect_url
+          account_number: paymentDetails.mobileNumber || paymentDetails.cardNumber || 'N/A'
         });
 
       if (transactionError) throw transactionError;
@@ -363,7 +362,7 @@ const InvestmentsPage = () => {
     try {
       const totalAmount = selectedInvestment.price * quantity;
       const projectId = selectedInvestment.id;
-      const userId = user?.id; // Use auth user ID
+      // const userId = user?.id; // Use auth user ID - not needed since we use profile?.id
       
       // Debug logging
       console.log('Debug Info:', {
@@ -382,7 +381,7 @@ const InvestmentsPage = () => {
         // Mobile Money Payment
         paymentUrl = 'https://infra.agripath.co/api/payments/momo/payin';
         paymentPayload = {
-          user_id: userId,
+          user_id: profile?.id, // Use profile ID for payment API
           project_id: projectId,
           subscriber_number: paymentDetails.mobileNumber,
           network: paymentDetails.provider,
@@ -394,7 +393,7 @@ const InvestmentsPage = () => {
         // Card Payment
         paymentUrl = 'https://infra.agripath.co/api/payments/card/payin';
         paymentPayload = {
-          user_id: userId,
+          user_id: profile?.id, // Use profile ID for payment API
           project_id: projectId,
           amount: totalAmount,
           unit: quantity,

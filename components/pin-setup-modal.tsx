@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Eye, EyeOff, AlertTriangle, Check, User, Mail } from 'lucide-react';
+import { Shield, Eye, EyeOff, AlertTriangle, Check, User } from 'lucide-react'; // Mail unused
 import { useProfile } from '@/contexts/ProfileContext';
 import { useUser } from '@/contexts/UserContext';
 import { createClient } from '@/app/utils/supabase/client';
@@ -17,7 +17,7 @@ interface PinSetupModalProps {
 }
 
 const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onComplete }) => {
-  const { profile, updateProfile, refreshProfile } = useProfile();
+  const { profile, updateProfile: _updateProfile, refreshProfile } = useProfile(); // updateProfile unused
   const { user } = useUser();
   const supabase = createClient();
   

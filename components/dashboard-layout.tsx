@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+// import { motion } from 'framer-motion'; // motion unused
 import { Sidebar, MobileSidebar, SidebarProvider, useSidebar } from './sidebar';
 import { cn } from '@/lib/utils';
 import { useProfileCompletion } from '@/hooks/useProfileCompletion';

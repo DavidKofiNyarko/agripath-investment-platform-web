@@ -11,6 +11,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  // error parameter is required by Next.js but not used in this implementation
   const router = useRouter();
 
   return (

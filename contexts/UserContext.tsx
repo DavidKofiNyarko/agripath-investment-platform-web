@@ -58,7 +58,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase.auth]); // Added supabase.auth dependency
 
   const value = {
     user,

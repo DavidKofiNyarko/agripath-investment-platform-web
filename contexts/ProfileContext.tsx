@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useUser } from '@/contexts/UserContext';
 
@@ -48,7 +48,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
   const { user } = useUser();
   const supabase = createClient();
 
-  const fetchProfile = async () => {
+  const fetchProfile = useCallback(async () => {
     if (!user) {
       setProfile(null);
       setLoading(false);
@@ -64,8 +64,30 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
 
       if (error) {
         console.error('Error fetching profile:', error);
-        // If profile doesn't exist, create one
-        await createProfile();
+        // If profile doesn't exist, create one inline
+        try {
+          const { data: newProfile, error: createError } = await supabase
+            .from('profiles')
+            .insert({
+              id: user.id,
+              first_name: user.user_metadata?.full_name?.split(' ')[0] || user.user_metadata?.first_name || '',
+              last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || user.user_metadata?.last_name || '',
+              email: user.email || '',
+              country: user.user_metadata?.country || 'Ghana',
+              phone_number: user.user_metadata?.phone_number || '',
+            })
+            .select()
+            .single();
+
+          if (createError) {
+            console.error('Error creating profile:', createError);
+            return;
+          }
+
+          setProfile(newProfile);
+        } catch (createError) {
+          console.error('Error creating profile:', createError);
+        }
         return;
       }
 
@@ -75,9 +97,9 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, supabase]);
 
-  const createProfile = async () => {
+  const createProfile = useCallback(async () => {
     if (!user) return;
 
     try {
@@ -103,7 +125,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
     } catch (error) {
       console.error('Error creating profile:', error);
     }
-  };
+  }, [user, supabase]);
 
   const updateProfile = async (updates: Partial<Profile>) => {
     if (!user || !profile) return;
@@ -134,7 +156,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
 
   useEffect(() => {
     fetchProfile();
-  }, [user]);
+  }, [user, fetchProfile]); // Added fetchProfile dependency
 
   const value = {
     profile,

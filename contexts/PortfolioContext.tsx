@@ -196,7 +196,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
       const { data: metricsData, error: metricsError } = await supabase
         .from('transactions')
         .select('amount, unit, type, status')
-        .eq('user_id', user.id)
+        .eq('profiles_id', user.id)
         .eq('type', 'Payin');
 
       if (metricsError) {
@@ -243,7 +243,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             project_stages
           )
         `)
-        .eq('user_id', user.id)
+        .eq('profiles_id', user.id)
         .eq('type', 'Payin')
         .order('created_at', { ascending: false });
 
@@ -338,7 +338,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
           channel,
           projects!inner(project_name)
         `)
-        .eq('user_id', user.id)
+        .eq('profiles_id', user.id)
         .order('created_at', { ascending: false })
         .limit(10);
 

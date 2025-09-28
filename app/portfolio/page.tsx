@@ -7,7 +7,7 @@ import { usePortfolio } from '@/contexts/PortfolioContext';
 import type { Project } from '@/contexts/PortfolioContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+// import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Unused imports
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -16,7 +16,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sh
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Search, 
-  Bell,
+  // Bell, // Unused import
   Eye,
   ChevronLeft,
   ChevronRight,
@@ -32,14 +32,14 @@ import {
 } from 'lucide-react';
 
 // Animation variants
-const timelineVariants = {
-  hidden: { opacity: 0, x: -20 },
-  visible: { 
-    opacity: 1, 
-    x: 0, 
-    transition: { duration: 0.5 }
-  }
-};
+// const timelineVariants = { // Unused variable
+//   hidden: { opacity: 0, x: -20 },
+//   visible: { 
+//     opacity: 1, 
+//     x: 0, 
+//     transition: { duration: 0.5 }
+//   }
+// };
 
 const stepVariants = {
   hidden: { opacity: 0, scale: 0.8 },
