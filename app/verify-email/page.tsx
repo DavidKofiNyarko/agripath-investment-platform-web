@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import React, { useState, useEffect, Suspense, useCallback } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '@/contexts/UserContext';
+import Image from 'next/image';
 
 const VerifyEmailContent = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -16,21 +17,7 @@ const VerifyEmailContent = () => {
   const searchParams = useSearchParams();
   const { user } = useUser();
 
-  // Handle email verification on page load
-  useEffect(() => {
-    const handleEmailVerification = async () => {
-      const token = searchParams.get('token');
-      const type = searchParams.get('type');
-      
-      if (token && type === 'email') {
-        await verifyEmailToken(token);
-      }
-    };
-
-    handleEmailVerification();
-  }, [searchParams]);
-
-  const verifyEmailToken = async (token: string) => {
+  const verifyEmailToken = useCallback(async (token: string) => {
     try {
       setIsLoading(true);
       setError('');
@@ -57,7 +44,21 @@ const VerifyEmailContent = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [supabase, user?.email, router]);
+
+  // Handle email verification on page load
+  useEffect(() => {
+    const handleEmailVerification = async () => {
+      const token = searchParams.get('token');
+      const type = searchParams.get('type');
+      
+      if (token && type === 'email') {
+        await verifyEmailToken(token);
+      }
+    };
+
+    handleEmailVerification();
+  }, [searchParams, verifyEmailToken]);
 
   const handleResendVerification = async () => {
     try {
@@ -117,7 +118,7 @@ const VerifyEmailContent = () => {
           <div className="space-y-2">
             <h1 className="text-4xl font-bold text-gray-900">Verify Your Email</h1>
             <p className="text-gray-600">
-              We&apos;ve sent a verification link to <span className="font-medium">{user?.email || 'your email'}</span>. 
+                We&apos;ve sent a verification link to <span className="font-medium">{user?.email || 'your email'}</span>. 
               {isLoading ? ' Checking verification...' : ' Click the link in your email to continue.'}
             </p>
           </div>
@@ -178,10 +179,11 @@ const VerifyEmailContent = () => {
 
       {/* Right side - Image */}
       <div className="flex-1 relative">
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1548550023-4b5b4e0b0c0c?w=800&h=1200&fit=crop&crop=center"
           alt="Modern chicken farm with clean facilities"
-          className="absolute inset-0 w-full h-full object-cover"
+          fill
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-slate-900/60 to-gray-800/40" />
         

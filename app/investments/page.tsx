@@ -12,11 +12,10 @@ import PinValidationModal from '@/components/pin-validation-modal';
 import { createClient } from '@/app/utils/supabase/client';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
@@ -29,12 +28,9 @@ import {
   Minus,
   ChevronUp,
   ChevronDown,
-  Bell,
   ArrowRight,
   X,
   Check,
-  CreditCard,
-  Smartphone,
   AlertTriangle,
   Loader2
 } from 'lucide-react';
@@ -51,74 +47,6 @@ interface Investment {
   description: string;
 }
 
-const investments: Investment[] = [
-  {
-    id: '1',
-    name: 'Tomatoes',
-    image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=300&fit=crop',
-    price: 3000,
-    roi: '25-35%',
-    duration: '6 Months',
-    unitsAvailable: 5,
-    totalUnits: 20,
-    description: 'Tomatoes are a fast-growing and high-demand crop with a market cycle of 6 months. Our farms in Akuse use climate-smart techniques to ensure maximum yields. Your investment supports sustainable agriculture practices.'
-  },
-  {
-    id: '2',
-    name: 'Habanero',
-    image: 'https://images.unsplash.com/photo-1583281629203-ca8b80e96f01?w=400&h=300&fit=crop',
-    price: 3000,
-    roi: '25-35%',
-    duration: '6 Months',
-    unitsAvailable: 10,
-    totalUnits: 20,
-    description: 'Premium habanero peppers with excellent market demand. These spicy peppers are grown using organic methods and have a consistent market price.'
-  },
-  {
-    id: '3',
-    name: 'Bell Pepper',
-    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400&h=300&fit=crop',
-    price: 3000,
-    roi: '25-35%',
-    duration: '6 Months',
-    unitsAvailable: 10,
-    totalUnits: 20,
-    description: 'Colorful bell peppers with high nutritional value and strong market demand. Grown in controlled environments for optimal yield.'
-  },
-  {
-    id: '4',
-    name: 'Bell Pepper',
-    image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?w=400&h=300&fit=crop',
-    price: 3000,
-    roi: '25-35%',
-    duration: '6 Months',
-    unitsAvailable: 10,
-    totalUnits: 20,
-    description: 'Another variety of bell peppers with different growing conditions and harvest times for diversified returns.'
-  },
-  {
-    id: '5',
-    name: 'Broiler Chicken',
-    image: 'https://images.unsplash.com/photo-1548550023-2bdb3c5beed7?w=400&h=300&fit=crop',
-    price: 1500,
-    roi: '10-15%',
-    duration: '3 Months',
-    unitsAvailable: 20,
-    totalUnits: 50,
-    description: 'Fast-growing broiler chickens with a quick turnaround time. Raised in modern facilities with proper veterinary care.'
-  },
-  {
-    id: '6',
-    name: 'Pigs',
-    image: 'https://images.unsplash.com/photo-1516467508483-a7212febe31a?w=400&h=300&fit=crop',
-    price: 3000,
-    roi: '15-25%',
-    duration: '6 Months',
-    unitsAvailable: 10,
-    totalUnits: 30,
-    description: 'Healthy pigs raised in clean, spacious environments with proper nutrition and healthcare. Strong market demand for pork products.'
-  }
-];
 
 // Animation variants
 const cardVariants = {
@@ -169,11 +97,6 @@ const InvestmentsPage = () => {
   } = useProjects();
   
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('All');
-  const [selectedDuration, setSelectedDuration] = useState('All');
-  const [selectedROI, setSelectedROI] = useState('All');
-  const [minAmount, setMinAmount] = useState('1000');
-  const [maxAmount, setMaxAmount] = useState('10000');
   const [showFilters, setShowFilters] = useState(false);
   const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -196,8 +119,6 @@ const InvestmentsPage = () => {
   });
   const [pin, setPin] = useState(['', '', '', '']);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [showError, setShowError] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
 
@@ -365,8 +286,6 @@ const InvestmentsPage = () => {
     });
     setPin(['', '', '', '']);
     setIsProcessing(false);
-    setShowSuccess(false);
-    setShowError(false);
   };
 
   const handleCompleteKyc = () => {
@@ -518,7 +437,6 @@ const InvestmentsPage = () => {
       setTimeout(() => {
         setIsProcessing(false);
         setCurrentStep('success');
-        setShowSuccess(true);
         // Reset form after successful payment
         resetForm();
       }, 2000);
@@ -528,7 +446,6 @@ const InvestmentsPage = () => {
       setTimeout(() => {
         setIsProcessing(false);
         setCurrentStep('error');
-        setShowError(true);
       }, 2000);
     }
   };
@@ -549,24 +466,6 @@ const InvestmentsPage = () => {
     setAgreedToTerms(false);
   };
 
-  const handlePinChange = (index: number, value: string) => {
-    if (value.length > 1) return;
-    const newPin = [...pin];
-    newPin[index] = value;
-    setPin(newPin);
-  };
-
-  const getStepProgress = () => {
-    switch (currentStep) {
-      case 'details': return 0;
-      case 'review': return 1;
-      case 'payment': return 2;
-      case 'process': return 3;
-      case 'success': return 3;
-      case 'error': return 2;
-      default: return 0;
-    }
-  };
 
   return (
     <DashboardLayout>
@@ -1608,7 +1507,6 @@ const InvestmentsPage = () => {
                         className="w-full bg-green-600 hover:bg-green-700"
                         onClick={() => {
                           setCurrentStep('payment');
-                          setShowError(false);
                         }}
                       >
                         Try Again

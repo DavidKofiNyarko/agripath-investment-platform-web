@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 const ForgotPasswordPage = () => {
   const [formData, setFormData] = useState({
@@ -83,7 +84,7 @@ const ForgotPasswordPage = () => {
                       Reset email sent!
                     </h3>
                     <div className="mt-2 text-sm text-green-700">
-                      <p>We've sent a password reset link to <strong>{formData.email}</strong></p>
+                      <p>We&apos;ve sent a password reset link to <strong>{formData.email}</strong></p>
                       <p className="mt-1">Check your email and click the link to reset your password.</p>
                     </div>
                   </div>
@@ -141,10 +142,11 @@ const ForgotPasswordPage = () => {
 
       {/* Right side - Image */}
       <div className="flex-1 relative hidden lg:block">
-        <img
+        <Image
           src="https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=800&h=1200&fit=crop&crop=center"
           alt="Vibrant cassava field with blue sky"
-          className="absolute inset-0 w-full h-full object-cover"
+          fill
+          className="object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/50 to-green-800/30" />
         
