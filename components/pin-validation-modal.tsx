@@ -120,7 +120,7 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md" hideClose>
+      <DialogContent className="max-w-md" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-semibold text-gray-900 flex items-center justify-center gap-2">
             <Shield className="w-6 h-6 text-green-600" />
@@ -146,7 +146,7 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
                 {pin.map((digit, index) => (
                   <Input
                     key={index}
-                    ref={(el) => (pinRefs.current[index] = el)}
+                    ref={(el) => { pinRefs.current[index] = el; }}
                     type={showPin ? 'text' : 'password'}
                     value={digit}
                     onChange={(e) => handlePinChange(index, e.target.value)}

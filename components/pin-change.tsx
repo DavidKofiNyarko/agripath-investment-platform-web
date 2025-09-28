@@ -180,7 +180,7 @@ const PinChange: React.FC = () => {
               {currentPin.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => (currentPinRefs.current[index] = el)}
+                  ref={(el) => { currentPinRefs.current[index] = el; }}
                   type={showCurrentPin ? 'text' : 'password'}
                   value={digit}
                   onChange={(e) => handlePinChange(index, e.target.value, 'current')}
@@ -202,7 +202,7 @@ const PinChange: React.FC = () => {
               {newPin.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => (newPinRefs.current[index] = el)}
+                  ref={(el) => { newPinRefs.current[index] = el; }}
                   type={showNewPin ? 'text' : 'password'}
                   value={digit}
                   onChange={(e) => handlePinChange(index, e.target.value, 'new')}
@@ -224,7 +224,7 @@ const PinChange: React.FC = () => {
               {confirmPin.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => (confirmPinRefs.current[index] = el)}
+                  ref={(el) => { confirmPinRefs.current[index] = el; }}
                   type={showConfirmPin ? 'text' : 'password'}
                   value={digit}
                   onChange={(e) => handlePinChange(index, e.target.value, 'confirm')}

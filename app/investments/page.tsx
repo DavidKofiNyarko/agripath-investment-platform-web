@@ -228,17 +228,18 @@ const InvestmentsPage = () => {
       const { error: transactionError } = await supabase
         .from('transactions')
         .insert({
-          user_id: user?.id,
+          user_id: user?.id, // Use auth user ID
           project_id: projectId,
           type: 'Payin',
           amount: totalAmount,
           unit: quantity,
           status: 'Completed',
-          fees: 0,
+          fees: 0.0, // Ensure it's a number, not integer
           net_amount: totalAmount,
           description: `Investment in project ${projectId}`,
-          channel: 'momo',
-          account_number: paymentDetails.mobileNumber || 'N/A'
+          channel: selectedPaymentMethod === 'mobile' ? 'momo' : 'card', // Ensure it's a string
+          account_number: paymentDetails.mobileNumber || paymentDetails.cardNumber || 'N/A',
+          redirect_url: `${window.location.origin}/dashboard` // Add required redirect_url
         });
 
       if (transactionError) throw transactionError;
@@ -434,7 +435,7 @@ const InvestmentsPage = () => {
   };
 
   const handleInvestmentPinSuccess = async () => {
-    if (!selectedInvestment || !user) return;
+    if (!selectedInvestment || !user || !profile) return;
     
     setShowPinModal(false);
     setCurrentStep('process');
@@ -443,7 +444,17 @@ const InvestmentsPage = () => {
     try {
       const totalAmount = selectedInvestment.price * quantity;
       const projectId = selectedInvestment.id;
-      const userId = user.id;
+      const userId = user?.id; // Use auth user ID
+      
+      // Debug logging
+      console.log('Debug Info:', {
+        authUserId: user?.id,
+        profileId: profile?.id,
+        profileUserId: profile?.user_id,
+        projectId: projectId,
+        totalAmount: totalAmount,
+        quantity: quantity
+      });
       
       let paymentPayload;
       let paymentUrl;

@@ -241,7 +241,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onComplete }) => 
               {pin.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => (pinRefs.current[index] = el)}
+                  ref={(el) => { pinRefs.current[index] = el; }}
                   type={showPin ? 'text' : 'password'}
                   value={digit}
                   onChange={(e) => handlePinChange(index, e.target.value)}
@@ -262,7 +262,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onComplete }) => 
               {confirmPin.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => (confirmPinRefs.current[index] = el)}
+                  ref={(el) => { confirmPinRefs.current[index] = el; }}
                   type={showConfirmPin ? 'text' : 'password'}
                   value={digit}
                   onChange={(e) => handlePinChange(index, e.target.value, true)}
@@ -324,7 +324,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onComplete }) => 
 
   return (
     <Dialog open={isOpen} onOpenChange={() => {}}>
-      <DialogContent className="max-w-md" hideClose>
+      <DialogContent className="max-w-md" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle className="text-center text-xl font-semibold text-gray-900">
             {currentStep === 1 ? 'Complete Your Profile' : 'Set Transaction PIN'}
