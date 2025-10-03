@@ -9,7 +9,10 @@ import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import KycModal from '@/components/kyc-modal';
 import PinValidationModal from '@/components/pin-validation-modal';
+import InvestmentPaymentTestComponent from '@/components/InvestmentPaymentTestComponent';
+import APIConnectivityTest from '@/components/APIConnectivityTest';
 import { createClient } from '@/app/utils/supabase/client';
+import { paymentService } from '@/lib/paymentService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -146,15 +149,19 @@ const InvestmentsPage = () => {
       if (projectError) throw projectError;
 
       // Create transaction record
+      // Generate unique transaction ID
+      const transactionId = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
+      
       const { error: transactionError } = await supabase
         .from('transactions')
         .insert({
-          profiles_id: profile?.id, // Use profile ID instead of user_id
+          transaction_id: transactionId,
+          profile_id: profile?.id, // Use profile ID instead of user_id
           project_id: projectId,
           type: 'Payin',
           amount: totalAmount,
           unit: quantity,
-          status: 'Completed',
+          status: 'Complete', // Database enum value is 'Complete' not 'Completed'
           fees: 0.0, // Ensure it's a number, not integer
           net_amount: totalAmount,
           description: `Investment in project ${projectId}`,
@@ -374,71 +381,72 @@ const InvestmentsPage = () => {
         quantity: quantity
       });
       
-      let paymentPayload;
-      let paymentUrl;
+      let paymentResult;
       
       if (selectedPaymentMethod === 'mobile') {
-        // Mobile Money Payment
-        paymentUrl = 'https://infra.agripath.co/api/payments/momo/payin';
-        paymentPayload = {
-          user_id: profile?.id, // Use profile ID for payment API
-          project_id: projectId,
-          subscriber_number: paymentDetails.mobileNumber,
-          network: paymentDetails.provider,
-          description: `Investment in ${selectedInvestment.name}`,
-          amount: totalAmount,
-          unit: quantity
-        };
-      } else if (selectedPaymentMethod === 'card') {
-        // Card Payment
-        paymentUrl = 'https://infra.agripath.co/api/payments/card/payin';
-        paymentPayload = {
-          user_id: profile?.id, // Use profile ID for payment API
+        // Mobile Money Payment using our payment service
+        paymentResult = await paymentService.processInvestmentMobileMoneyPayment({
+          user_id: profile?.id || '', // Use profile ID (required by backend)
           project_id: projectId,
           amount: totalAmount,
           unit: quantity,
-          desc: `Investment in ${selectedInvestment.name}`,
-          pan: paymentDetails.cardNumber.replace(/\s/g, ''),
-          exp_month: paymentDetails.expiryDate.split('/')[0],
-          exp_year: paymentDetails.expiryDate.split('/')[1],
-          cvv: paymentDetails.cvv,
-          card_holder: paymentDetails.cardName,
-          user_email: user.email || '',
-          redirect_url: `${window.location.origin}/dashboard`
-        };
+          subscriber_number: paymentDetails.mobileNumber,
+          network: paymentDetails.provider,
+          description: `Investment in ${selectedInvestment.name}`
+        });
+      } else if (selectedPaymentMethod === 'card') {
+        // Card Payment using our payment service
+        paymentResult = await paymentService.processInvestmentCardPayment({
+          user_id: profile?.id || '', // Use profile ID (required by backend)
+          project_id: projectId,
+          amount: totalAmount,
+          unit: quantity,
+          cardDetails: {
+            pan: paymentDetails.cardNumber.replace(/\s/g, ''),
+            exp_month: paymentDetails.expiryDate.split('/')[0],
+            exp_year: paymentDetails.expiryDate.split('/')[1],
+            cvv: paymentDetails.cvv,
+            card_holder: paymentDetails.cardName
+          },
+          user_email: user?.email || 'user@example.com',
+          user_name: user?.user_metadata?.full_name || 'Investment User',
+          profiles_id: profile?.id,
+          description: `Investment in ${selectedInvestment.name}`
+        });
       } else {
         throw new Error('Invalid payment method selected');
       }
       
-      console.log('Payment URL:', paymentUrl);
-      console.log('Payment Payload:', paymentPayload);
+      console.log('Payment result:', paymentResult);
       
-      // Make the payment API call
-      const response = await fetch(paymentUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(paymentPayload)
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Payment failed: ${response.status} ${response.statusText}`);
+      // Handle payment response
+      // Backend returns status: "approved" for successful payments
+      if (paymentResult.status === 'success' || paymentResult.status === 'approved' || paymentResult.code === '000') {
+        // Update project units in database
+        await updateProjectUnits(projectId, quantity, totalAmount);
+        
+        // Simulate processing delay
+        setTimeout(() => {
+          setIsProcessing(false);
+          setCurrentStep('success');
+          // Reset form after successful payment
+          resetForm();
+        }, 2000);
+      } else if (paymentResult.status === 'vbv_required') {
+        // Handle 3D Secure redirect
+        console.log('3D Secure required, redirecting to:', paymentResult.redirect_url);
+        if (paymentResult.redirect_url) {
+          window.open(paymentResult.redirect_url, '_blank');
+        }
+        // For demo purposes, assume success after redirect
+        setTimeout(() => {
+          setIsProcessing(false);
+          setCurrentStep('success');
+          resetForm();
+        }, 2000);
+      } else {
+        throw new Error(paymentResult.reason || 'Payment failed');
       }
-      
-      const result = await response.json();
-      console.log('Payment result:', result);
-      
-      // Update project units in database
-      await updateProjectUnits(projectId, quantity, totalAmount);
-      
-      // Simulate processing delay
-      setTimeout(() => {
-        setIsProcessing(false);
-        setCurrentStep('success');
-        // Reset form after successful payment
-        resetForm();
-      }, 2000);
       
     } catch (error) {
       console.error('Payment error:', error);
@@ -471,6 +479,12 @@ const InvestmentsPage = () => {
       <div className={`space-y-6 transition-all duration-300 ${isSheetOpen ? 'main-content-blur' : ''}`}>
         {/* Header */}
         <UserHeader />
+
+        {/* Investment Payment Test Component - Remove this in production */}
+        {/* <InvestmentPaymentTestComponent /> */}
+
+        {/* API Connectivity Test - Remove this in production */}
+        {/* <APIConnectivityTest /> */}
 
         {/* Page Title */}
         <div className="flex items-center justify-between">

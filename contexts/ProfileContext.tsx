@@ -57,7 +57,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
 
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profile')
         .select('*')
         .eq('id', user.id)
         .single();
@@ -67,7 +67,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
         // If profile doesn't exist, create one inline
         try {
           const { data: newProfile, error: createError } = await supabase
-            .from('profiles')
+            .from('profile')
             .insert({
               id: user.id,
               first_name: user.user_metadata?.full_name?.split(' ')[0] || user.user_metadata?.first_name || '',
@@ -75,6 +75,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
               email: user.email || '',
               country: user.user_metadata?.country || 'Ghana',
               phone_number: user.user_metadata?.phone_number || '',
+              user_id: user.id
             })
             .select()
             .single();
@@ -104,7 +105,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
 
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profile')
         .insert({
           id: user.id,
           first_name: user.user_metadata?.full_name?.split(' ')[0] || user.user_metadata?.first_name || '',
@@ -112,6 +113,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
           email: user.email || '',
           country: user.user_metadata?.country || 'Ghana',
           phone_number: user.user_metadata?.phone_number || '',
+          user_id: user.id
         })
         .select()
         .single();
@@ -132,7 +134,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
 
     try {
       const { data, error } = await supabase
-        .from('profiles')
+        .from('profile')
         .update(updates)
         .eq('id', user.id)
         .select()

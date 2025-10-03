@@ -7,12 +7,12 @@ import { useUser } from './UserContext';
 export interface Transaction {
   id: string;
   transaction_id: string;
-  profiles_id: string;
+  profile_id: string;
   project_id: string;
   type: 'Payin' | 'Payout' | 'Refund';
   amount: number;
   unit: number;
-  status: 'Pending' | 'Completed' | 'Failed' | 'Cancelled';
+  status: 'Pending' | 'Complete' | 'Failed'; // Database uses 'Complete' not 'Completed'
   fees: number;
   net_amount: number;
   description: string;
@@ -29,7 +29,7 @@ export interface Transaction {
 interface TransactionRow {
   id: string;
   transaction_id: string;
-  profiles_id: string;
+  profile_id: string;
   project_id: string;
   type: string;
   amount: number;
@@ -47,7 +47,7 @@ interface TransactionRow {
   account_number: string;
   projects: {
     project_name: string | null;
-  }[];
+  } | null;
 }
 
 interface TransactionFilters {
@@ -121,7 +121,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
         .select(`
           id,
           transaction_id,
-          profiles_id,
+          profile_id,
           project_id,
           type,
           amount,
@@ -139,7 +139,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
           account_number,
           projects!inner(project_name)
         `)
-        .eq('profiles_id', user.id)
+        .eq('profile_id', user.id)
         .order('created_at', { ascending: false });
 
       // Apply type filter
@@ -192,12 +192,12 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
       const formattedTransactions = data?.map((item: TransactionRow) => ({
         id: item.id,
         transaction_id: item.transaction_id,
-        profiles_id: item.profiles_id,
+        profile_id: item.profile_id,
         project_id: item.project_id,
         type: item.type as 'Payin' | 'Payout' | 'Refund',
         amount: item.amount,
         unit: item.unit,
-        status: item.status as 'Pending' | 'Completed' | 'Failed' | 'Cancelled',
+        status: item.status as 'Pending' | 'Complete' | 'Failed',
         fees: item.fees || 0,
         net_amount: item.net_amount,
         description: item.description || '',
@@ -208,7 +208,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
         external_id: item.external_id,
         network: item.network,
         account_number: item.account_number,
-        project_name: item.projects?.[0]?.project_name || 'Unknown Project',
+        project_name: item.projects?.project_name || 'Unknown Project',
       })) || [];
 
       setTransactions(formattedTransactions);

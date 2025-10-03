@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
 import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import {
@@ -287,6 +287,7 @@ export const MobileSidebar = () => {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="p-0 w-64">
+        <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
         <SidebarContext.Provider value={{ isCollapsed: false, setIsCollapsed: () => {} }}>
           <SidebarContent />
         </SidebarContext.Provider>

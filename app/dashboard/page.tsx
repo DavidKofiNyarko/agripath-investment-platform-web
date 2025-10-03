@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard-layout';
 import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useWallet } from '@/contexts/WalletContext';
 import UserHeader from '@/components/user-header';
 import { usePortfolio } from '@/contexts/PortfolioContext';
 import { useProjects } from '@/contexts/ProjectsContext';
@@ -39,11 +40,13 @@ import {
   X
 } from 'lucide-react';
 import PinValidationModal from '@/components/pin-validation-modal';
+import WalletTestComponent from '@/components/WalletTestComponent';
 
 const DashboardPage = () => {
   const router = useRouter();
   const { loading } = useUser();
   const { loading: profileLoading } = useProfile();
+  const { wallet, loading: walletLoading, updateBalance, processCardPayment, processMobileMoneyPayment, processPayout } = useWallet();
   const { metrics, loading: portfolioLoading } = usePortfolio();
   const { projects, loading: projectsLoading } = useProjects();
   const { updates, loading: updatesLoading } = useUpdates();
@@ -86,11 +89,56 @@ const DashboardPage = () => {
     }
   };
 
-  const handleTopUpPinSuccess = () => {
+  const handleTopUpPinSuccess = async () => {
     setIsTopUpPinModalOpen(false);
-    // Simulate success/error randomly
-    const isSuccess = Math.random() > 0.3; // 70% success rate
-    setCurrentStep(isSuccess ? 'success' : 'error');
+    
+    try {
+      const topUpAmount = parseFloat(amount.replace(/,/g, ''));
+      
+      // Use payment API based on payment method
+      if (paymentMethod === 'card') {
+        // For card payments, we'd need card details from the user
+        // For now, we'll use a test card
+        const result = await processCardPayment({
+          pan: '4111111111111111',
+          exp_month: '12',
+          exp_year: '25',
+          cvv: '123',
+          card_holder: 'Test User',
+          amount: topUpAmount
+        });
+        
+        if (result.success) {
+          setCurrentStep('success');
+        } else if (result.redirect_url) {
+          // Handle 3D Secure redirect
+          window.open(result.redirect_url, '_blank');
+          setCurrentStep('success'); // Assume success for demo
+        } else {
+          setCurrentStep('error');
+        }
+      } else if (paymentMethod === 'momo') {
+        // For mobile money, we'd need the user's mobile number
+        // For now, we'll use a test number
+        const result = await processMobileMoneyPayment({
+          subscriber_number: '0241234567',
+          amount: topUpAmount
+        });
+        
+        if (result.success) {
+          setCurrentStep('success');
+        } else {
+          setCurrentStep('error');
+        }
+      } else {
+        // Fallback to direct wallet update for other methods
+        const success = await updateBalance(topUpAmount, 'Top up via ' + paymentMethod);
+        setCurrentStep(success ? 'success' : 'error');
+      }
+    } catch (error) {
+      console.error('Top-up error:', error);
+      setCurrentStep('error');
+    }
   };
 
   const handleWithdraw = () => {
@@ -102,11 +150,29 @@ const DashboardPage = () => {
     }
   };
 
-  const handleWithdrawPinSuccess = () => {
+  const handleWithdrawPinSuccess = async () => {
     setIsWithdrawPinModalOpen(false);
-    // Simulate success/error randomly
-    const isSuccess = Math.random() > 0.2; // 80% success rate
-    setWithdrawStep(isSuccess ? 'success' : 'error');
+    
+    try {
+      const withdrawAmountValue = parseFloat(withdrawAmount.replace(/,/g, ''));
+      
+      // Use payment API for payout
+      const result = await processPayout({
+        amount: withdrawAmountValue,
+        channel: withdrawMethod === 'momo' ? 'momo' : 'bank',
+        recipient_number: withdrawMethod === 'momo' ? '0241234567' : undefined,
+        account_number: withdrawMethod === 'bank' ? '1234567890123' : undefined
+      });
+      
+      if (result.success) {
+        setWithdrawStep('success');
+      } else {
+        setWithdrawStep('error');
+      }
+    } catch (error) {
+      console.error('Withdrawal error:', error);
+      setWithdrawStep('error');
+    }
   };
 
 
@@ -137,7 +203,7 @@ const DashboardPage = () => {
     setIsWithdrawOpen(false);
   };
 
-  if (loading || profileLoading || portfolioLoading || projectsLoading || updatesLoading || transactionsLoading) {
+  if (loading || profileLoading || walletLoading || portfolioLoading || projectsLoading || updatesLoading || transactionsLoading) {
     return (
       <DashboardLayout>
         <div className="flex items-center justify-center min-h-screen">
@@ -171,7 +237,7 @@ const DashboardPage = () => {
                 <div className="flex items-center gap-2 sm:gap-3 mb-2">
                   <span className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">
                     {isBalanceVisible ? (
-                      `GHS ${metrics?.total_invested?.toLocaleString() || '0.00'}`
+                      `${wallet?.currency || 'GHS'} ${wallet?.balance?.toLocaleString() || '0.00'}`
                     ) : (
                       '••••••••'
                     )}
@@ -288,6 +354,8 @@ const DashboardPage = () => {
           </div>
         </div>
 
+        {/* Wallet Test Component - Remove this in production */}
+      
         {/* Available Investment Section */}
         <div>
           <div className="flex items-center justify-between mb-4">

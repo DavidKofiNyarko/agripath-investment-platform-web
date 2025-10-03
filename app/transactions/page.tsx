@@ -31,14 +31,12 @@ const transactionTypes = [
 
 const getStatusBadge = (status: string) => {
   switch (status) {
-    case 'Completed':
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>;
+    case 'Complete':
+      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Complete</Badge>;
     case 'Pending':
       return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Pending</Badge>;
     case 'Failed':
       return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Failed</Badge>;
-    case 'Cancelled':
-      return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Cancelled</Badge>;
     default:
       return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">{status}</Badge>;
   }
@@ -58,6 +56,29 @@ const TransactionsPage = () => {
   
   const [activeTab, setActiveTab] = useState('investments');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Group transactions by date
+  const groupTransactionsByDate = (transactions: typeof transactions) => {
+    const groups: Record<string, typeof transactions> = {};
+    
+    transactions.forEach(transaction => {
+      const date = new Date(transaction.created_at).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      if (!groups[date]) {
+        groups[date] = [];
+      }
+      groups[date].push(transaction);
+    });
+    
+    return groups;
+  };
+
+  const groupedTransactions = groupTransactionsByDate(transactions);
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: string) => {
@@ -183,10 +204,9 @@ const TransactionsPage = () => {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All">All</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Complete">Complete</SelectItem>
                       <SelectItem value="Pending">Pending</SelectItem>
                       <SelectItem value="Failed">Failed</SelectItem>
-                      <SelectItem value="Cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -260,7 +280,7 @@ const TransactionsPage = () => {
                   ) : (
                     transactions.map((transaction) => (
                       <tr key={transaction.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {transaction.transaction_id}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -321,67 +341,75 @@ const TransactionsPage = () => {
                   </div>
                 </div>
               ) : (
-                <div className="space-y-3 p-4">
-                  {transactions.map((transaction) => (
-                    <Card key={transaction.id} className="p-4">
+                <div className="p-4">
+                  {Object.entries(groupedTransactions).map(([date, dateTransactions]) => (
+                    <div key={date} className="mb-6">
+                      <h3 className="text-sm font-semibold text-gray-700 mb-3 sticky top-0 bg-white py-2">
+                        {date}
+                      </h3>
                       <div className="space-y-3">
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900 truncate">
-                              {transaction.transaction_id}
-                            </p>
-                            <p className="text-xs text-gray-500 mt-1">
-                              {new Date(transaction.created_at).toLocaleDateString()} at{' '}
-                              {new Date(transaction.created_at).toLocaleTimeString()}
-                            </p>
-                          </div>
-                          <div className="ml-2">
-                            {getStatusBadge(transaction.status)}
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <p className="text-xs text-gray-500">Project</p>
-                            <p className="font-medium text-gray-900 truncate">
-                              {transaction.project_name || 'Unknown Project'}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500">Amount</p>
-                            <p className="font-medium text-gray-900">
-                              GHS {transaction.amount.toLocaleString()}
-                            </p>
-                            {transaction.fees > 0 && (
-                              <p className="text-xs text-gray-500">Fee: GHS {transaction.fees.toLocaleString()}</p>
-                            )}
-                          </div>
-                        </div>
-                        
-                        <div className="grid grid-cols-2 gap-3 text-sm">
-                          <div>
-                            <p className="text-xs text-gray-500">Method</p>
-                            <p className="font-medium text-gray-900 capitalize">
-                              {transaction.channel}
-                              {transaction.network && (
-                                <span className="text-xs text-gray-500 ml-1">({transaction.network})</span>
-                              )}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs text-gray-500">Units</p>
-                            <p className="font-medium text-gray-900">{transaction.unit}</p>
-                          </div>
-                        </div>
-                        
-                        <div className="flex justify-end pt-2">
-                          <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
-                            <Eye className="h-4 w-4 mr-1" />
-                            View
-                          </Button>
-                        </div>
+                        {dateTransactions.map((transaction) => (
+                          <Card key={transaction.id} className="p-4">
+                            <div className="space-y-3">
+                              <div className="flex items-start justify-between">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm text-gray-900 truncate">
+                                    {transaction.transaction_id}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    {new Date(transaction.created_at).toLocaleTimeString()}
+                                  </p>
+                                </div>
+                                <div className="ml-2">
+                                  {getStatusBadge(transaction.status)}
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <p className="text-xs text-gray-500">Project</p>
+                                  <p className="font-medium text-gray-900 truncate">
+                                    {transaction.project_name || 'Unknown Project'}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">Amount</p>
+                                  <p className="font-medium text-gray-900">
+                                    GHS {transaction.amount.toLocaleString()}
+                                  </p>
+                                  {transaction.fees > 0 && (
+                                    <p className="text-xs text-gray-500">Fee: GHS {transaction.fees.toLocaleString()}</p>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              <div className="grid grid-cols-2 gap-3 text-sm">
+                                <div>
+                                  <p className="text-xs text-gray-500">Method</p>
+                                  <p className="font-medium text-gray-900 capitalize">
+                                    {transaction.channel}
+                                    {transaction.network && (
+                                      <span className="text-xs text-gray-500 ml-1">({transaction.network})</span>
+                                    )}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-gray-500">Units</p>
+                                  <p className="font-medium text-gray-900">{transaction.unit}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex justify-end pt-2">
+                                <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                              </div>
+                            </div>
+                          </Card>
+                        ))}
                       </div>
-                    </Card>
+                    </div>
                   ))}
                 </div>
               )}
