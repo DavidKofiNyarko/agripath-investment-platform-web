@@ -9,7 +9,6 @@ import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import KycModal from '@/components/kyc-modal';
 import PinValidationModal from '@/components/pin-validation-modal';
-import InvestmentPaymentTestComponent from '@/components/InvestmentPaymentTestComponent';
 import APIConnectivityTest from '@/components/APIConnectivityTest';
 import { createClient } from '@/app/utils/supabase/client';
 import { paymentService } from '@/lib/paymentService';
@@ -480,11 +479,7 @@ const InvestmentsPage = () => {
         {/* Header */}
         <UserHeader />
 
-        {/* Investment Payment Test Component - Remove this in production */}
-        {/* <InvestmentPaymentTestComponent /> */}
-
-        {/* API Connectivity Test - Remove this in production */}
-        {/* <APIConnectivityTest /> */}
+       
 
         {/* Page Title */}
         <div className="flex items-center justify-between">

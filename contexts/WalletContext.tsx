@@ -288,10 +288,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         project_id: momoData.project_id || '00000000-0000-0000-0000-000000000000',
         amount: momoData.amount,
         unit: 1,
-        fees: fees,
         description: 'Wallet top-up via mobile money',
-        channel: 'momo',
-        redirect_url: `${window.location.origin}/payment/callback`
+        profile_id: user.id
       };
 
       const response = await paymentService.processMobileMoneyPayment(paymentRequest);

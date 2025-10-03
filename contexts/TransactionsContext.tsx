@@ -47,7 +47,7 @@ interface TransactionRow {
   account_number: string;
   projects: {
     project_name: string | null;
-  } | null;
+  }[] | null;
 }
 
 interface TransactionFilters {
@@ -208,7 +208,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
         external_id: item.external_id,
         network: item.network,
         account_number: item.account_number,
-        project_name: item.projects?.project_name || 'Unknown Project',
+        project_name: item.projects?.[0]?.project_name || 'Unknown Project',
       })) || [];
 
       setTransactions(formattedTransactions);

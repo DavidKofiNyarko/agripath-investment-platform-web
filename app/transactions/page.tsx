@@ -3,13 +3,13 @@
 import React, { useState } from 'react';
 import DashboardLayout from '@/components/dashboard-layout';
 import UserHeader from '@/components/user-header';
-import { useTransactions } from '@/contexts/TransactionsContext';
+import { Transaction, useTransactions } from '@/contexts/TransactionsContext';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-// import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Unused imports
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { TransactionDetailDrawer } from '@/components/transaction-detail-drawer';
 import { 
   Search, 
   Download,
@@ -17,14 +17,13 @@ import {
   Eye,
   ChevronLeft,
   ChevronRight,
-  // Calendar // Unused import
 } from 'lucide-react';
 
 const transactionTypes = [
-  { id: 'investments', label: 'Investments', active: true },
-  { id: 'topups', label: 'Top Ups', active: false },
-  { id: 'withdrawals', label: 'Withdrawals', active: false },
-  { id: 'payouts', label: 'Payouts', active: false }
+  { id: 'investments', label: 'Investments', dbType: 'Payin', active: true, disabled: false },
+  { id: 'topups', label: 'Top Ups', dbType: null, active: false, disabled: true },
+  { id: 'withdrawals', label: 'Withdrawals', dbType: null, active: false, disabled: true },
+  { id: 'payouts', label: 'Payouts', dbType: 'Payout', active: false, disabled: false }
 ];
 
 // Transaction data now comes from TransactionsContext
@@ -56,10 +55,33 @@ const TransactionsPage = () => {
   
   const [activeTab, setActiveTab] = useState('investments');
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
+  const handleViewTransaction = (transactionId: string) => {
+    setSelectedTransactionId(transactionId);
+    setDrawerOpen(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setDrawerOpen(false);
+    setSelectedTransactionId(null);
+  };
+
+  // Filter transactions by active tab
+  const getFilteredTransactions = () => {
+    const activeType = transactionTypes.find(t => t.id === activeTab);
+    if (!activeType || !activeType.dbType) {
+      return [];
+    }
+    return transactions.filter(t => t.type === activeType.dbType);
+  };
+
+  const filteredTransactions = getFilteredTransactions();
 
   // Group transactions by date
-  const groupTransactionsByDate = (transactions: typeof transactions) => {
-    const groups: Record<string, typeof transactions> = {};
+  const groupTransactionsByDate = (transactions: Transaction[]) => {
+    const groups: Record<string, Transaction[]> = {};
     
     transactions.forEach(transaction => {
       const date = new Date(transaction.created_at).toLocaleDateString('en-US', {
@@ -78,7 +100,7 @@ const TransactionsPage = () => {
     return groups;
   };
 
-  const groupedTransactions = groupTransactionsByDate(transactions);
+  const groupedTransactions = groupTransactionsByDate(filteredTransactions);
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: string) => {
@@ -149,14 +171,18 @@ const TransactionsPage = () => {
               {transactionTypes.map((type) => (
                 <button
                   key={type.id}
-                  onClick={() => setActiveTab(type.id)}
+                  onClick={() => !type.disabled && setActiveTab(type.id)}
+                  disabled={type.disabled}
                   className={`px-4 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                     activeTab === type.id
                       ? 'bg-green-600 text-white'
+                      : type.disabled
+                      ? 'text-gray-400 bg-gray-50 cursor-not-allowed'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                   }`}
                 >
                   {type.label}
+                  {type.disabled && <span className="ml-2 text-xs">(Coming Soon)</span>}
                 </button>
               ))}
             </div>
@@ -267,7 +293,7 @@ const TransactionsPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {transactions.length === 0 ? (
+                  {filteredTransactions.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                         <div className="flex flex-col items-center">
@@ -278,7 +304,7 @@ const TransactionsPage = () => {
                       </td>
                     </tr>
                   ) : (
-                    transactions.map((transaction) => (
+                    filteredTransactions.map((transaction) => (
                       <tr key={transaction.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {transaction.transaction_id}
@@ -319,7 +345,12 @@ const TransactionsPage = () => {
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-8 w-8 p-0"
+                            onClick={() => handleViewTransaction(transaction.id)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                         </td>
@@ -332,7 +363,7 @@ const TransactionsPage = () => {
 
             {/* Transactions Cards - Mobile */}
             <div className="lg:hidden">
-              {transactions.length === 0 ? (
+              {filteredTransactions.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
                   <div className="flex flex-col items-center">
                     <Bell className="h-12 w-12 text-gray-300 mb-4" />
@@ -399,12 +430,17 @@ const TransactionsPage = () => {
                                 </div>
                               </div>
                               
-                              <div className="flex justify-end pt-2">
-                                <Button variant="ghost" size="sm" className="text-green-600 hover:text-green-700">
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  View
-                                </Button>
-                              </div>
+                        <div className="flex justify-end pt-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-green-600 hover:text-green-700"
+                            onClick={() => handleViewTransaction(transaction.id)}
+                          >
+                            <Eye className="h-4 w-4 mr-1" />
+                            View
+                          </Button>
+                        </div>
                             </div>
                           </Card>
                         ))}
@@ -419,7 +455,7 @@ const TransactionsPage = () => {
             <div className="px-4 sm:px-6 py-4 border-t bg-gray-50">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
                 <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
-                  Showing {((pagination.currentPage - 1) * pagination.itemsPerPage) + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)} of {pagination.totalItems} transactions
+                  Showing {filteredTransactions.length === 0 ? 0 : ((pagination.currentPage - 1) * pagination.itemsPerPage) + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredTransactions.length)} of {filteredTransactions.length} transactions
                 </div>
                 
                 <div className="flex items-center gap-1 sm:gap-2">
@@ -473,6 +509,13 @@ const TransactionsPage = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Transaction Detail Drawer */}
+      <TransactionDetailDrawer 
+        transactionId={selectedTransactionId}
+        open={drawerOpen}
+        onClose={handleCloseDrawer}
+      />
     </DashboardLayout>
   );
 };
