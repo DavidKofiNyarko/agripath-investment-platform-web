@@ -154,7 +154,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onComplete }) => 
           email: email.trim(),
           pin: pinValue
         })
-        .eq('user_id', user?.id);
+          .eq('user_id', profile?.user_id);
 
       if (error) {
         setError('Failed to save profile. Please try again.');
