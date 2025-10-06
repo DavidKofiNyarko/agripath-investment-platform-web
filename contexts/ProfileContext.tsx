@@ -59,7 +59,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
       const { data, error } = await supabase
         .from('profile')
         .select('*')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .single();
 
       if (error) {
@@ -69,7 +69,6 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
           const { data: newProfile, error: createError } = await supabase
             .from('profile')
             .insert({
-              id: user.id,
               first_name: user.user_metadata?.full_name?.split(' ')[0] || user.user_metadata?.first_name || '',
               last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || user.user_metadata?.last_name || '',
               email: user.email || '',
@@ -136,7 +135,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
       const { data, error } = await supabase
         .from('profile')
         .update(updates)
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .select()
         .single();
 

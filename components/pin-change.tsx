@@ -123,9 +123,9 @@ const PinChange: React.FC = () => {
       const newPinValue = newPin.join('');
       
       const { error } = await supabase
-        .from('profiles')
+        .from('profile')
         .update({ pin: newPinValue })
-        .eq('id', profile?.id);
+        .eq('user_id', user?.id);
 
       if (error) {
         setError('Failed to update PIN. Please try again.');

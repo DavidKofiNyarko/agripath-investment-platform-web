@@ -147,14 +147,14 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({ isOpen, onComplete }) => 
       
       // Update profile with all details
       const { error } = await supabase
-        .from('profiles')
+        .from('profile')
         .update({
           first_name: firstName.trim(),
           last_name: lastName.trim(),
           email: email.trim(),
           pin: pinValue
         })
-        .eq('id', profile?.id);
+        .eq('user_id', user?.id);
 
       if (error) {
         setError('Failed to save profile. Please try again.');

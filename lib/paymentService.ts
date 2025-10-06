@@ -33,7 +33,7 @@ export interface CardPaymentRequest {
   redirect_url: string;
   external_id: string;
   channel: string;
-  profiles_id: string;
+  profile_id: string;
 }
 
 export interface MobileMoneyPaymentRequest {
@@ -300,7 +300,7 @@ class PaymentService {
     };
     user_email?: string;
     user_name?: string;
-    profiles_id?: string;
+    profile_id?: string;
     description?: string;
   }): Promise<PaymentResponse> {
     try {
@@ -345,7 +345,7 @@ class PaymentService {
         redirect_url: `${window.location.origin}/investment/callback`,
         external_id: externalId,
         channel: 'card',
-        profiles_id: investmentData.profiles_id || investmentData.user_id
+        profile_id: investmentData.profile_id || investmentData.user_id
       };
 
       return await this.processCardPayment(paymentRequest);

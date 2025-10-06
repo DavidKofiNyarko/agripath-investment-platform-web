@@ -409,7 +409,7 @@ const InvestmentsPage = () => {
           },
           user_email: user?.email || 'user@example.com',
           user_name: user?.user_metadata?.full_name || 'Investment User',
-          profiles_id: profile?.id,
+          profile_id: profile?.id,
           description: `Investment in ${selectedInvestment.name}`
         });
       } else {

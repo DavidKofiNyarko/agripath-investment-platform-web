@@ -80,7 +80,7 @@ const APIConnectivityTest = () => {
           redirect_url: 'http://localhost:3000/callback',
           external_id: 'ext_123',
           channel: 'card',
-          profiles_id: '2ccc4654-c305-4b78-a25c-708a8238c536'
+          profile_id: '2ccc4654-c305-4b78-a25c-708a8238c536'
         })
       });
       

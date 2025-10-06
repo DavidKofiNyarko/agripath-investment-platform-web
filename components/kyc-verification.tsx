@@ -175,7 +175,7 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
 
     try {
       const { error: _error } = await supabase
-        .from('profiles')
+        .from('profile')
         .update({
           kyc_status: 'pending',
           kyc_documents: {
@@ -184,7 +184,7 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
             selfie: selfie
           }
         })
-        .eq('id', profile?.id);
+        .eq('user_id', user?.id);
 
       if (error) {
         setError('Failed to submit KYC. Please try again.');

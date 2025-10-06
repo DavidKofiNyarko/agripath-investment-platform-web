@@ -241,7 +241,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         redirect_url: `${window.location.origin}/payment/callback`,
         external_id: externalId,
         channel: 'card',
-        profiles_id: user.id
+        profile_id: user.id
       };
 
       const response = await paymentService.processCardPayment(paymentRequest);
