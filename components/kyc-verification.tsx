@@ -184,7 +184,7 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
             selfie: selfie
           }
         })
-        .eq('user_id', user?.id);
+        .eq('user_id', profile?.user_id);
 
       if (error) {
         setError('Failed to submit KYC. Please try again.');
