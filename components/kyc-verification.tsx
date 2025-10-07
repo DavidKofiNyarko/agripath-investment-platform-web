@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useUser } from '@/contexts/UserContext';
 
 interface KycVerificationProps {
   onComplete?: () => void;
@@ -30,6 +31,7 @@ interface KycVerificationProps {
 
 const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip }) => {
   const { profile, refreshProfile } = useProfile();
+  const { user } = useUser();
   const supabase = createClient();
   
   const [currentStep, setCurrentStep] = useState(1);
@@ -170,6 +172,11 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
       return;
     }
 
+    if (!user?.id) {
+      setError('User not authenticated. Please refresh and try again.');
+      return;
+    }
+
     setUploading(true);
     setError('');
 
@@ -184,9 +191,10 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
             selfie: selfie
           }
         })
-        .eq('user_id', profile?.user_id);
+        .eq('user_id', user.id);
 
-      if (error) {
+      if (_error) {
+        console.error('KYC submission error:', _error);
         setError('Failed to submit KYC. Please try again.');
         return;
       }
@@ -198,6 +206,7 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
         if (onComplete) onComplete();
       }, 2000);
     } catch (error) {
+      console.error('KYC submission error:', error);
       setError('Failed to submit KYC. Please try again.');
     } finally {
       setUploading(false);
@@ -267,14 +276,15 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
                   <Upload className="w-12 h-12 text-gray-400 mx-auto" />
                   <div>
                     <p className="text-gray-600 mb-2">Drag and drop your National ID front here, or</p>
-                    <Button
+                    <button
+                      type="button"
                       onClick={() => idFrontRef.current?.click()}
                       disabled={uploading}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold shadow-lg rounded-md px-4 py-2"
                     >
                       <Upload className="w-4 h-4 mr-2" />
                       Choose File
-                    </Button>
+                    </button>
                   </div>
                   <p className="text-xs text-gray-500">Supports: JPG, PNG (Max 5MB)</p>
                 </div>
@@ -282,6 +292,7 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
             </div>
 
             <input
+              id="id-front-input"
               ref={idFrontRef}
               type="file"
               accept="image/*"
@@ -329,14 +340,15 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
                   <Upload className="w-12 h-12 text-gray-400 mx-auto" />
                   <div>
                     <p className="text-gray-600 mb-2">Drag and drop your National ID back here, or</p>
-                    <Button
+                    <button
+                      type="button"
                       onClick={() => idBackRef.current?.click()}
                       disabled={uploading}
-                      className="bg-green-600 hover:bg-green-700"
+                      className="inline-flex items-center bg-green-600 hover:bg-green-700 text-white font-semibold shadow-lg rounded-md px-4 py-2"
                     >
                       <Upload className="w-4 h-4 mr-2" />
                       Choose File
-                    </Button>
+                    </button>
                   </div>
                   <p className="text-xs text-gray-500">Supports: JPG, PNG (Max 5MB)</p>
                 </div>
@@ -344,6 +356,7 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
             </div>
 
             <input
+              id="id-back-input"
               ref={idBackRef}
               type="file"
               accept="image/*"
@@ -368,53 +381,66 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
 
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Button
+                <button
+                  type="button"
                   onClick={() => cameraRef.current?.click()}
                   disabled={uploading}
-                  className="h-20 bg-green-600 hover:bg-green-700 flex flex-col items-center justify-center"
+                  className="h-20 w-full bg-green-600 hover:bg-green-700 text-white font-semibold flex flex-col items-center justify-center shadow-lg rounded-md"
                 >
                   <Camera className="w-6 h-6 mb-2" />
                   Take Photo
-                </Button>
+                </button>
                 
-                <Button
+                <button
+                  type="button"
                   onClick={() => selfieRef.current?.click()}
                   disabled={uploading}
-                  variant="outline"
-                  className="h-20 flex flex-col items-center justify-center"
+                  className="h-20 w-full border border-gray-300 text-gray-700 hover:bg-gray-50 font-semibold flex flex-col items-center justify-center rounded-md"
                 >
                   <Upload className="w-6 h-6 mb-2" />
                   Upload Photo
-                </Button>
+                </button>
               </div>
 
-              {selfie ? (
-                <div className="text-center space-y-4">
-                  <div className="w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
-                    <Check className="w-8 h-8 text-green-600" />
+              {/* Drag and Drop Area */}
+              <div
+                className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-500 transition-colors"
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, 'selfie')}
+              >
+                {selfie ? (
+                  <div className="space-y-4">
+                    <div className="w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
+                      <Check className="w-8 h-8 text-green-600" />
+                    </div>
+                    <p className="text-green-600 font-medium">Selfie uploaded successfully!</p>
+                    <Button
+                      variant="outline"
+                      onClick={() => removeDocument('selfie')}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      Remove
+                    </Button>
                   </div>
-                  <p className="text-green-600 font-medium">Selfie uploaded successfully!</p>
-                  <Button
-                    variant="outline"
-                    onClick={() => removeDocument('selfie')}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <X className="w-4 h-4 mr-2" />
-                    Remove
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <p className="text-gray-500 text-sm">No selfie uploaded yet</p>
-                </div>
-              )}
+                ) : (
+                  <div className="space-y-4">
+                    <Upload className="w-12 h-12 text-gray-400 mx-auto" />
+                    <div>
+                      <p className="text-gray-600 mb-2">Drag and drop your selfie photo here, or</p>
+                      <p className="text-sm text-gray-500">Use the buttons above to take or upload a photo</p>
+                    </div>
+                    <p className="text-xs text-gray-500">Supports: JPG, PNG (Max 5MB)</p>
+                  </div>
+                )}
+              </div>
             </div>
 
             <input
+              id="upload-selfie-input"
               ref={selfieRef}
               type="file"
               accept="image/*"
-              capture="user"
               className="hidden"
               onChange={(e) => {
                 if (e.target.files?.[0]) {
@@ -424,6 +450,7 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
             />
 
             <input
+              id="take-selfie-input"
               ref={cameraRef}
               type="file"
               accept="image/*"
@@ -518,209 +545,162 @@ const KycVerification: React.FC<KycVerificationProps> = ({ onComplete, onSkip })
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Mobile Background */}
-      <div className="lg:hidden fixed inset-0 bg-gradient-to-br from-green-900 via-green-800 to-green-700">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20"></div>
-      </div>
-
-      <div className="relative z-10 min-h-screen flex">
-        {/* Left Side - Desktop Only */}
-        <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-green-900 via-green-800 to-green-700 relative">
-          <div className="absolute inset-0 bg-black/20"></div>
-          <div className="relative z-10 flex flex-col justify-center items-center text-white p-12">
-            <div className="text-center space-y-6">
-              <div className="w-24 h-24 bg-white/20 rounded-full flex items-center justify-center">
-                <Shield className="w-12 h-12" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold mb-4">Identity Verification</h1>
-                <p className="text-xl text-green-100 leading-relaxed">
-                  Complete your KYC verification to unlock full access to investments and secure transactions.
-                </p>
-              </div>
-              <div className="space-y-3 text-left">
-                <div className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-green-300" />
-                  <span>National ID verification</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-green-300" />
-                  <span>Selfie photo capture</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-green-300" />
-                  <span>Secure document storage</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Check className="w-5 h-5 text-green-300" />
-                  <span>Full investment access</span>
-                </div>
-              </div>
-            </div>
+    <div className="w-full max-w-4xl mx-auto">
+      {/* Mobile Header */}
+      <div className="lg:hidden bg-gradient-to-r from-green-600 to-green-700 text-white p-4 rounded-t-lg">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+            <Shield className="w-4 h-4 text-white" />
+          </div>
+          <div>
+            <h1 className="text-white font-semibold">KYC Verification</h1>
+            <p className="text-green-100 text-sm">Step {currentStep} of 4</p>
           </div>
         </div>
+      </div>
 
-        {/* Right Side */}
-        <div className="w-full lg:w-1/2 flex flex-col">
-          {/* Mobile Header */}
-          <div className="lg:hidden bg-white/10 backdrop-blur-sm border-b border-white/20 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
-                  <Shield className="w-4 h-4 text-white" />
+      {/* Desktop Header */}
+      <div className="hidden lg:block bg-gradient-to-r from-green-600 to-green-700 text-white p-6 rounded-t-lg">
+        <div className="flex items-center gap-4">
+          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+            <Shield className="w-6 h-6 text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Identity Verification</h1>
+            <p className="text-green-100">Complete your KYC verification to unlock full access</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="bg-white p-4 sm:p-6 lg:p-8 rounded-b-lg">
+        <div className="max-w-2xl mx-auto">
+          {/* Progress Steps */}
+          <div className="mb-6 sm:mb-8">
+            <div className="flex items-center justify-between mb-4">
+              {steps.map((step, _index) => (
+                <div key={step.id} className="flex flex-col items-center">
+                  <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center ${
+                    currentStep >= step.id 
+                      ? 'bg-green-600 text-white' 
+                      : 'bg-gray-200 text-gray-500'
+                  }`}>
+                    <step.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  </div>
+                  <span className="text-xs mt-2 text-center hidden sm:block max-w-16">
+                    {step.title}
+                  </span>
                 </div>
-                <div>
-                  <h1 className="text-white font-semibold">KYC Verification</h1>
-                  <p className="text-green-100 text-sm">Step {currentStep} of 4</p>
+              ))}
+            </div>
+            <Progress value={(currentStep / 4) * 100} className="h-2" />
+          </div>
+
+          {/* Step Content */}
+          <div className="mb-6">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentStep}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                {renderStep()}
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* Upload Progress */}
+          {uploading && (
+            <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-blue-800">Uploading...</span>
+                  <span className="text-blue-600 font-medium">{uploadProgress}%</span>
                 </div>
+                <Progress value={uploadProgress} className="h-2" />
               </div>
             </div>
+          )}
+
+          {/* Error Message */}
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2"
+              >
+                <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
+                <p className="text-red-800 text-sm font-medium">{error}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Success Message */}
+          <AnimatePresence>
+            {success && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2"
+              >
+                <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
+                <p className="text-green-800 text-sm font-medium">{success}</p>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Navigation Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3">
+            {currentStep > 1 && (
+              <Button
+                variant="outline"
+                onClick={prevStep}
+                className="flex-1 border-gray-300 text-gray-700 hover:bg-gray-50 font-medium py-3"
+                disabled={uploading}
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Previous
+              </Button>
+            )}
+
+            {currentStep < 4 ? (
+              <Button
+                onClick={nextStep}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 shadow-lg"
+                disabled={uploading || (currentStep === 1 && !idFront) || (currentStep === 2 && !idBack) || (currentStep === 3 && !selfie)}
+              >
+                Next
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmitKyc}
+                disabled={uploading || !idFront || !idBack || !selfie}
+                className="flex-1 bg-green-600 hover:bg-green-700 text-white font-semibold py-3 shadow-lg"
+              >
+                {uploading ? 'Submitting...' : 'Submit KYC'}
+              </Button>
+            )}
           </div>
 
-          {/* Main Content */}
-          <div className="flex-1 flex flex-col justify-center p-6 lg:p-12">
-            <div className="max-w-md mx-auto w-full">
-              {/* Progress Steps */}
-              <div className="mb-8">
-                <div className="flex items-center justify-between mb-4">
-                  {steps.map((step, _index) => (
-                    <div key={step.id} className="flex flex-col items-center">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        currentStep >= step.id 
-                          ? 'bg-green-600 text-white' 
-                          : 'bg-gray-200 text-gray-500'
-                      }`}>
-                        <step.icon className="w-5 h-5" />
-                      </div>
-                      <span className="text-xs mt-2 text-center hidden sm:block">
-                        {step.title}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-                <Progress value={(currentStep / 4) * 100} className="h-2" />
-              </div>
-
-              {/* Step Content */}
-              <Card className="mb-6">
-                <CardContent className="p-6">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={currentStep}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.3 }}
-                    >
-                      {renderStep()}
-                    </motion.div>
-                  </AnimatePresence>
-                </CardContent>
-              </Card>
-
-              {/* Upload Progress */}
-              {uploading && (
-                <Card className="mb-6">
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span>Uploading...</span>
-                        <span>{uploadProgress}%</span>
-                      </div>
-                      <Progress value={uploadProgress} className="h-2" />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
-              {/* Error Message */}
-              <AnimatePresence>
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2"
-                  >
-                    <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0" />
-                    <p className="text-red-800 text-sm">{error}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Success Message */}
-              <AnimatePresence>
-                {success && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2"
-                  >
-                    <Check className="w-5 h-5 text-green-600 flex-shrink-0" />
-                    <p className="text-green-800 text-sm">{success}</p>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-              {/* Navigation Buttons */}
-              <div className="flex gap-3">
-                {currentStep > 1 && (
-                  <Button
-                    variant="outline"
-                    onClick={prevStep}
-                    className="flex-1"
-                    disabled={uploading}
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Previous
-                  </Button>
-                )}
-
-                {currentStep < 4 ? (
-                  <Button
-                    onClick={nextStep}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                    disabled={uploading || (currentStep === 1 && !idFront) || (currentStep === 2 && !idBack) || (currentStep === 3 && !selfie)}
-                  >
-                    Next
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleSubmitKyc}
-                    disabled={uploading || !idFront || !idBack || !selfie}
-                    className="flex-1 bg-green-600 hover:bg-green-700"
-                  >
-                    {uploading ? 'Submitting...' : 'Submit KYC'}
-                  </Button>
-                )}
-              </div>
-
-              {/* Skip Button */}
-              {onSkip && (
-                <div className="text-center mt-4">
-                  <Button
-                    variant="ghost"
-                    onClick={onSkip}
-                    className="text-gray-500 hover:text-gray-700"
-                    disabled={uploading}
-                  >
-                    Skip for now
-                  </Button>
-                </div>
-              )}
+          {/* Skip Button */}
+          {onSkip && (
+            <div className="text-center mt-4">
+              <Button
+                variant="ghost"
+                onClick={onSkip}
+                className="text-gray-500 hover:text-gray-700 font-medium"
+                disabled={uploading}
+              >
+                Skip for now
+              </Button>
             </div>
-          </div>
-
-          {/* Mobile Footer */}
-          <div className="lg:hidden bg-white/10 backdrop-blur-sm border-t border-white/20 px-6 py-4">
-            <p className="text-center text-green-100 text-sm">
-              Secure • Encrypted • Protected
-            </p>
-          </div>
+          )}
         </div>
       </div>
     </div>

@@ -28,6 +28,7 @@ interface Profile {
 interface ProfileContextType {
   profile: Profile | null;
   loading: boolean;
+  isProfileComplete: boolean;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -47,6 +48,27 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
   const [loading, setLoading] = useState(true);
   const { user } = useUser();
   const supabase = createClient();
+
+  // Check if profile is complete
+  const isProfileComplete = useCallback((profile: Profile | null): boolean => {
+    if (!profile) return false;
+    
+    // Check if all required fields are filled
+    const hasBasicInfo = !!(
+      profile.first_name && 
+      profile.last_name && 
+      profile.email && 
+      profile.phone_number
+    );
+    
+    // Check if PIN is set
+    const hasPin = !!profile.pin;
+    
+    // Check if KYC is submitted (pending or verified)
+    const hasKyc = profile.kyc_status === 'verified' || profile.kyc_status === 'pending';
+    
+    return hasBasicInfo && hasPin && hasKyc;
+  }, []);
 
   const fetchProfile = useCallback(async () => {
     if (!user) {
@@ -69,6 +91,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
           const { data: newProfile, error: createError } = await supabase
             .from('profile')
             .insert({
+              id: user.id,
               first_name: user.user_metadata?.full_name?.split(' ')[0] || user.user_metadata?.first_name || '',
               last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || user.user_metadata?.last_name || '',
               email: user.email || '',
@@ -162,6 +185,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
   const value = {
     profile,
     loading,
+    isProfileComplete: isProfileComplete(profile),
     updateProfile,
     refreshProfile
   };

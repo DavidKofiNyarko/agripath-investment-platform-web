@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard-layout';
 import { useUser } from '@/contexts/UserContext';
@@ -41,11 +41,12 @@ import {
 } from 'lucide-react';
 import PinValidationModal from '@/components/pin-validation-modal';
 import WalletTestComponent from '@/components/WalletTestComponent';
+import ProfileSetupFlow from '@/components/profile-setup-flow';
 
 const DashboardPage = () => {
   const router = useRouter();
-  const { loading } = useUser();
-  const { loading: profileLoading } = useProfile();
+  const { user, loading } = useUser();
+  const { profile, loading: profileLoading, isProfileComplete } = useProfile();
   const { wallet, loading: walletLoading, updateBalance, processCardPayment, processMobileMoneyPayment, processPayout } = useWallet();
   const { metrics, loading: portfolioLoading } = usePortfolio();
   const { projects, loading: projectsLoading } = useProjects();
@@ -203,6 +204,13 @@ const DashboardPage = () => {
     setIsWithdrawOpen(false);
   };
 
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/signin');
+    }
+  }, [user, loading, router]);
+
   if (loading || profileLoading || walletLoading || portfolioLoading || projectsLoading || updatesLoading || transactionsLoading) {
     return (
       <DashboardLayout>
@@ -216,8 +224,20 @@ const DashboardPage = () => {
     );
   }
 
+  // Don't render anything if user is not authenticated
+  if (!user) {
+    return null;
+  }
+
   return (
     <DashboardLayout>
+      {/* Dim/blur background and show setup flow if profile is incomplete */}
+      {!isProfileComplete && (
+        <>
+          <div className="pointer-events-none fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" />
+          <ProfileSetupFlow onCompleted={() => { /* context will re-render */ }} />
+        </>
+      )}
       <div className={`space-y-4 sm:space-y-6 px-4 sm:px-0 transition-all duration-300 ${isTopUpOpen || isWithdrawOpen ? 'main-content-blur' : ''}`}>
        
         {/* Header */}
