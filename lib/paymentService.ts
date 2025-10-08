@@ -284,8 +284,107 @@ class PaymentService {
   }
 
   /**
-   * Process investment payment via card
+   * Process wallet topup via card or mobile money
    */
+  async processWalletTopup(topupData: {
+    profile_id: string;
+    project_id: string;
+    amount: number;
+    channel: 'card' | 'momo';
+    description?: string;
+    redirect_url?: string;
+    // KYC fields
+    kyc_status?: string;
+    kyc_verified?: boolean;
+    kyc_documents?: any;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone_number?: string;
+    // Card fields
+    pan?: string;
+    exp_month?: string;
+    exp_year?: string;
+    cvv?: string;
+    card_holder?: string;
+    user_email?: string;
+    // Momo fields
+    subscriber_number?: string;
+    network?: string;
+  }): Promise<PaymentResponse> {
+    try {
+      console.log('Wallet topup request:', JSON.stringify(topupData, null, 2));
+      
+      const response = await fetch(`${this.baseUrl}/wallet/topup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(topupData),
+      });
+
+      const responseData = await response.json();
+      console.log('Wallet topup response:', responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Wallet topup failed');
+      }
+
+      return responseData;
+    } catch (error) {
+      console.error('Wallet topup error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Process wallet withdrawal via bank or mobile money
+   */
+  async processWalletWithdrawal(withdrawalData: {
+    profile_id: string;
+    project_id: string;
+    amount: number;
+    channel: 'bank' | 'momo';
+    description?: string;
+    // KYC fields
+    kyc_status?: string;
+    kyc_verified?: boolean;
+    kyc_documents?: any;
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    phone_number?: string;
+    // Bank fields
+    account_number?: string;
+    account_bank?: string;
+    // Momo fields
+    recipient_number?: string;
+    account_issuer?: string;
+  }): Promise<PaymentResponse> {
+    try {
+      console.log('Wallet withdrawal request:', JSON.stringify(withdrawalData, null, 2));
+      
+      const response = await fetch(`${this.baseUrl}/wallet/withdrawal`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(withdrawalData),
+      });
+
+      const responseData = await response.json();
+      console.log('Wallet withdrawal response:', responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Wallet withdrawal failed');
+      }
+
+      return responseData;
+    } catch (error) {
+      console.error('Wallet withdrawal error:', error);
+      throw error;
+    }
+  }
   async processInvestmentCardPayment(investmentData: {
     user_id: string;
     project_id: string;

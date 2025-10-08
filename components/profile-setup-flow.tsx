@@ -20,7 +20,7 @@ interface ProfileSetupFlowProps {
 const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onCompleted }) => {
   const router = useRouter();
   const { user } = useUser();
-  const { profile, isProfileComplete, updateProfile } = useProfile();
+  const { profile, isProfileComplete, updateProfile, createProfile } = useProfile();
   const supabase = createClient();
   const [currentStep, setCurrentStep] = useState<'basic' | 'pin' | 'kyc'>('basic');
   const [formData, setFormData] = useState({
@@ -62,19 +62,16 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onCompleted }) => {
     try {
       setSavingBasic(true);
       if (!profile) {
-        // Create profile if it doesn't exist yet
-        const { error: insertError } = await supabase
-          .from('profile')
-          .insert({
-            id: user?.id,
-            user_id: user?.id,
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            email: formData.email,
-            phone_number: formData.phoneNumber,
-            country: formData.country
-          });
-        if (insertError) throw insertError;
+        // Create profile using the context function (handles existing profiles)
+        await createProfile();
+        // Then update with the form data
+        await updateProfile({
+          first_name: formData.firstName,
+          last_name: formData.lastName,
+          email: formData.email,
+          phone_number: formData.phoneNumber,
+          country: formData.country
+        });
       } else {
         // Update existing profile
         await updateProfile({
@@ -173,7 +170,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onCompleted }) => {
       case 'pin':
         return profile.pin ? 'complete' : 'pending';
       case 'kyc':
-        return profile.kyc_status === 'verified' ? 'complete' : 'pending';
+        return (profile.kyc_status === 'verified' || (profile.kyc_status as any) === 'complete') ? 'complete' : 'pending';
       default:
         return 'pending';
     }

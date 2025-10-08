@@ -87,7 +87,7 @@ const ProfileSetupPage = () => {
       case 'pin':
         return profile.pin ? 'complete' : 'pending';
       case 'kyc':
-        return profile.kyc_status === 'verified' ? 'complete' : 'pending';
+        return profile.kyc_status === 'verified' || profile.kyc_status === 'complete' ? 'complete' : 'pending';
       default:
         return 'pending';
     }

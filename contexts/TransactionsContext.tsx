@@ -12,7 +12,7 @@ export interface Transaction {
   type: 'Payin' | 'Payout' | 'Refund';
   amount: number;
   unit: number;
-  status: 'Pending' | 'Complete' | 'Failed'; // Database uses 'Complete' not 'Completed'
+  status: 'Pending' | 'Complete' | 'Failed'; // Database uses 'Complete'
   fees: number;
   net_amount: number;
   description: string;

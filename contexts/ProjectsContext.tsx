@@ -16,7 +16,7 @@ export interface Project {
   total_value: number;
   expected_return_rate: number;
   duration_months: number;
-  status: 'Active' | 'Inactive' | 'Completed' | 'Cancelled';
+  status: 'Active' | 'Inactive' | 'Complete' | 'Cancelled';
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -214,7 +214,7 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
         total_value: item.total_value || 0,
         expected_return_rate: item.expected_return_rate || 0,
         duration_months: item.duration_months || 0,
-        status: (item.status as 'Active' | 'Inactive' | 'Completed' | 'Cancelled') || 'Active',
+        status: (item.status as 'Active' | 'Inactive' | 'Complete' | 'Cancelled') || 'Active',
         created_by: item.created_by || '',
         created_at: item.created_at,
         updated_at: item.updated_at,

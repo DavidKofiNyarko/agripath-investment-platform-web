@@ -71,7 +71,7 @@ const getStatusBadge = (status: string) => {
   switch (status) {
     case 'Completed':
     case 'Complete':
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Completed</Badge>;
+      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Complete</Badge>;
     case 'In progress':
       return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">In progress</Badge>;
     case 'Canceled':
@@ -218,7 +218,7 @@ const PortfolioPage = () => {
                     <SelectContent>
                       <SelectItem value="All">All</SelectItem>
                       <SelectItem value="In progress">In progress</SelectItem>
-                      <SelectItem value="Completed">Completed</SelectItem>
+                      <SelectItem value="Complete">Complete</SelectItem>
                       <SelectItem value="Canceled">Canceled</SelectItem>
                     </SelectContent>
                   </Select>
@@ -440,7 +440,7 @@ const PortfolioPage = () => {
                     <Badge className={`${
                       selectedProject.status === 'In progress' 
                         ? 'bg-orange-100 text-orange-800' 
-                        : selectedProject.status === 'Completed' || selectedProject.status === 'Complete'
+                        : selectedProject.status === 'Complete' || selectedProject.status === 'Complete'
                         ? 'bg-green-100 text-green-800'
                         : 'bg-red-100 text-red-800'
                     }`}>

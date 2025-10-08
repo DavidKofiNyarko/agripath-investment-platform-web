@@ -160,7 +160,7 @@ const InvestmentsPage = () => {
           type: 'Payin',
           amount: totalAmount,
           unit: quantity,
-          status: 'Complete', // Database enum value is 'Complete' not 'Completed'
+          status: 'Complete', // Database enum value is 'Complete'
           fees: 0.0, // Ensure it's a number, not integer
           net_amount: totalAmount,
           description: `Investment in project ${projectId}`,
@@ -308,15 +308,15 @@ const InvestmentsPage = () => {
     
     // Handle both "15-25%" and "15%" formats
     if (selectedInvestment.roi.includes('-')) {
-      const [minROI, maxROI] = selectedInvestment.roi.split('-').map(r => parseInt(r.replace('%', '')));
-      const minReturn = Math.floor(total * (minROI / 100));
-      const maxReturn = Math.floor(total * (maxROI / 100));
-      return `${minReturn} - ${maxReturn}`;
+      const [minROI, maxROI] = selectedInvestment.roi.split('-').map(r => parseFloat(r.replace('%', '')));
+      const minReturn = Math.round(total * (minROI / 100) * 100) / 100; // Round to 2 decimal places
+      const maxReturn = Math.round(total * (maxROI / 100) * 100) / 100; // Round to 2 decimal places
+      return `${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)}`;
     } else {
       // Single ROI value
-      const roi = parseInt(selectedInvestment.roi.replace('%', ''));
-      const expectedReturn = Math.floor(total * (roi / 100));
-      return `${expectedReturn}`;
+      const roi = parseFloat(selectedInvestment.roi.replace('%', ''));
+      const expectedReturn = Math.round(total * (roi / 100) * 100) / 100; // Round to 2 decimal places
+      return `${expectedReturn.toFixed(2)}`;
     }
   };
 

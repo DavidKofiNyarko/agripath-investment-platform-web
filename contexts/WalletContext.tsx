@@ -22,7 +22,36 @@ interface WalletContextType {
   refreshWallet: () => Promise<void>;
   createWallet: () => Promise<void>;
   
-  // Payment API Integration Methods
+  // New Wallet API Methods
+  processWalletTopup: (topupData: {
+    amount: number;
+    channel: 'card' | 'momo';
+    // Card fields
+    pan?: string;
+    exp_month?: string;
+    exp_year?: string;
+    cvv?: string;
+    card_holder?: string;
+    user_email?: string;
+    // Momo fields
+    subscriber_number?: string;
+    network?: string;
+    description?: string;
+  }) => Promise<{ success: boolean; redirect_url?: string; error?: string }>;
+  
+  processWalletWithdrawal: (withdrawalData: {
+    amount: number;
+    channel: 'bank' | 'momo';
+    // Bank fields
+    account_number?: string;
+    account_bank?: string;
+    // Momo fields
+    recipient_number?: string;
+    account_issuer?: string;
+    description?: string;
+  }) => Promise<{ success: boolean; error?: string }>;
+  
+  // Legacy Payment API Integration Methods (kept for backward compatibility)
   processCardPayment: (cardData: {
     pan: string;
     exp_month: string;
@@ -64,6 +93,32 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useUser();
   const supabase = createClient();
 
+  const createWallet = useCallback(async () => {
+    if (!user) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('wallets')
+        .insert({
+          profile_id: user.id,
+          balance: 0.00,
+          currency: 'GHS',
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating wallet:', error);
+        return;
+      }
+
+      setWallet(data);
+    } catch (error) {
+      console.error('Error creating wallet:', error);
+    }
+  }, [user, supabase]);
+
   const fetchWallet = useCallback(async () => {
     if (!user) {
       setWallet(null);
@@ -91,33 +146,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     } finally {
       setLoading(false);
     }
-  }, [user, supabase]);
-
-  const createWallet = useCallback(async () => {
-    if (!user) return;
-
-    try {
-      const { data, error } = await supabase
-        .from('wallets')
-        .insert({
-          profile_id: user.id,
-          balance: 0.00,
-          currency: 'GHS',
-          status: 'active'
-        })
-        .select()
-        .single();
-
-      if (error) {
-        console.error('Error creating wallet:', error);
-        return;
-      }
-
-      setWallet(data);
-    } catch (error) {
-      console.error('Error creating wallet:', error);
-    }
-  }, [user, supabase]);
+  }, [user, supabase, createWallet]);
 
 
   const refreshWallet = useCallback(async () => {
@@ -262,6 +291,182 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [user, wallet, updateBalance]);
 
+  // New Wallet API Methods
+  const processWalletTopup = useCallback(async (topupData: {
+    amount: number;
+    channel: 'card' | 'momo';
+    pan?: string;
+    exp_month?: string;
+    exp_year?: string;
+    cvv?: string;
+    card_holder?: string;
+    user_email?: string;
+    subscriber_number?: string;
+    network?: string;
+    description?: string;
+  }) => {
+    if (!user) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      // Get user data from users table (backend expects this table)
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id, kyc_status, name, email, phone')
+        .eq('id', user.id)
+        .single();
+
+      if (!userData) {
+        return { success: false, error: 'User not found' };
+      }
+
+      // Check KYC status - only allow topup if KYC is Completed
+      if (!userData.kyc_status || userData.kyc_status !== 'Completed') {
+        return { 
+          success: false, 
+          error: 'KYC verification required. Please complete your identity verification before making wallet transactions.' 
+        };
+      }
+
+      // Get first available project
+      const { data: projects } = await supabase
+        .from('projects')
+        .select('id')
+        .limit(1);
+
+      if (!projects || projects.length === 0) {
+        return { success: false, error: 'No projects available' };
+      }
+
+      const walletTopupData = {
+        profile_id: userData.id,
+        project_id: projects[0].id,
+        amount: topupData.amount,
+        channel: topupData.channel,
+        description: topupData.description || `Wallet topup - ${topupData.channel}`,
+        redirect_url: `${window.location.origin}/dashboard`,
+        // Send the exact KYC status from users table (backend expects "Completed")
+        kyc_status: userData.kyc_status,
+        kyc_verified: userData.kyc_status === 'Completed',
+        // Include user information from users table
+        first_name: userData.name?.split(' ')[0] || '',
+        last_name: userData.name?.split(' ').slice(1).join(' ') || '',
+        email: userData.email,
+        phone_number: userData.phone || '',
+        ...(topupData.channel === 'card' ? {
+          pan: topupData.pan,
+          exp_month: topupData.exp_month,
+          exp_year: topupData.exp_year,
+          cvv: topupData.cvv,
+          card_holder: topupData.card_holder,
+          user_email: topupData.user_email
+        } : {
+          subscriber_number: topupData.subscriber_number,
+          network: topupData.network
+        })
+      };
+
+      const response = await paymentService.processWalletTopup(walletTopupData);
+
+      if (response.status === 'approved') {
+        // Refresh wallet balance after successful topup
+        await refreshWallet();
+        return { success: true };
+      } else if (response.redirect_url) {
+        // Handle 3D Secure redirect
+        return { success: false, redirect_url: response.redirect_url };
+      } else {
+        return { success: false, error: response.reason || 'Topup failed' };
+      }
+    } catch (error) {
+      console.error('Wallet topup error:', error);
+      return { success: false, error: 'Topup processing failed' };
+    }
+  }, [user, supabase, refreshWallet]);
+
+  const processWalletWithdrawal = useCallback(async (withdrawalData: {
+    amount: number;
+    channel: 'bank' | 'momo';
+    account_number?: string;
+    account_bank?: string;
+    recipient_number?: string;
+    account_issuer?: string;
+    description?: string;
+  }) => {
+    if (!user) {
+      return { success: false, error: 'User not authenticated' };
+    }
+
+    try {
+      // Get user data from users table (backend expects this table)
+      const { data: userData } = await supabase
+        .from('users')
+        .select('id, kyc_status, name, email, phone')
+        .eq('id', user.id)
+        .single();
+
+      if (!userData) {
+        return { success: false, error: 'User not found' };
+      }
+
+      // Check KYC status - only allow withdrawal if KYC is Completed
+      if (!userData.kyc_status || userData.kyc_status !== 'Completed') {
+        return { 
+          success: false, 
+          error: 'KYC verification required. Please complete your identity verification before making wallet transactions.' 
+        };
+      }
+
+      // Get first available project
+      const { data: projects } = await supabase
+        .from('projects')
+        .select('id')
+        .limit(1);
+
+      if (!projects || projects.length === 0) {
+        return { success: false, error: 'No projects available' };
+      }
+
+      const walletWithdrawalData = {
+        profile_id: userData.id,
+        project_id: projects[0].id,
+        amount: withdrawalData.amount,
+        channel: withdrawalData.channel,
+        description: withdrawalData.description || `Wallet withdrawal - ${withdrawalData.channel}`,
+        // Send the exact KYC status from users table (backend expects "Completed")
+        kyc_status: userData.kyc_status,
+        kyc_verified: userData.kyc_status === 'Completed',
+        // Include user information from users table
+        first_name: userData.name?.split(' ')[0] || '',
+        last_name: userData.name?.split(' ').slice(1).join(' ') || '',
+        email: userData.email,
+        phone_number: userData.phone || '',
+        ...(withdrawalData.channel === 'bank' ? {
+          account_number: withdrawalData.account_number,
+          account_bank: withdrawalData.account_bank
+        } : {
+          recipient_number: withdrawalData.recipient_number,
+          account_issuer: withdrawalData.account_issuer
+        })
+      };
+
+      const response = await paymentService.processWalletWithdrawal(walletWithdrawalData);
+
+      if (response.status === 'approved') {
+        // Refresh wallet balance after successful withdrawal
+        await refreshWallet();
+        return { success: true };
+      } else {
+        return { success: false, error: response.reason || 'Withdrawal failed' };
+      }
+    } catch (error) {
+      console.error('Wallet withdrawal error:', error);
+      return { success: false, error: 'Withdrawal processing failed' };
+    }
+  }, [user, supabase, refreshWallet]);
+
+  // Legacy Payment API Integration Methods
   const processMobileMoneyPayment = useCallback(async (momoData: {
     subscriber_number: string;
     amount: number;
@@ -372,6 +577,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     updateBalance,
     refreshWallet,
     createWallet,
+    processWalletTopup,
+    processWalletWithdrawal,
     processCardPayment,
     processMobileMoneyPayment,
     processPayout

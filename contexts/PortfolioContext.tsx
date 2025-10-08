@@ -53,7 +53,7 @@ interface Transaction {
   type: 'Payin' | 'Payout' | 'Refund';
   amount: number;
   unit: number;
-  status: 'Completed' | 'Pending' | 'Failed' | 'Cancelled';
+  status: 'Complete' | 'Pending' | 'Failed' | 'Cancelled';
   net_amount: number;
   description: string | null;
   processed_at: string | null;
@@ -69,7 +69,7 @@ interface SupabaseProject {
   description: string | null;
   cover_image_url: string | null;
   project_type: 'CROP' | 'LIVESTOCK' | 'FISHERY' | 'OTHER';
-  status: 'Active' | 'Inactive' | 'Completed' | 'Cancelled';
+  status: 'Active' | 'Inactive' | 'Complete' | 'Cancelled';
   total_units: number;
   unit_price: number;
   expected_return_rate: number;
@@ -89,7 +89,7 @@ interface SupabaseMetricsData {
   amount: number;
   unit: number;
   type: 'Payin' | 'Payout' | 'Refund';
-  status: 'Completed' | 'Pending' | 'Failed' | 'Cancelled';
+  status: 'Complete' | 'Pending' | 'Failed' | 'Cancelled';
 }
 
 interface SupabaseTransactionData {
@@ -99,7 +99,7 @@ interface SupabaseTransactionData {
   type: 'Payin' | 'Payout' | 'Refund';
   amount: number;
   unit: number;
-  status: 'Completed' | 'Pending' | 'Failed' | 'Cancelled';
+  status: 'Complete' | 'Pending' | 'Failed' | 'Cancelled';
   net_amount: number;
   description: string | null;
   processed_at: string | null;

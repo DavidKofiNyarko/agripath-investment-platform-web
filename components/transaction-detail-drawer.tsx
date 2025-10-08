@@ -1,9 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { createClient } from '@/app/utils/supabase/client';
 import { 
   Calendar, 
@@ -17,7 +16,9 @@ import {
   XCircle,
   FileText,
   Smartphone,
-  Network
+  Network,
+  TrendingUp,
+  Shield
 } from 'lucide-react';
 
 interface TransactionDetail {
@@ -85,7 +86,11 @@ const getStatusBadge = (status: string) => {
         </Badge>
       );
     default:
-      return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">{status}</Badge>;
+      return (
+        <Badge variant="secondary" className="capitalize">
+          {status}
+        </Badge>
+      );
   }
 };
 
@@ -94,11 +99,24 @@ const getTypeLabel = (type: string) => {
     case 'Payin':
       return 'Investment';
     case 'Payout':
-      return 'Payout';
+      return 'Withdrawal';
     case 'Refund':
       return 'Refund';
     default:
       return type;
+  }
+};
+
+const getTypeIcon = (type: string) => {
+  switch (type) {
+    case 'Payin':
+      return TrendingUp;
+    case 'Payout':
+      return DollarSign;
+    case 'Refund':
+      return Shield;
+    default:
+      return FileText;
   }
 };
 
@@ -107,13 +125,7 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
-  useEffect(() => {
-    if (open && transactionId) {
-      fetchTransactionDetail();
-    }
-  }, [open, transactionId]);
-
-  const fetchTransactionDetail = async () => {
+  const fetchTransactionDetail = useCallback(async () => {
     if (!transactionId) return;
     
     setLoading(true);
@@ -151,14 +163,20 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
     } finally {
       setLoading(false);
     }
-  };
+  }, [transactionId, supabase]);
+
+  useEffect(() => {
+    if (open && transactionId) {
+      fetchTransactionDetail();
+    }
+  }, [open, transactionId, fetchTransactionDetail]);
 
   if (loading) {
     return (
       <Sheet open={open} onOpenChange={onClose}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>Transaction Details</SheetTitle>
+        <SheetContent className="w-full sm:max-w-lg p-0 overflow-y-auto">
+          <SheetHeader className="p-6 border-b">
+            <SheetTitle className="text-xl font-semibold">Transaction Details</SheetTitle>
           </SheetHeader>
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
@@ -172,233 +190,211 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
     return null;
   }
 
+  const TypeIcon = getTypeIcon(transaction.type);
+
   return (
     <Sheet open={open} onOpenChange={onClose}>
-      <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-        <SheetHeader>
-          <SheetTitle>Transaction Details</SheetTitle>
-          <SheetDescription>
+      <SheetContent className="w-full sm:max-w-lg p-0 overflow-y-auto">
+        <SheetHeader className="p-6 border-b">
+          <SheetTitle className="text-xl font-semibold">Transaction Details</SheetTitle>
+          <SheetDescription className="text-gray-600">
             Complete information about this transaction
           </SheetDescription>
         </SheetHeader>
 
-        <div className="mt-6 space-y-6">
-          {/* Transaction Status and Type */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <FileText className="h-5 w-5 text-gray-500" />
-              <span className="font-medium">{getTypeLabel(transaction.type)}</span>
-            </div>
-            {getStatusBadge(transaction.status)}
-          </div>
-
-          <Separator />
-
-          {/* Transaction ID */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-sm text-gray-500">
-              <Hash className="h-4 w-4" />
-              <span>Transaction ID</span>
-            </div>
-            <p className="text-sm font-mono bg-gray-50 p-2 rounded">{transaction.transaction_id}</p>
-          </div>
-
-          {/* Amount Details */}
-          <div className="bg-green-50 p-4 rounded-lg space-y-3">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-gray-700">
-                <DollarSign className="h-4 w-4" />
-                <span>Amount</span>
+        <div className="flex-1 p-6 space-y-6">
+          {/* Header Section with Status */}
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-xl border border-green-100">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-100 rounded-lg">
+                  <TypeIcon className="h-5 w-5 text-green-700" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-gray-900">{getTypeLabel(transaction.type)}</h2>
+                  <p className="text-sm text-gray-600">#{transaction.transaction_id}</p>
+                </div>
               </div>
-              <span className="text-lg font-bold text-green-700">
-                GHS {transaction.amount.toLocaleString()}
-              </span>
-            </div>
-            
-            {transaction.fees > 0 && (
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-gray-600">Transaction Fee</span>
-                <span className="text-gray-700">GHS {transaction.fees.toLocaleString()}</span>
-              </div>
-            )}
-            
-            <div className="flex items-center justify-between text-sm pt-2 border-t border-green-200">
-              <span className="text-gray-600">Net Amount</span>
-              <span className="font-semibold text-gray-900">
-                GHS {transaction.net_amount.toLocaleString()}
-              </span>
-            </div>
-
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-600">Units</span>
-              <span className="font-semibold text-gray-900">{transaction.unit}</span>
+              {getStatusBadge(transaction.status)}
             </div>
           </div>
 
-          <Separator />
+          {/* Financial Summary Card */}
+          <div className="bg-white border border-gray-50/10 rounded-xl p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <DollarSign className="h-4 w-4 text-green-600" />
+              Financial Summary
+            </h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-600 font-medium">Amount</span>
+                <span className="text-xl font-bold text-green-600">
+                  GHS {transaction.amount.toLocaleString()}
+                </span>
+              </div>
+              
+              {transaction.fees > 0 && (
+                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                  <span className="text-gray-600">Transaction Fee</span>
+                  <span className="font-semibold text-gray-700">GHS {transaction.fees.toLocaleString()}</span>
+                </div>
+              )}
+              
+              <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                <span className="text-gray-600 font-medium">Net Amount</span>
+                <span className="text-lg font-bold text-gray-900">
+                  GHS {transaction.net_amount.toLocaleString()}
+                </span>
+              </div>
 
-          {/* Payment Method */}
-          <div className="space-y-3">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
-              <CreditCard className="h-4 w-4" />
+              <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                <span className="text-gray-600 font-medium">Units</span>
+                <span className="text-lg font-bold text-gray-900">{transaction.unit}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Information Card */}
+          <div className="bg-white border border-gray-50/10 rounded-xl p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-blue-600" />
               Payment Information
             </h3>
             
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Method</span>
-                <span className="font-medium capitalize">{transaction.channel}</span>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-600 font-medium">Method</span>
+                <Badge variant="secondary" className="capitalize bg-blue-100 text-blue-800">
+                  {transaction.channel}
+                </Badge>
               </div>
               
               {transaction.network && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600 flex items-center gap-1">
-                    <Network className="h-3 w-3" />
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 flex items-center gap-2">
+                    <Network className="h-4 w-4" />
                     Network
                   </span>
-                  <span className="font-medium">{transaction.network}</span>
+                  <span className="font-semibold text-gray-900">{transaction.network}</span>
                 </div>
               )}
               
-              <div className="flex justify-between">
-                <span className="text-gray-600 flex items-center gap-1">
-                  <Smartphone className="h-3 w-3" />
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-600 flex items-center gap-2">
+                  <Smartphone className="h-4 w-4" />
                   Account Number
                 </span>
-                <span className="font-medium font-mono">{transaction.account_number}</span>
+                <span className="font-semibold text-gray-900 font-mono">{transaction.account_number}</span>
               </div>
 
               {transaction.external_id && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">External ID</span>
-                  <span className="font-medium text-xs">{transaction.external_id}</span>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 font-medium">External ID</span>
+                  <span className="font-semibold text-gray-900 text-sm">{transaction.external_id}</span>
                 </div>
               )}
             </div>
           </div>
 
-          <Separator />
-
-          {/* Project Information */}
+          {/* Project Information Card */}
           {transaction.project && (
-            <>
+            <div className="bg-white border border-gray-50/10 rounded-xl p-5 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-purple-600" />
+                Project Information
+              </h3>
+              
               <div className="space-y-3">
-                <h3 className="font-semibold text-sm flex items-center gap-2">
-                  <Building2 className="h-4 w-4" />
-                  Project Information
-                </h3>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 font-medium">Project Name</span>
+                  <span className="font-semibold text-gray-900">{transaction.project.project_name}</span>
+                </div>
                 
-                <div className="space-y-2 text-sm bg-gray-50 p-3 rounded-lg">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Project Name</span>
-                    <span className="font-medium">{transaction.project.project_name}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Location</span>
-                    <span className="font-medium">{transaction.project.farm_location}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Price per Unit</span>
-                    <span className="font-medium">GHS {transaction.project.unit_price.toLocaleString()}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total Units</span>
-                    <span className="font-medium">{transaction.project.total_units}</span>
-                  </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 font-medium">Location</span>
+                  <span className="font-semibold text-gray-900">{transaction.project.farm_location}</span>
+                </div>
+                
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 font-medium">Price per Unit</span>
+                  <span className="font-semibold text-gray-900">GHS {transaction.project.unit_price.toLocaleString()}</span>
+                </div>
+                
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 font-medium">Total Units</span>
+                  <span className="font-semibold text-gray-900">{transaction.project.total_units}</span>
+                </div>
 
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Project Status</span>
-                    <Badge variant="outline" className="capitalize">
-                      {transaction.project.status}
-                    </Badge>
-                  </div>
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 font-medium">Project Status</span>
+                  <Badge 
+                    variant={transaction.project.status === 'Active' ? 'default' : 'secondary'}
+                    className={`capitalize ${
+                      transaction.project.status === 'Active' 
+                        ? 'bg-green-100 text-green-800 hover:bg-green-100' 
+                        : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+                    }`}
+                  >
+                    {transaction.project.status}
+                  </Badge>
                 </div>
               </div>
-
-              <Separator />
-            </>
+            </div>
           )}
 
-          {/* User Information */}
+          {/* Investor Information Card */}
           {transaction.profile && (
-            <>
+            <div className="bg-white border border-gray-50/10 rounded-xl p-5 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <User className="h-4 w-4 text-orange-600" />
+                Investor Information
+              </h3>
+              
               <div className="space-y-3">
-                <h3 className="font-semibold text-sm flex items-center gap-2">
-                  <User className="h-4 w-4" />
-                  Investor Information
-                </h3>
-                
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Name</span>
-                    <span className="font-medium">{transaction.profile.first_name} {transaction.profile.last_name}</span>
-                  </div>
-                  
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Email</span>
-                    <span className="font-medium text-xs">{transaction.profile.email}</span>
-                  </div>
-                  
-                  {transaction.profile.phone_number && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Phone</span>
-                      <span className="font-medium">{transaction.profile.phone_number}</span>
-                    </div>
-                  )}
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 font-medium">Name</span>
+                  <span className="font-semibold text-gray-900">{transaction.profile.first_name} {transaction.profile.last_name}</span>
                 </div>
+                
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 font-medium">Email</span>
+                  <span className="font-semibold text-gray-900 text-sm">{transaction.profile.email}</span>
+                </div>
+                
+                {transaction.profile.phone_number && (
+                  <div className="flex items-center justify-between py-2">
+                    <span className="text-gray-600 font-medium">Phone</span>
+                    <span className="font-semibold text-gray-900">{transaction.profile.phone_number}</span>
+                  </div>
+                )}
               </div>
-
-              <Separator />
-            </>
+            </div>
           )}
 
-          {/* Description */}
-          {transaction.description && (
-            <>
-              <div className="space-y-2">
-                <h3 className="font-semibold text-sm">Description</h3>
-                <p className="text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                  {transaction.description}
-                </p>
-              </div>
-
-              <Separator />
-            </>
-          )}
-
-          {/* Timestamps */}
-          <div className="space-y-3">
-            <h3 className="font-semibold text-sm flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Timeline
+          {/* Transaction Timeline Card */}
+          <div className="bg-white border border-gray-50/10 rounded-xl p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-indigo-600" />
+              Transaction Timeline
             </h3>
             
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Created</span>
-                <span className="font-medium">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-600 font-medium">Created</span>
+                <span className="font-semibold text-gray-900">
                   {new Date(transaction.created_at).toLocaleString()}
                 </span>
               </div>
               
               {transaction.processed_at && (
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Processed</span>
-                  <span className="font-medium">
+                <div className="flex items-center justify-between py-2">
+                  <span className="text-gray-600 font-medium">Processed</span>
+                  <span className="font-semibold text-gray-900">
                     {new Date(transaction.processed_at).toLocaleString()}
                   </span>
                 </div>
               )}
-              
-              <div className="flex justify-between">
-                <span className="text-gray-600">Last Updated</span>
-                <span className="font-medium">
-                  {new Date(transaction.updated_at).toLocaleString()}
-                </span>
-              </div>
             </div>
           </div>
         </div>
@@ -406,4 +402,3 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
     </Sheet>
   );
 }
-

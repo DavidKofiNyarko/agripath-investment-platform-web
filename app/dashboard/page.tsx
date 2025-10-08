@@ -47,7 +47,7 @@ const DashboardPage = () => {
   const router = useRouter();
   const { user, loading } = useUser();
   const { profile, loading: profileLoading, isProfileComplete } = useProfile();
-  const { wallet, loading: walletLoading, updateBalance, processCardPayment, processMobileMoneyPayment, processPayout } = useWallet();
+  const { wallet, loading: walletLoading, updateBalance, processWalletTopup, processWalletWithdrawal } = useWallet();
   const { metrics, loading: portfolioLoading } = usePortfolio();
   const { projects, loading: projectsLoading } = useProjects();
   const { updates, loading: updatesLoading } = useUpdates();
@@ -96,17 +96,20 @@ const DashboardPage = () => {
     try {
       const topUpAmount = parseFloat(amount.replace(/,/g, ''));
       
-      // Use payment API based on payment method
+      // Use new wallet API based on payment method
       if (paymentMethod === 'card') {
         // For card payments, we'd need card details from the user
         // For now, we'll use a test card
-        const result = await processCardPayment({
+        const result = await processWalletTopup({
+          amount: topUpAmount,
+          channel: 'card',
           pan: '4111111111111111',
           exp_month: '12',
           exp_year: '25',
           cvv: '123',
           card_holder: 'Test User',
-          amount: topUpAmount
+          user_email: user?.email || 'test@example.com',
+          description: 'Dashboard topup via card'
         });
         
         if (result.success) {
@@ -118,12 +121,15 @@ const DashboardPage = () => {
         } else {
           setCurrentStep('error');
         }
-      } else if (paymentMethod === 'momo') {
+      } else if (paymentMethod === 'mobile') {
         // For mobile money, we'd need the user's mobile number
         // For now, we'll use a test number
-        const result = await processMobileMoneyPayment({
+        const result = await processWalletTopup({
+          amount: topUpAmount,
+          channel: 'momo',
           subscriber_number: '0241234567',
-          amount: topUpAmount
+          network: 'MTN',
+          description: 'Dashboard topup via mobile money'
         });
         
         if (result.success) {
@@ -157,12 +163,18 @@ const DashboardPage = () => {
     try {
       const withdrawAmountValue = parseFloat(withdrawAmount.replace(/,/g, ''));
       
-      // Use payment API for payout
-      const result = await processPayout({
+      // Use new wallet API for payout
+      const result = await processWalletWithdrawal({
         amount: withdrawAmountValue,
-        channel: withdrawMethod === 'momo' ? 'momo' : 'bank',
-        recipient_number: withdrawMethod === 'momo' ? '0241234567' : undefined,
-        account_number: withdrawMethod === 'bank' ? '1234567890123' : undefined
+        channel: withdrawMethod === 'mobile' ? 'momo' : 'bank',
+        ...(withdrawMethod === 'mobile' ? {
+          recipient_number: '0241234567',
+          account_issuer: 'MTN'
+        } : {
+          account_number: '1234567890123',
+          account_bank: 'ADB'
+        }),
+        description: 'Dashboard withdrawal'
       });
       
       if (result.success) {
@@ -231,8 +243,8 @@ const DashboardPage = () => {
 
   return (
     <DashboardLayout>
-      {/* Dim/blur background and show setup flow if profile is incomplete */}
-      {!isProfileComplete && (
+      {/* Dim/blur background and show setup flow if profile doesn't exist */}
+      {!profile && (
         <>
           <div className="pointer-events-none fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" />
           <ProfileSetupFlow onCompleted={() => { /* context will re-render */ }} />
@@ -404,7 +416,7 @@ const DashboardPage = () => {
                   <Badge className={`absolute top-1 right-1 sm:top-2 sm:right-2 text-xs ${
                     project.status === 'Active' 
                       ? 'bg-green-600 hover:bg-green-700' 
-                      : project.status === 'Completed'
+                      : project.status === 'Complete'
                       ? 'bg-blue-600 hover:bg-blue-700'
                       : 'bg-gray-600 hover:bg-gray-700'
                   }`}>

@@ -321,17 +321,17 @@ const SettingsPage = () => {
                     </p>
                     <Badge 
                       variant={
-                        profile?.kyc_status === 'verified' ? 'default' : 
+                        profile?.kyc_status === 'verified' || (profile?.kyc_status as any) === 'complete' ? 'default' : 
                         profile?.kyc_status === 'pending' ? 'secondary' : 
                         'destructive'
                       }
                       className={`mt-2 ${
-                        profile?.kyc_status === 'verified' ? 'bg-green-600 hover:bg-green-700' : 
+                        profile?.kyc_status === 'verified' || (profile?.kyc_status as any) === 'complete' ? 'bg-green-600 hover:bg-green-700' : 
                         profile?.kyc_status === 'pending' ? 'bg-yellow-600 hover:bg-yellow-700' : 
                         'bg-red-600 hover:bg-red-700'
                       }`}
                     >
-                      {profile?.kyc_status === 'verified' ? 'KYC Verified' : 
+                      {profile?.kyc_status === 'verified' || (profile?.kyc_status as any) === 'complete' ? 'KYC Verified' : 
                        profile?.kyc_status === 'pending' ? 'KYC Pending' : 
                        'KYC Incomplete'}
                     </Badge>

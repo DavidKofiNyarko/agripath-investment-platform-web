@@ -36,6 +36,16 @@ const KycModal: React.FC<KycModalProps> = ({ isOpen, onClose, onCompleteKyc }) =
           borderColor: 'border-green-200',
           actionText: 'Continue to Investment'
         };
+      case 'complete':
+        return {
+          icon: Check,
+          title: 'KYC Complete',
+          description: 'Your identity verification is complete. You can now make investments.',
+          color: 'text-green-600',
+          bgColor: 'bg-green-50',
+          borderColor: 'border-green-200',
+          actionText: 'Continue to Investment'
+        };
       case 'pending':
         return {
           icon: AlertTriangle,

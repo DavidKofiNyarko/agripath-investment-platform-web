@@ -1,0 +1,374 @@
+'use client';
+
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useUser } from '@/contexts/UserContext';
+import { useProfile } from '@/contexts/ProfileContext';
+import { useProjects } from '@/contexts/ProjectsContext';
+import { useWallet } from '@/contexts/WalletContext';
+import { ArrowDownLeft, Loader2 } from 'lucide-react';
+import KycRequiredModal from '@/components/kyc-required-modal';
+
+interface TopupFormData {
+  amount: string;
+  channel: 'card' | 'momo';
+  description: string;
+  // Card fields
+  pan: string;
+  exp_month: string;
+  exp_year: string;
+  cvv: string;
+  card_holder: string;
+  user_email: string;
+  // Momo fields
+  subscriber_number: string;
+  network: string;
+}
+
+const WalletTopup: React.FC = () => {
+  const { user } = useUser();
+  const { profile } = useProfile();
+  const { projects } = useProjects();
+  const { processWalletTopup } = useWallet();
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState('');
+  const [error, setError] = useState('');
+  const [showKycModal, setShowKycModal] = useState(false);
+  
+  const [formData, setFormData] = useState<TopupFormData>({
+    amount: '',
+    channel: 'card',
+    description: '',
+    pan: '',
+    exp_month: '',
+    exp_year: '',
+    cvv: '',
+    card_holder: '',
+    user_email: user?.email || '',
+    subscriber_number: '',
+    network: 'MTN'
+  });
+
+  const handleInputChange = (field: keyof TopupFormData, value: string) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setError('');
+    setSuccess('');
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user?.id || !profile?.id) {
+      setError('User not authenticated');
+      return;
+    }
+
+    if (!projects || projects.length === 0) {
+      setError('No projects available');
+      return;
+    }
+
+    // Validate required fields based on channel
+    if (formData.channel === 'card') {
+      if (!formData.pan || !formData.exp_month || !formData.exp_year || !formData.cvv || !formData.card_holder || !formData.user_email) {
+        setError('All card fields are required');
+        return;
+      }
+    } else if (formData.channel === 'momo') {
+      if (!formData.subscriber_number || !formData.network) {
+        setError('Subscriber number and network are required for mobile money');
+        return;
+      }
+    }
+
+    if (!formData.amount || parseFloat(formData.amount) <= 0) {
+      setError('Please enter a valid amount');
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+    setSuccess('');
+
+    try {
+      const topupData = {
+        amount: parseFloat(formData.amount),
+        channel: formData.channel,
+        description: formData.description || `Wallet topup - ${formData.channel}`,
+        ...(formData.channel === 'card' ? {
+          pan: formData.pan,
+          exp_month: formData.exp_month,
+          exp_year: formData.exp_year,
+          cvv: formData.cvv,
+          card_holder: formData.card_holder,
+          user_email: formData.user_email
+        } : {
+          subscriber_number: formData.subscriber_number,
+          network: formData.network
+        })
+      };
+
+      const result = await processWalletTopup(topupData);
+
+      if (result.success) {
+        setSuccess('Topup request submitted successfully!');
+        
+        // Reset form
+        setFormData({
+          amount: '',
+          channel: 'card',
+          description: '',
+          pan: '',
+          exp_month: '',
+          exp_year: '',
+          cvv: '',
+          card_holder: '',
+          user_email: user?.email || '',
+          subscriber_number: '',
+          network: 'MTN'
+        });
+      } else if (result.redirect_url) {
+        // Handle 3D Secure redirect
+        window.open(result.redirect_url, '_blank');
+        setSuccess('Please complete the 3D Secure verification in the popup window.');
+      } else if (result.error?.includes('KYC verification required')) {
+        // Show KYC modal instead of error message
+        setShowKycModal(true);
+      } else {
+        setError(result.error || 'Topup failed. Please try again.');
+      }
+
+    } catch (err) {
+      console.error('Topup error:', err);
+      setError(err instanceof Error ? err.message : 'Topup failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Card className="w-full max-w-2xl mx-auto">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <ArrowDownLeft className="w-5 h-5 text-blue-600" />
+          Wallet Topup
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Amount */}
+          <div className="space-y-2">
+            <Label htmlFor="amount">Amount (GHS)</Label>
+            <Input
+              id="amount"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.amount}
+              onChange={(e) => handleInputChange('amount', e.target.value)}
+              placeholder="Enter amount to add"
+              required
+            />
+          </div>
+
+          {/* Channel Selection */}
+          <div className="space-y-2">
+            <Label htmlFor="channel">Payment Method</Label>
+            <Select
+              value={formData.channel}
+              onValueChange={(value: 'card' | 'momo') => handleInputChange('channel', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select payment method" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="card">Card Payment</SelectItem>
+                <SelectItem value="momo">Mobile Money</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Card Payment Fields */}
+          {formData.channel === 'card' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="pan">Card Number</Label>
+                <Input
+                  id="pan"
+                  value={formData.pan}
+                  onChange={(e) => handleInputChange('pan', e.target.value)}
+                  placeholder="5314455096498197"
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="exp_month">Expiry Month</Label>
+                  <Select
+                    value={formData.exp_month}
+                    onValueChange={(value) => handleInputChange('exp_month', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="MM" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 12 }, (_, i) => (
+                        <SelectItem key={i + 1} value={String(i + 1).padStart(2, '0')}>
+                          {String(i + 1).padStart(2, '0')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="exp_year">Expiry Year</Label>
+                  <Select
+                    value={formData.exp_year}
+                    onValueChange={(value) => handleInputChange('exp_year', value)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="YY" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 10 }, (_, i) => {
+                        const year = new Date().getFullYear() + i;
+                        return (
+                          <SelectItem key={year} value={String(year).slice(-2)}>
+                            {String(year).slice(-2)}
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="cvv">CVV</Label>
+                <Input
+                  id="cvv"
+                  type="password"
+                  value={formData.cvv}
+                  onChange={(e) => handleInputChange('cvv', e.target.value)}
+                  placeholder="553"
+                  maxLength={4}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="card_holder">Card Holder Name</Label>
+                <Input
+                  id="card_holder"
+                  value={formData.card_holder}
+                  onChange={(e) => handleInputChange('card_holder', e.target.value)}
+                  placeholder="David"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="user_email">Email</Label>
+                <Input
+                  id="user_email"
+                  type="email"
+                  value={formData.user_email}
+                  onChange={(e) => handleInputChange('user_email', e.target.value)}
+                  placeholder="david@test.com"
+                  required
+                />
+              </div>
+            </>
+          )}
+
+          {/* Mobile Money Fields */}
+          {formData.channel === 'momo' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="subscriber_number">Mobile Number</Label>
+                <Input
+                  id="subscriber_number"
+                  value={formData.subscriber_number}
+                  onChange={(e) => handleInputChange('subscriber_number', e.target.value)}
+                  placeholder="0241183886"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="network">Network</Label>
+                <Select
+                  value={formData.network}
+                  onValueChange={(value) => handleInputChange('network', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select network" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MTN">MTN</SelectItem>
+                    <SelectItem value="VDF">Vodafone</SelectItem>
+                    <SelectItem value="ATL">AirtelTigo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label htmlFor="description">Description (Optional)</Label>
+            <Input
+              id="description"
+              value={formData.description}
+              onChange={(e) => handleInputChange('description', e.target.value)}
+              placeholder="Add a description for this topup"
+            />
+          </div>
+
+          {/* Error/Success Messages */}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+              <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+          
+          {success && (
+            <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+              <p className="text-sm text-green-600">{success}</p>
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-base shadow-lg"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Processing Topup...
+              </>
+            ) : (
+              'Submit Topup Request'
+            )}
+          </Button>
+        </form>
+      </CardContent>
+      
+      {/* KYC Required Modal */}
+      <KycRequiredModal
+        isOpen={showKycModal}
+        onClose={() => setShowKycModal(false)}
+        onCompleteKyc={() => {
+          setShowKycModal(false);
+          // Navigate to profile setup or KYC page
+          window.location.href = '/profile-setup';
+        }}
+        transactionType="topup"
+      />
+    </Card>
+  );
+};
+
+export default WalletTopup;
