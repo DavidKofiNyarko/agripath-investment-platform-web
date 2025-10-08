@@ -82,11 +82,18 @@ const getStatusBadge = (status: string) => {
 };
 
 const PortfolioPage = () => {
-  const { projects, metrics, transactions, loading, error, refreshPortfolio } = usePortfolio();
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedType, setSelectedType] = useState('All');
-  const [selectedStatus, setSelectedStatus] = useState('All');
-  const [currentPage, setCurrentPage] = useState(1);
+  const { 
+    projects, 
+    metrics, 
+    transactions, 
+    loading, 
+    error, 
+    filters,
+    setFilters,
+    pagination,
+    setPagination,
+    refreshPortfolio 
+  } = usePortfolio();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showTimeline, setShowTimeline] = useState(true);
@@ -95,6 +102,49 @@ const PortfolioPage = () => {
     setSelectedProject(project);
     setIsDrawerOpen(true);
   };
+
+  // Handle filter changes
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters({ ...filters, [key]: value });
+  };
+
+  // Handle search
+  const handleSearch = (value: string) => {
+    setFilters({ ...filters, search: value });
+  };
+
+  // Handle pagination
+  const handlePageChange = (page: number) => {
+    setPagination({ ...pagination, currentPage: page });
+  };
+
+  // Apply client-side filtering
+  const filteredProjects = projects.filter(project => {
+    // Apply type filter
+    if (filters.type !== 'All' && project.project_type !== filters.type) {
+      return false;
+    }
+    
+    // Apply status filter
+    if (filters.status !== 'All' && project.status !== filters.status) {
+      return false;
+    }
+    
+    // Apply search filter
+    if (filters.search && filters.search.trim() !== '') {
+      const searchTerm = filters.search.toLowerCase();
+      return project.project_name.toLowerCase().includes(searchTerm);
+    }
+    
+    return true;
+  });
+
+  // Apply pagination to filtered projects
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredProjects.length / itemsPerPage);
+  const startIndex = (pagination.currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedProjects = filteredProjects.slice(startIndex, endIndex);
 
   // Loading state
   if (loading) {
@@ -197,29 +247,29 @@ const PortfolioPage = () => {
           <CardContent className="p-0">
             {/* Filters */}
             <div className="p-4 sm:p-6 border-b bg-gray-50">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
-                  <Select value={selectedType} onValueChange={setSelectedType}>
+                  <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
                     <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Type" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All">All</SelectItem>
-                      <SelectItem value="Crops">Crops</SelectItem>
-                      <SelectItem value="Livestock">Livestock</SelectItem>
+                      <SelectItem value="CROP">Crops</SelectItem>
+                      <SelectItem value="LIVESTOCK">Livestock</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
                     <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All">All</SelectItem>
-                      <SelectItem value="In progress">In progress</SelectItem>
+                      <SelectItem value="Active">Active</SelectItem>
                       <SelectItem value="Complete">Complete</SelectItem>
-                      <SelectItem value="Canceled">Canceled</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -227,19 +277,12 @@ const PortfolioPage = () => {
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                     <Input
-                      placeholder="Search user..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Search projects..."
+                      value={filters.search}
+                      onChange={(e) => handleSearch(e.target.value)}
                       className="pl-10 text-sm"
                     />
                   </div>
-                </div>
-                <div>
-                  <Button variant="outline" className="w-full justify-start text-sm">
-                    <Calendar className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Jan 20, 2024 - Feb 09, 2024</span>
-                    <span className="sm:hidden">Date Range</span>
-                  </Button>
                 </div>
               </div>
             </div>
@@ -273,7 +316,7 @@ const PortfolioPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {projects.length === 0 ? (
+                  {paginatedProjects.length === 0 ? (
                     <tr>
                       <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
                         <div className="flex flex-col items-center">
@@ -284,7 +327,7 @@ const PortfolioPage = () => {
                       </td>
                     </tr>
                   ) : (
-                    projects.map((project) => (
+                    paginatedProjects.map((project) => (
                       <tr key={project.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {project.project_name}
@@ -326,7 +369,7 @@ const PortfolioPage = () => {
 
             {/* Projects Cards - Mobile */}
             <div className="lg:hidden">
-              {projects.length === 0 ? (
+              {paginatedProjects.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
                   <div className="flex flex-col items-center">
                     <Package className="h-12 w-12 text-gray-300 mb-4" />
@@ -336,7 +379,7 @@ const PortfolioPage = () => {
                 </div>
               ) : (
                 <div className="space-y-3 p-4">
-                  {projects.map((project) => (
+                  {paginatedProjects.map((project) => (
                     <Card key={project.id} className="p-4">
                       <div className="space-y-3">
                         <div className="flex items-start justify-between">
@@ -394,36 +437,57 @@ const PortfolioPage = () => {
 
             {/* Pagination */}
             <div className="px-4 sm:px-6 py-4 border-t bg-gray-50">
-              <div className="flex items-center justify-between gap-2">
-                <Button variant="outline" size="sm" disabled={currentPage === 1} className="text-xs sm:text-sm px-2 sm:px-3">
-                  <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  <span className="hidden sm:inline">Previous</span>
-                  <span className="sm:hidden">Prev</span>
-                </Button>
-                
-                <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4].map((page) => (
-                    <Button
-                      key={page}
-                      variant={currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      className={`h-7 w-7 sm:h-8 sm:w-8 p-0 text-xs sm:text-sm ${
-                        currentPage === page 
-                          ? 'bg-green-600 hover:bg-green-700 text-white' 
-                          : 'text-gray-600'
-                      }`}
-                      onClick={() => setCurrentPage(page)}
-                    >
-                      {page}
-                    </Button>
-                  ))}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
+                <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
+                  Showing {filteredProjects.length === 0 ? 0 : startIndex + 1} to {Math.min(endIndex, filteredProjects.length)} of {filteredProjects.length} projects
                 </div>
                 
-                <Button variant="outline" size="sm" disabled={currentPage === 4} className="text-xs sm:text-sm px-2 sm:px-3">
-                  <span className="hidden sm:inline">Next</span>
-                  <span className="sm:hidden">Next</span>
-                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
-                </Button>
+                <div className="flex items-center gap-1 sm:gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled={pagination.currentPage === 1}
+                    onClick={() => handlePageChange(pagination.currentPage - 1)}
+                    className="text-xs sm:text-sm px-2 sm:px-3"
+                  >
+                    <ChevronLeft className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                    <span className="hidden sm:inline">Previous</span>
+                    <span className="sm:hidden">Prev</span>
+                  </Button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
+                      const page = i + 1;
+                      return (
+                        <Button
+                          key={page}
+                          variant={pagination.currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          className={`h-7 w-7 sm:h-8 sm:w-8 p-0 text-xs sm:text-sm ${
+                            pagination.currentPage === page 
+                              ? 'bg-green-600 hover:bg-green-700 text-white' 
+                              : 'text-gray-600'
+                          }`}
+                          onClick={() => handlePageChange(page)}
+                        >
+                          {page}
+                        </Button>
+                      );
+                    })}
+                  </div>
+                  
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    disabled={pagination.currentPage === totalPages}
+                    onClick={() => handlePageChange(pagination.currentPage + 1)}
+                    className="text-xs sm:text-sm px-2 sm:px-3"
+                  >
+                    <span className="hidden sm:inline">Next</span>
+                    <span className="sm:hidden">Next</span>
+                    <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
             </div>
           </CardContent>

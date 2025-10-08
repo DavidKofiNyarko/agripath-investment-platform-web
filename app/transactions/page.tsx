@@ -21,8 +21,8 @@ import {
 
 const transactionTypes = [
   { id: 'investments', label: 'Investments', dbType: 'Payin', active: true, disabled: false },
-  { id: 'topups', label: 'Top Ups', dbType: null, active: false, disabled: true },
-  { id: 'withdrawals', label: 'Withdrawals', dbType: null, active: false, disabled: true },
+  { id: 'topups', label: 'Top Ups', dbType: 'momo_topup', active: false, disabled: false },
+  { id: 'withdrawals', label: 'Withdrawals', dbType: 'momo_withdrawal', active: false, disabled: false },
   { id: 'payouts', label: 'Payouts', dbType: 'Payout', active: false, disabled: false }
 ];
 
@@ -74,10 +74,43 @@ const TransactionsPage = () => {
     if (!activeType || !activeType.dbType) {
       return [];
     }
+    
+    // Handle withdrawal types (multiple types)
+    if (activeType.id === 'withdrawals') {
+      return transactions.filter(t => t.type === 'momo_withdrawal' || t.type === 'bank_withdrawal');
+    }
+    
     return transactions.filter(t => t.type === activeType.dbType);
   };
 
-  const filteredTransactions = getFilteredTransactions();
+  const allFilteredTransactions = getFilteredTransactions();
+  
+  // Apply additional filters (status, search) to the already filtered transactions
+  const filteredTransactions = allFilteredTransactions.filter(transaction => {
+    // Apply status filter
+    if (filters.status !== 'All' && transaction.status !== filters.status) {
+      return false;
+    }
+    
+    // Apply search filter
+    if (filters.search && filters.search.trim() !== '') {
+      const searchTerm = filters.search.toLowerCase();
+      return (
+        transaction.transaction_id.toLowerCase().includes(searchTerm) ||
+        (transaction.project_name && transaction.project_name.toLowerCase().includes(searchTerm)) ||
+        (transaction.description && transaction.description.toLowerCase().includes(searchTerm))
+      );
+    }
+    
+    return true;
+  });
+
+  // Apply pagination to filtered transactions
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+  const startIndex = (pagination.currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
 
   // Group transactions by date
   const groupTransactionsByDate = (transactions: Transaction[]) => {
@@ -100,7 +133,6 @@ const TransactionsPage = () => {
     return groups;
   };
 
-  const groupedTransactions = groupTransactionsByDate(filteredTransactions);
 
   // Handle filter changes
   const handleFilterChange = (key: string, value: string) => {
@@ -193,9 +225,9 @@ const TransactionsPage = () => {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
-                    placeholder="Search projects..."
+                    placeholder="Search transactions..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => handleSearch(e.target.value)}
                     className="pl-10 text-sm sm:text-base"
                   />
                 </div>
@@ -209,7 +241,7 @@ const TransactionsPage = () => {
 
             {/* Filters */}
             <div className="p-4 sm:p-6 border-b bg-gray-50">
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
                   <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
                     <SelectTrigger className="text-sm">
@@ -233,20 +265,6 @@ const TransactionsPage = () => {
                       <SelectItem value="Complete">Complete</SelectItem>
                       <SelectItem value="Pending">Pending</SelectItem>
                       <SelectItem value="Failed">Failed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Select value={filters.dateRange} onValueChange={(value) => handleFilterChange('dateRange', value)}>
-                    <SelectTrigger className="text-sm">
-                      <SelectValue placeholder="Date Range" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All Time</SelectItem>
-                      <SelectItem value="Today">Today</SelectItem>
-                      <SelectItem value="This Week">This Week</SelectItem>
-                      <SelectItem value="This Month">This Month</SelectItem>
-                      <SelectItem value="Last 3 Months">Last 3 Months</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -293,7 +311,7 @@ const TransactionsPage = () => {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredTransactions.length === 0 ? (
+                  {paginatedTransactions.length === 0 ? (
                     <tr>
                       <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
                         <div className="flex flex-col items-center">
@@ -304,7 +322,7 @@ const TransactionsPage = () => {
                       </td>
                     </tr>
                   ) : (
-                    filteredTransactions.map((transaction) => (
+                    paginatedTransactions.map((transaction) => (
                       <tr key={transaction.id} className="hover:bg-gray-50">
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {transaction.transaction_id}
@@ -363,7 +381,7 @@ const TransactionsPage = () => {
 
             {/* Transactions Cards - Mobile */}
             <div className="lg:hidden">
-              {filteredTransactions.length === 0 ? (
+              {paginatedTransactions.length === 0 ? (
                 <div className="p-6 text-center text-gray-500">
                   <div className="flex flex-col items-center">
                     <Bell className="h-12 w-12 text-gray-300 mb-4" />
@@ -373,7 +391,7 @@ const TransactionsPage = () => {
                 </div>
               ) : (
                 <div className="p-4">
-                  {Object.entries(groupedTransactions).map(([date, dateTransactions]) => (
+                  {Object.entries(groupTransactionsByDate(paginatedTransactions)).map(([date, dateTransactions]) => (
                     <div key={date} className="mb-6">
                       <h3 className="text-sm font-semibold text-gray-700 mb-3 sticky top-0 bg-white py-2">
                         {date}
@@ -455,7 +473,7 @@ const TransactionsPage = () => {
             <div className="px-4 sm:px-6 py-4 border-t bg-gray-50">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
                 <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
-                  Showing {filteredTransactions.length === 0 ? 0 : ((pagination.currentPage - 1) * pagination.itemsPerPage) + 1} to {Math.min(pagination.currentPage * pagination.itemsPerPage, filteredTransactions.length)} of {filteredTransactions.length} transactions
+                  Showing {filteredTransactions.length === 0 ? 0 : startIndex + 1} to {Math.min(endIndex, filteredTransactions.length)} of {filteredTransactions.length} transactions
                 </div>
                 
                 <div className="flex items-center gap-1 sm:gap-2">
@@ -472,7 +490,7 @@ const TransactionsPage = () => {
                   </Button>
                   
                   <div className="flex items-center gap-1">
-                    {Array.from({ length: Math.min(3, pagination.totalPages) }, (_, i) => {
+                    {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
                       const page = i + 1;
                       return (
                         <Button
@@ -495,7 +513,7 @@ const TransactionsPage = () => {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    disabled={pagination.currentPage === pagination.totalPages}
+                    disabled={pagination.currentPage === totalPages}
                     onClick={() => handlePageChange(pagination.currentPage + 1)}
                     className="text-xs sm:text-sm px-2 sm:px-3"
                   >

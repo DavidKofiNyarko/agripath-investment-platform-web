@@ -132,7 +132,7 @@ const SignInPage = () => {
                 hour12: false,
                 timeZone: 'GMT',
                 timeZoneName: 'short'
-              }).replace('GMT', 'GMT')}
+              }).replace(/,/g, '').replace('GMT', 'GMT')}
             </div>
           </div>
           <div className="space-y-2">
@@ -281,7 +281,7 @@ const SignInPage = () => {
               hour12: false,
               timeZone: 'GMT',
               timeZoneName: 'short'
-            }).replace('GMT', 'GMT')}
+            }).replace(/,/g, '').replace('GMT', 'GMT')}
           </div>
         </div>
 

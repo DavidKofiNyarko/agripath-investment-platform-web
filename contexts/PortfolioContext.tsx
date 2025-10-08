@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useUser } from './UserContext';
 
@@ -75,6 +75,7 @@ interface SupabaseProject {
   expected_return_rate: number;
   duration_months: number;
   project_stages: 'PLANNING' | 'PREPARATION' | 'PLANTING' | 'GROWTH' | 'HARVEST' | 'COMPLETED';
+  created_at: string;
 }
 
 interface SupabaseTransactionWithProject {
@@ -110,12 +111,29 @@ interface SupabaseTransactionData {
   };
 }
 
+interface PortfolioFilters {
+  type: string;
+  status: string;
+  search: string;
+}
+
+interface PortfolioPagination {
+  currentPage: number;
+  totalPages: number;
+  totalItems: number;
+  itemsPerPage: number;
+}
+
 interface PortfolioContextType {
   projects: Project[];
   metrics: PortfolioMetrics | null;
   transactions: Transaction[];
   loading: boolean;
   error: string | null;
+  filters: PortfolioFilters;
+  setFilters: (filters: PortfolioFilters) => void;
+  pagination: PortfolioPagination;
+  setPagination: React.Dispatch<React.SetStateAction<PortfolioPagination>>;
   refreshPortfolio: () => Promise<void>;
 }
 
@@ -129,6 +147,72 @@ export const usePortfolio = () => {
   return context;
 };
 
+// Calculate accurate project progress based on timeline
+const calculateProjectProgress = (projectStartDate: Date, durationMonths: number) => {
+  const now = new Date();
+  const projectEndDate = new Date(projectStartDate.getTime() + durationMonths * 30 * 24 * 60 * 60 * 1000);
+  const totalDuration = projectEndDate.getTime() - projectStartDate.getTime();
+  const elapsed = now.getTime() - projectStartDate.getTime();
+  
+  // Clamp progress between 0 and 100
+  const progress = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
+  return Math.round(progress);
+};
+
+// Calculate accurate end date from project start + duration
+const calculateProjectEndDate = (projectStartDate: Date, durationMonths: number) => {
+  const endDate = new Date(projectStartDate.getTime() + durationMonths * 30 * 24 * 60 * 60 * 1000);
+  return endDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+};
+
+// Generate accurate project timeline based on real project data
+const generateProjectTimeline = (projectStage: string, durationMonths: number, projectStartDate: Date) => {
+  const timeline = [];
+  const now = new Date();
+  const projectEndDate = new Date(projectStartDate.getTime() + durationMonths * 30 * 24 * 60 * 60 * 1000);
+  
+  // Define project phases based on duration and current stage
+  const phases = [
+    { name: 'Project Initiation', duration: 0.5 }, // 0.5 months
+    { name: 'Land Preparation', duration: 1 },     // 1 month
+    { name: 'Planting/Growth', duration: durationMonths * 0.6 }, // 60% of duration
+    { name: 'Harvest Phase', duration: durationMonths * 0.3 },   // 30% of duration
+    { name: 'Project Completion', duration: 0.5 }   // 0.5 months
+  ];
+  
+  let currentDate = new Date(projectStartDate);
+  let currentPhaseIndex = -1;
+  
+  // Find which phase we're currently in based on project stage
+  const stageMapping: Record<string, number> = {
+    'PLANNING': 0,
+    'PREPARATION': 1,
+    'PLANTING': 2,
+    'GROWTH': 2,
+    'HARVEST': 3,
+    'COMPLETED': 4
+  };
+  
+  currentPhaseIndex = stageMapping[projectStage] || 0;
+  
+  phases.forEach((phase, index) => {
+    const phaseEndDate = new Date(currentDate.getTime() + phase.duration * 30 * 24 * 60 * 60 * 1000);
+    const isCompleted = index < currentPhaseIndex || (index === currentPhaseIndex && now > phaseEndDate);
+    const isCurrent = index === currentPhaseIndex && now >= currentDate && now <= phaseEndDate;
+    
+    timeline.push({
+      step: phase.name,
+      date: phaseEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      completed: isCompleted,
+      current: isCurrent && !isCompleted
+    });
+    
+    currentDate = new Date(phaseEndDate);
+  });
+  
+  return timeline;
+};
+
 // Type validation helpers
 const isValidProject = (project: unknown): project is SupabaseProject => {
   if (!project || typeof project !== 'object' || project === null) return false;
@@ -140,7 +224,8 @@ const isValidProject = (project: unknown): project is SupabaseProject => {
     typeof p.expected_return_rate === 'number' &&
     typeof p.duration_months === 'number' &&
     typeof p.unit_price === 'number' &&
-    typeof p.total_units === 'number'
+    typeof p.total_units === 'number' &&
+    typeof p.created_at === 'string'
   );
 };
 
@@ -177,7 +262,19 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filters, setFilters] = useState<PortfolioFilters>({
+    type: 'All',
+    status: 'All',
+    search: ''
+  });
+  const [pagination, setPagination] = useState<PortfolioPagination>({
+    currentPage: 1,
+    totalPages: 1,
+    totalItems: 0,
+    itemsPerPage: 10
+  });
   const supabase = createClient();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchPortfolioData = useCallback(async () => {
     if (!user) {
@@ -221,7 +318,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         average_investment: averageInvestment
       });
 
-      // Fetch projects with investment data
+      // Fetch all projects data (filtering now handled client-side)
       const { data: projectsData, error: projectsError } = await supabase
         .from('transactions')
         .select(`
@@ -240,7 +337,8 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             unit_price,
             expected_return_rate,
             duration_months,
-            project_stages
+            project_stages,
+            created_at
           )
         `)
         .eq('profile_id', user.id)
@@ -280,17 +378,12 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             amount: 0,
             units: 0,
             date: '',
-            progress: 75, // Default progress
+            progress: calculateProjectProgress(new Date(project.created_at || Date.now()), project.duration_months),
             roi: `${project.expected_return_rate}%`,
             potentialReturn: `GHS ${Math.round(project.expected_return_rate / 100 * 1000)} - ${Math.round(project.expected_return_rate / 100 * 1500)}`,
             duration: `${project.duration_months} Months`,
-            endDate: new Date(Date.now() + project.duration_months * 30 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
-            timeline: [
-              { step: 'Project Initiation', date: new Date().toLocaleDateString(), completed: true },
-              { step: 'Development Phase', date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toLocaleDateString(), completed: false, current: true },
-              { step: 'Growth Phase', date: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toLocaleDateString(), completed: false },
-              { step: 'Harvest Phase', date: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toLocaleDateString(), completed: false }
-            ]
+            endDate: calculateProjectEndDate(new Date(project.created_at || Date.now()), project.duration_months),
+            timeline: generateProjectTimeline(project.project_stages, project.duration_months, new Date(project.created_at || Date.now()))
           });
         }
 
@@ -402,6 +495,9 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
     }
   }, [user, fetchPortfolioData]);
 
+  // Note: Filtering and pagination are now handled client-side
+  // No need for useEffect to watch filter changes
+
   const refreshPortfolio = useCallback(() => fetchPortfolioData(), [fetchPortfolioData]);
 
   const value = {
@@ -410,6 +506,10 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
     transactions,
     loading,
     error,
+    filters,
+    setFilters,
+    pagination,
+    setPagination,
     refreshPortfolio
   };
 

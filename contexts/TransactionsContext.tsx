@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useUser } from './UserContext';
 
@@ -9,7 +9,7 @@ export interface Transaction {
   transaction_id: string;
   profile_id: string;
   project_id: string;
-  type: 'Payin' | 'Payout' | 'Refund';
+  type: 'Payin' | 'Payout' | 'Refund' | 'momo_topup' | 'momo_withdrawal' | 'bank_withdrawal' | 'investment';
   amount: number;
   unit: number;
   status: 'Pending' | 'Complete' | 'Failed'; // Database uses 'Complete'
@@ -54,7 +54,6 @@ interface TransactionFilters {
   type: string;
   status: string;
   search: string;
-  dateRange: string;
 }
 
 interface Pagination {
@@ -93,8 +92,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
   const [filters, setFilters] = useState<TransactionFilters>({
     type: 'All',
     status: 'All',
-    search: '',
-    dateRange: 'All'
+    search: ''
   });
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -103,6 +101,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
     itemsPerPage: 10
   });
   const supabase = createClient();
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchTransactions = useCallback(async () => {
     if (!user) {
@@ -138,43 +137,21 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
           network,
           account_number,
           projects!inner(project_name)
-        `)
+        `, { count: 'exact' })
         .eq('profile_id', user.id)
         .order('created_at', { ascending: false });
 
-      // Apply type filter
-      if (filters.type !== 'All') {
-        query = query.eq('type', filters.type);
-      }
+      // Note: Type filtering is now handled in the UI component, not at database level
+      // This allows for better tab switching without refetching data
 
       // Apply status filter
       if (filters.status !== 'All') {
         query = query.eq('status', filters.status);
       }
 
-      // Apply date range filter
-      if (filters.dateRange !== 'All') {
-        const now = new Date();
-        let startDate: Date;
-        
-        switch (filters.dateRange) {
-          case 'Today':
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            break;
-          case 'This Week':
-            startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-            break;
-          case 'This Month':
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-          case 'Last 3 Months':
-            startDate = new Date(now.getFullYear(), now.getMonth() - 3, now.getDate());
-            break;
-          default:
-            startDate = new Date(0);
-        }
-        
-        query = query.gte('created_at', startDate.toISOString());
+      // Apply search filter
+      if (filters.search && filters.search.trim() !== '') {
+        query = query.or(`transaction_id.ilike.%${filters.search}%,projects.project_name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
       // Apply pagination
@@ -236,6 +213,38 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
       fetchTransactions();
     }
   }, [user, fetchTransactions]);
+
+  // Refetch when non-search filters change (immediate)
+  useEffect(() => {
+    if (user) {
+      // Reset to first page when filters change
+      setPagination(prev => ({ ...prev, currentPage: 1 }));
+      fetchTransactions();
+    }
+  }, [filters.status, user, fetchTransactions]);
+
+  // Debounced search effect
+  useEffect(() => {
+    if (user) {
+      // Clear existing timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+
+      // Set new timeout for search
+      searchTimeoutRef.current = setTimeout(() => {
+        setPagination(prev => ({ ...prev, currentPage: 1 }));
+        fetchTransactions();
+      }, 500); // 500ms delay
+
+      // Cleanup timeout on unmount
+      return () => {
+        if (searchTimeoutRef.current) {
+          clearTimeout(searchTimeoutRef.current);
+        }
+      };
+    }
+  }, [filters.search, user, fetchTransactions]);
 
   const refreshTransactions = useCallback(() => fetchTransactions(), [fetchTransactions]);
 
