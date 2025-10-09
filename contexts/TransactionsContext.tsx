@@ -47,13 +47,14 @@ interface TransactionRow {
   account_number: string;
   projects: {
     project_name: string | null;
+  } | {
+    project_name: string | null;
   }[] | null;
 }
 
 interface TransactionFilters {
   type: string;
   status: string;
-  search: string;
 }
 
 interface Pagination {
@@ -91,8 +92,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<TransactionFilters>({
     type: 'All',
-    status: 'All',
-    search: ''
+    status: 'All'
   });
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -101,7 +101,6 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
     itemsPerPage: 10
   });
   const supabase = createClient();
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchTransactions = useCallback(async () => {
     if (!user) {
@@ -136,7 +135,9 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
           external_id,
           network,
           account_number,
-          projects!inner(project_name)
+          projects:project_id(
+            project_name
+          )
         `, { count: 'exact' })
         .eq('profile_id', user.id)
         .order('created_at', { ascending: false });
@@ -147,11 +148,6 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
       // Apply status filter
       if (filters.status !== 'All') {
         query = query.eq('status', filters.status);
-      }
-
-      // Apply search filter
-      if (filters.search && filters.search.trim() !== '') {
-        query = query.or(`transaction_id.ilike.%${filters.search}%,projects.project_name.ilike.%${filters.search}%,description.ilike.%${filters.search}%`);
       }
 
       // Apply pagination
@@ -185,7 +181,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
         external_id: item.external_id,
         network: item.network,
         account_number: item.account_number,
-        project_name: item.projects?.[0]?.project_name || 'Unknown Project',
+        project_name: Array.isArray(item.projects) ? (item.projects[0]?.project_name || 'Unknown Project') : (item.projects?.project_name || 'Unknown Project'),
       })) || [];
 
       setTransactions(formattedTransactions);
@@ -214,7 +210,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
     }
   }, [user, fetchTransactions]);
 
-  // Refetch when non-search filters change (immediate)
+  // Refetch when filters change (immediate)
   useEffect(() => {
     if (user) {
       // Reset to first page when filters change
@@ -222,29 +218,6 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
       fetchTransactions();
     }
   }, [filters.status, user, fetchTransactions]);
-
-  // Debounced search effect
-  useEffect(() => {
-    if (user) {
-      // Clear existing timeout
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-
-      // Set new timeout for search
-      searchTimeoutRef.current = setTimeout(() => {
-        setPagination(prev => ({ ...prev, currentPage: 1 }));
-        fetchTransactions();
-      }, 500); // 500ms delay
-
-      // Cleanup timeout on unmount
-      return () => {
-        if (searchTimeoutRef.current) {
-          clearTimeout(searchTimeoutRef.current);
-        }
-      };
-    }
-  }, [filters.search, user, fetchTransactions]);
 
   const refreshTransactions = useCallback(() => fetchTransactions(), [fetchTransactions]);
 

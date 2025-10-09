@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard-layout';
 import UserHeader from '@/components/user-header';
 import { useProjects, Project } from '@/contexts/ProjectsContext';
@@ -14,7 +15,6 @@ import { createClient } from '@/app/utils/supabase/client';
 import { paymentService } from '@/lib/paymentService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
@@ -36,6 +36,7 @@ import {
   AlertTriangle,
   Loader2
 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Investment {
   id: string;
@@ -86,6 +87,7 @@ const progressVariants = {
 const InvestmentsPage = () => {
   const { user } = useUser();
   const { profile } = useProfile();
+  const router = useRouter();
   const supabase = createClient();
   const { 
     projects, 
@@ -260,7 +262,7 @@ const InvestmentsPage = () => {
       type: project.project_type,
       location: project.farm_location,
       price: project.unit_price,
-      roi: `${project.expected_return_rate}%`,
+      roi: `${project.expected_return_rate}% - ${project.max_expected_return_rate}%`,
       duration: `${project.duration_months} months`,
       available: project.available_unit,
       totalUnits: project.total_units,
@@ -308,7 +310,7 @@ const InvestmentsPage = () => {
     
     // Handle both "15-25%" and "15%" formats
     if (selectedInvestment.roi.includes('-')) {
-      const [minROI, maxROI] = selectedInvestment.roi.split('-').map(r => parseFloat(r.replace('%', '')));
+      const [minROI, maxROI] = selectedInvestment.roi.split('-').map((r: string) => parseFloat(r.replace('%', '')));
       const minReturn = Math.round(total * (minROI / 100) * 100) / 100; // Round to 2 decimal places
       const maxReturn = Math.round(total * (maxROI / 100) * 100) / 100; // Round to 2 decimal places
       return `${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)}`;
@@ -318,6 +320,192 @@ const InvestmentsPage = () => {
       const expectedReturn = Math.round(total * (roi / 100) * 100) / 100; // Round to 2 decimal places
       return `${expectedReturn.toFixed(2)}`;
     }
+  };
+
+  // Generate and download receipt
+  const generateReceipt = () => {
+    if (!selectedInvestment || !profile) return;
+
+    const receiptData = {
+      transactionId: `TXN-${Date.now()}`,
+      date: new Date().toLocaleDateString('en-US', { 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }),
+      investor: {
+        name: `${profile.first_name} ${profile.last_name}`,
+        email: profile.email,
+        phone: profile.phone_number
+      },
+      investment: {
+        project: selectedInvestment.name,
+        amount: calculateTotal(),
+        units: quantity,
+        expectedReturn: calculateExpectedReturn(),
+        duration: selectedInvestment.duration,
+        startDate: 'November 2025'
+      }
+    };
+
+    // Create receipt HTML
+    const receiptHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>Investment Receipt - Agripath</title>
+        <style>
+          body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px; 
+            background: #f8f9fa;
+          }
+          .receipt { 
+            max-width: 400px; 
+            margin: 0 auto; 
+            background: white; 
+            border-radius: 12px; 
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            overflow: hidden;
+          }
+          .header { 
+            background: linear-gradient(135deg, #16a34a, #15803d); 
+            color: white; 
+            padding: 24px; 
+            text-align: center; 
+          }
+          .logo { 
+            font-size: 24px; 
+            font-weight: bold; 
+            margin-bottom: 8px;
+          }
+          .subtitle { 
+            font-size: 14px; 
+            opacity: 0.9; 
+          }
+          .content { 
+            padding: 24px; 
+          }
+          .section { 
+            margin-bottom: 20px; 
+          }
+          .section-title { 
+            font-size: 16px; 
+            font-weight: 600; 
+            color: #374151; 
+            margin-bottom: 12px; 
+            border-bottom: 2px solid #e5e7eb; 
+            padding-bottom: 8px;
+          }
+          .detail-row { 
+            display: flex; 
+            justify-content: space-between; 
+            margin-bottom: 8px; 
+            font-size: 14px;
+          }
+          .label { 
+            color: #6b7280; 
+          }
+          .value { 
+            font-weight: 500; 
+            color: #111827; 
+          }
+          .total { 
+            background: #f3f4f6; 
+            padding: 16px; 
+            border-radius: 8px; 
+            margin-top: 16px;
+          }
+          .total-amount { 
+            font-size: 20px; 
+            font-weight: bold; 
+            color: #16a34a; 
+            text-align: center;
+          }
+          .footer { 
+            background: #f9fafb; 
+            padding: 16px; 
+            text-align: center; 
+            font-size: 12px; 
+            color: #6b7280;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="receipt">
+          <div class="header">
+            <div class="logo">🌱 Agripath</div>
+            <div class="subtitle">Investment Receipt</div>
+          </div>
+          
+          <div class="content">
+            <div class="section">
+              <div class="section-title">Transaction Details</div>
+              <div class="detail-row">
+                <span class="label">Transaction ID:</span>
+                <span class="value">${receiptData.transactionId}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Date & Time:</span>
+                <span class="value">${receiptData.date}</span>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">Investment Details</div>
+              <div class="detail-row">
+                <span class="label">Project:</span>
+                <span class="value">${receiptData.investment.project}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Units:</span>
+                <span class="value">${receiptData.investment.units}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Duration:</span>
+                <span class="value">${receiptData.investment.duration}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Expected Return:</span>
+                <span class="value">GHS ${receiptData.investment.expectedReturn}</span>
+              </div>
+              <div class="detail-row">
+                <span class="label">Start Date:</span>
+                <span class="value">${receiptData.investment.startDate}</span>
+              </div>
+            </div>
+
+            <div class="total">
+              <div class="detail-row">
+                <span class="label">Total Investment:</span>
+                <span class="value">GHS ${receiptData.investment.amount.toLocaleString()}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="footer">
+            <p>Thank you for investing with Agripath!</p>
+            <p>This receipt confirms your investment transaction.</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Create and download the receipt
+    const blob = new Blob([receiptHTML], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `agripath-investment-receipt-${receiptData.transactionId}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleInvestNow = () => {
@@ -669,7 +857,7 @@ const InvestmentsPage = () => {
                       <span>Duration</span>
                     </div>
                     <div className="flex justify-between items-center mb-3">
-                      <span className="font-semibold text-orange-600">{project.expected_return_rate}%</span>
+                      <span className="font-semibold text-orange-600">{project.expected_return_rate}% - {project.max_expected_return_rate}%</span>
                       <span className="font-semibold text-orange-600">{project.duration_months} months</span>
                     </div>
 
@@ -1433,7 +1621,11 @@ const InvestmentsPage = () => {
                           </div>
                         </div>
 
-                        <Button variant="link" className="text-green-600 underline">
+                        <Button 
+                          variant="link" 
+                          className="text-green-600 underline"
+                          onClick={generateReceipt}
+                        >
                           Download Receipt
                         </Button>
                       </div>
@@ -1444,7 +1636,7 @@ const InvestmentsPage = () => {
                         className="w-full bg-green-600 hover:bg-green-700"
                         onClick={() => {
                           setIsSheetOpen(false);
-                          // Navigate to portfolio
+                          router.push('/portfolio');
                         }}
                       >
                         View My Portfolio

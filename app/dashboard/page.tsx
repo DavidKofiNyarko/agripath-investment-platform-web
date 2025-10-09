@@ -32,6 +32,7 @@ import {
   TrendingUp,
   Activity,
   CheckCircle,
+  Loader2,
   Phone,
   CreditCard,
   Lock,
@@ -63,7 +64,7 @@ const DashboardPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('');
   const [savePaymentMethod, setSavePaymentMethod] = useState(true);
-  const [currentStep, setCurrentStep] = useState('amount'); // 'amount', 'payment', 'pin', 'success', 'error'
+  const [currentStep, setCurrentStep] = useState('amount'); // 'amount', 'payment', 'pin', 'loading', 'success', 'error'
   const [withdrawStep, setWithdrawStep] = useState('amount'); // 'amount', 'method', 'pin', 'success', 'error'
   const [paymentDetails, setPaymentDetails] = useState({
     networkProvider: '',
@@ -92,6 +93,7 @@ const DashboardPage = () => {
 
   const handleTopUpPinSuccess = async () => {
     setIsTopUpPinModalOpen(false);
+    setCurrentStep('loading'); // Show loading state
     
     try {
       const topUpAmount = parseFloat(amount.replace(/,/g, ''));
@@ -113,11 +115,16 @@ const DashboardPage = () => {
         });
         
         if (result.success) {
-          setCurrentStep('success');
+          // Wait a moment for wallet to refresh, then show success
+          setTimeout(() => {
+            setCurrentStep('success');
+          }, 1000);
         } else if (result.redirect_url) {
           // Handle 3D Secure redirect
           window.open(result.redirect_url, '_blank');
-          setCurrentStep('success'); // Assume success for demo
+          setTimeout(() => {
+            setCurrentStep('success'); // Assume success for demo
+          }, 1000);
         } else {
           setCurrentStep('error');
         }
@@ -133,14 +140,23 @@ const DashboardPage = () => {
         });
         
         if (result.success) {
-          setCurrentStep('success');
+          // Wait a moment for wallet to refresh, then show success
+          setTimeout(() => {
+            setCurrentStep('success');
+          }, 1000);
         } else {
           setCurrentStep('error');
         }
       } else {
         // Fallback to direct wallet update for other methods
         const success = await updateBalance(topUpAmount, 'Top up via ' + paymentMethod);
-        setCurrentStep(success ? 'success' : 'error');
+        if (success) {
+          setTimeout(() => {
+            setCurrentStep('success');
+          }, 1000);
+        } else {
+          setCurrentStep('error');
+        }
       }
     } catch (error) {
       console.error('Top-up error:', error);
@@ -434,7 +450,7 @@ const DashboardPage = () => {
                   </div>
                   <div className="flex justify-between items-center mb-2 sm:mb-3">
                     <span className="text-xs sm:text-sm font-semibold text-orange-600">
-                      {project.expected_return_rate}%
+                      {project.expected_return_rate}% - {project.max_expected_return_rate}%
                     </span>
                     <span className="text-xs sm:text-sm font-semibold text-orange-600">
                       {project.duration_months}M
@@ -878,6 +894,34 @@ const DashboardPage = () => {
                 )}
 
 
+                {/* Loading Step */}
+                {currentStep === 'loading' && (
+                  <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 10 }}
+                      className="relative"
+                    >
+                      <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                        >
+                          <Loader2 className="h-10 w-10 text-blue-600" />
+                        </motion.div>
+                      </div>
+                    </motion.div>
+                    
+                    <div>
+                      <h3 className="text-xl font-bold text-gray-900 mb-2">Processing Top Up</h3>
+                      <p className="text-gray-600">
+                        Please wait while we process your <span className="font-semibold text-orange-600">GHS {amount}</span> top up...
+                      </p>
+                    </div>
+                  </div>
+                )}
+
                 {/* Success Step */}
                 {currentStep === 'success' && (
                   <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
@@ -917,7 +961,7 @@ const DashboardPage = () => {
                       <h3 className="text-xl font-bold text-gray-900 mb-2">Top Up Successful</h3>
                       <p className="text-gray-600">
                         <span className="font-semibold text-orange-600">GHS {amount}</span> has been added to your in app account. 
-                        Your new balance is <span className="font-semibold text-orange-600">GHS 3,050.70</span>.
+                        Your new balance is <span className="font-semibold text-orange-600">GHS {wallet?.balance?.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) || '0.00'}</span>.
                       </p>
                     </div>
                   </div>

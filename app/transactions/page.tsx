@@ -54,7 +54,6 @@ const TransactionsPage = () => {
   } = useTransactions();
   
   const [activeTab, setActiveTab] = useState('investments');
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedTransactionId, setSelectedTransactionId] = useState<string | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -92,16 +91,6 @@ const TransactionsPage = () => {
       return false;
     }
     
-    // Apply search filter
-    if (filters.search && filters.search.trim() !== '') {
-      const searchTerm = filters.search.toLowerCase();
-      return (
-        transaction.transaction_id.toLowerCase().includes(searchTerm) ||
-        (transaction.project_name && transaction.project_name.toLowerCase().includes(searchTerm)) ||
-        (transaction.description && transaction.description.toLowerCase().includes(searchTerm))
-      );
-    }
-    
     return true;
   });
 
@@ -137,12 +126,6 @@ const TransactionsPage = () => {
   // Handle filter changes
   const handleFilterChange = (key: string, value: string) => {
     setFilters({ ...filters, [key]: value });
-  };
-
-  // Handle search
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-    setFilters({ ...filters, search: value });
   };
 
   // Handle pagination
@@ -219,18 +202,9 @@ const TransactionsPage = () => {
               ))}
             </div>
 
-            {/* Search and Export */}
+            {/* Export */}
             <div className="p-4 sm:p-6 border-b">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                  <Input
-                    placeholder="Search transactions..."
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="pl-10 text-sm sm:text-base"
-                  />
-                </div>
+              <div className="flex justify-end">
                 <Button className="bg-green-600 hover:bg-green-700 gap-2 text-sm sm:text-base py-2 sm:py-2.5">
                   <Download className="h-4 w-4" />
                   <span className="hidden sm:inline">Export</span>
@@ -241,7 +215,7 @@ const TransactionsPage = () => {
 
             {/* Filters */}
             <div className="p-4 sm:p-6 border-b bg-gray-50">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 <div>
                   <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
                     <SelectTrigger className="text-sm">
@@ -267,14 +241,6 @@ const TransactionsPage = () => {
                       <SelectItem value="Failed">Failed</SelectItem>
                     </SelectContent>
                   </Select>
-                </div>
-                <div>
-                  <Input
-                    placeholder="Search transactions..."
-                    value={searchQuery}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="w-full text-sm"
-                  />
                 </div>
               </div>
             </div>

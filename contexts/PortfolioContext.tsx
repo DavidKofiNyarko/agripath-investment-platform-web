@@ -379,7 +379,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             units: 0,
             date: '',
             progress: calculateProjectProgress(new Date(project.created_at || Date.now()), project.duration_months),
-            roi: `${project.expected_return_rate}%`,
+            roi: `${project.expected_return_rate}% - ${project.max_expected_return_rate}%`,
             potentialReturn: `GHS ${Math.round(project.expected_return_rate / 100 * 1000)} - ${Math.round(project.expected_return_rate / 100 * 1500)}`,
             duration: `${project.duration_months} Months`,
             endDate: calculateProjectEndDate(new Date(project.created_at || Date.now()), project.duration_months),
