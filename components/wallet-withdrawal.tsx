@@ -10,7 +10,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import { useProjects } from '@/contexts/ProjectsContext';
 import { useWallet } from '@/contexts/WalletContext';
-import { ArrowUpRight, Loader2 } from 'lucide-react';
+import { ArrowUpRight, Loader2, AlertTriangle, Wallet } from 'lucide-react';
 import KycRequiredModal from '@/components/kyc-required-modal';
 
 interface WithdrawalFormData {
@@ -29,10 +29,11 @@ const WalletWithdrawal: React.FC = () => {
   const { user } = useUser();
   const { profile } = useProfile();
   const { projects } = useProjects();
-  const { processWalletWithdrawal } = useWallet();
+  const { processWalletWithdrawal, wallet } = useWallet();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [errorType, setErrorType] = useState<'general' | 'insufficient_funds' | 'kyc'>('general');
   const [showKycModal, setShowKycModal] = useState(false);
   
   const [formData, setFormData] = useState<WithdrawalFormData>({
@@ -49,6 +50,24 @@ const WalletWithdrawal: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setError('');
     setSuccess('');
+    setErrorType('general');
+  };
+
+  // Check if withdrawal amount exceeds wallet balance
+  const isAmountExceedingBalance = () => {
+    if (!wallet?.balance || !formData.amount) return false;
+    const withdrawalAmount = parseFloat(formData.amount);
+    return withdrawalAmount > wallet.balance;
+  };
+
+  // Get validation error message
+  const getValidationError = () => {
+    if (!formData.amount) return '';
+    
+    const amount = parseFloat(formData.amount);
+    if (amount <= 0) return 'Amount must be greater than 0';
+    if (isAmountExceedingBalance()) return 'Amount exceeds available balance';
+    return '';
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,8 +136,14 @@ const WalletWithdrawal: React.FC = () => {
         });
       } else if (result.error?.includes('KYC verification required')) {
         // Show KYC modal instead of error message
+        setErrorType('kyc');
         setShowKycModal(true);
+      } else if (result.error === 'insufficient_funds') {
+        // Handle insufficient funds error specifically
+        setErrorType('insufficient_funds');
+        setError(result.details || 'Insufficient funds in merchant account. Please try a smaller amount or contact support.');
       } else {
+        setErrorType('general');
         setError(result.error || 'Withdrawal failed. Please try again.');
       }
 
@@ -139,6 +164,20 @@ const WalletWithdrawal: React.FC = () => {
         </CardTitle>
       </CardHeader>
       <CardContent>
+        {/* Wallet Balance Display */}
+        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="flex items-center gap-2 mb-2">
+            <Wallet className="h-5 w-5 text-green-600" />
+            <span className="text-sm font-medium text-green-800">Available Balance</span>
+          </div>
+          <div className="text-2xl font-bold text-green-700">
+            {wallet?.currency || 'GHS'} {wallet?.balance?.toLocaleString('en-US', { 
+              minimumFractionDigits: 2, 
+              maximumFractionDigits: 2 
+            }) || '0.00'}
+          </div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Amount */}
           <div className="space-y-2">
@@ -148,11 +187,19 @@ const WalletWithdrawal: React.FC = () => {
               type="number"
               step="0.01"
               min="0"
+              max={wallet?.balance || undefined}
               value={formData.amount}
               onChange={(e) => handleInputChange('amount', e.target.value)}
               placeholder="Enter amount to withdraw"
+              className={isAmountExceedingBalance() ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}
               required
             />
+            {getValidationError() && (
+              <p className="text-sm text-red-600 flex items-center gap-1">
+                <AlertTriangle className="h-4 w-4" />
+                {getValidationError()}
+              </p>
+            )}
           </div>
 
           {/* Channel Selection */}
@@ -254,8 +301,52 @@ const WalletWithdrawal: React.FC = () => {
 
           {/* Error/Success Messages */}
           {error && (
-            <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-              <p className="text-sm text-red-600">{error}</p>
+            <div className={`p-4 rounded-lg border ${
+              errorType === 'insufficient_funds' 
+                ? 'bg-orange-50 border-orange-200' 
+                : errorType === 'kyc'
+                ? 'bg-blue-50 border-blue-200'
+                : 'bg-red-50 border-red-200'
+            }`}>
+              <div className="flex items-start gap-3">
+                <AlertTriangle className={`h-5 w-5 mt-0.5 ${
+                  errorType === 'insufficient_funds' 
+                    ? 'text-orange-600' 
+                    : errorType === 'kyc'
+                    ? 'text-blue-600'
+                    : 'text-red-600'
+                }`} />
+                <div>
+                  <p className={`font-medium ${
+                    errorType === 'insufficient_funds' 
+                      ? 'text-orange-800' 
+                      : errorType === 'kyc'
+                      ? 'text-blue-800'
+                      : 'text-red-800'
+                  }`}>
+                    {errorType === 'insufficient_funds' 
+                      ? 'Insufficient Funds' 
+                      : errorType === 'kyc'
+                      ? 'KYC Verification Required'
+                      : 'Withdrawal Failed'
+                    }
+                  </p>
+                  <p className={`text-sm mt-1 ${
+                    errorType === 'insufficient_funds' 
+                      ? 'text-orange-700' 
+                      : errorType === 'kyc'
+                      ? 'text-blue-700'
+                      : 'text-red-700'
+                  }`}>
+                    {error}
+                  </p>
+                  {errorType === 'insufficient_funds' && (
+                    <p className="text-sm text-orange-600 mt-2">
+                      💡 Try withdrawing a smaller amount or contact support for assistance.
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           )}
           
@@ -268,8 +359,8 @@ const WalletWithdrawal: React.FC = () => {
           {/* Submit Button */}
           <Button
             type="submit"
-            disabled={loading}
-            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-base shadow-lg"
+            disabled={loading || isAmountExceedingBalance() || !!getValidationError()}
+            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-base shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>

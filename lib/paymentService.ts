@@ -56,6 +56,7 @@ export interface PaymentResponse {
   message?: string;
   error?: string;
   statusCode?: number;
+  description?: string;
 }
 
 export interface PayoutRequest {

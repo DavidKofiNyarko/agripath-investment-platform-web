@@ -17,21 +17,19 @@ import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import PasswordChange from '@/components/password-change';
 import PinChange from '@/components/pin-change';
+import { logoutAllDevices } from '@/lib/authService';
 import { 
   User, 
   Shield, 
   Bell, 
   CreditCard, 
-  // ChevronDown, // Unused import 
   Key, 
-  // Eye, // Unused import 
-  // EyeOff, // Unused import
   Trash2,
   Check,
   X,
-  // Upload, // Unused import
   AlertTriangle,
-  PartyPopper
+  PartyPopper,
+  Loader2
 } from 'lucide-react';
 
 const SettingsPage = () => {
@@ -74,6 +72,8 @@ const SettingsPage = () => {
   const [isPinSetOpen, setIsPinSetOpen] = useState(false);
   const [isSuccessOpen, setIsSuccessOpen] = useState(false);
   const [isProfileSuccessOpen, setIsProfileSuccessOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState<string | null>(null);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [profileForm, setProfileForm] = useState({
@@ -234,6 +234,25 @@ const SettingsPage = () => {
   const handleDeletePaymentMethod = (id: number) => {
     // Handle deletion logic
     console.log('Delete payment method:', id);
+  };
+
+  const handleLogoutAllDevices = async () => {
+    setIsLoggingOut(true);
+    setLogoutError(null);
+    
+    try {
+      const result = await logoutAllDevices();
+      
+      if (!result.success) {
+        setLogoutError(result.error || 'Failed to logout all devices. Please try again.');
+        setIsLoggingOut(false);
+      }
+      // If successful, user will be redirected to signin page
+    } catch (error) {
+      console.error('Logout error:', error);
+      setLogoutError('An unexpected error occurred. Please try again.');
+      setIsLoggingOut(false);
+    }
   };
 
   if (profileLoading) {
@@ -654,13 +673,47 @@ const SettingsPage = () => {
                     <p className="text-gray-600 mb-4">
                       For security reasons, you can log out of all devices where your AgriPath account is currently active.
                     </p>
+                    
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-                      <p className="text-red-800 text-sm">
-                        This will log you out everywhere, including this device. You&apos;ll need to sign in again.
-                      </p>
+                      <div className="flex items-start">
+                        <AlertTriangle className="h-5 w-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
+                        <div>
+                          <p className="text-red-800 text-sm font-medium mb-1">
+                            ⚠️ This will log you out everywhere, including this device
+                          </p>
+                          <p className="text-red-700 text-sm">
+                            You'll need to sign in again on all devices after this action.
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <Button variant="destructive" className="bg-red-600 hover:bg-red-700">
-                      Logout All Devices
+
+                    {logoutError && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-start">
+                          <X className="h-5 w-5 text-red-600 mt-0.5 mr-3 flex-shrink-0" />
+                          <div>
+                            <p className="text-red-800 text-sm font-medium">Error</p>
+                            <p className="text-red-700 text-sm">{logoutError}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <Button 
+                      variant="destructive" 
+                      className="bg-red-600 hover:bg-red-700"
+                      onClick={handleLogoutAllDevices}
+                      disabled={isLoggingOut}
+                    >
+                      {isLoggingOut ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Logging out...
+                        </>
+                      ) : (
+                        'Logout All Devices'
+                      )}
                     </Button>
                   </CardContent>
                 </Card>

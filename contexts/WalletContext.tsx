@@ -49,7 +49,7 @@ interface WalletContextType {
     recipient_number?: string;
     account_issuer?: string;
     description?: string;
-  }) => Promise<{ success: boolean; error?: string }>;
+  }) => Promise<{ success: boolean; error?: string; details?: string }>;
   
   // Legacy Payment API Integration Methods (kept for backward compatibility)
   processCardPayment: (cardData: {
@@ -458,6 +458,16 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         await refreshWallet();
         return { success: true };
       } else {
+        // Handle specific error cases
+        if (response.description?.toLowerCase().includes('insufficient funds') || 
+            response.description?.toLowerCase().includes('merchant float')) {
+          return { 
+            success: false, 
+            error: 'insufficient_funds',
+            details: response.description || 'Insufficient funds in merchant account'
+          };
+        }
+        
         return { success: false, error: response.reason || 'Withdrawal failed' };
       }
     } catch (error) {

@@ -36,7 +36,11 @@ interface UpdateRow {
     project_name: string | null;
     project_type: string | null;
     farm_location: string | null;
-  }[];
+  } | {
+    project_name: string | null;
+    project_type: string | null;
+    farm_location: string | null;
+  }[] | null;
 }
 
 interface UpdateFilters {
@@ -185,9 +189,9 @@ export const UpdatesProvider = ({ children }: { children: React.ReactNode }) => 
         update_type: item.update_type as 'Progress' | 'Milestone' | 'Issue' | 'Completion',
         status: item.status as 'Draft' | 'Published' | 'Archived',
         updated_at: item.updated_at,
-        project_name: item.projects?.[0]?.project_name || 'Unknown Project',
-        project_type: item.projects?.[0]?.project_type || 'CROP',
-        farm_location: item.projects?.[0]?.farm_location || 'Unknown Location'
+        project_name: Array.isArray(item.projects) ? (item.projects[0]?.project_name || 'Unknown Project') : (item.projects?.project_name || 'Unknown Project'),
+        project_type: Array.isArray(item.projects) ? (item.projects[0]?.project_type || 'CROP') : (item.projects?.project_type || 'CROP'),
+        farm_location: Array.isArray(item.projects) ? (item.projects[0]?.farm_location || 'Unknown Location') : (item.projects?.farm_location || 'Unknown Location')
       })) || [];
 
       setUpdates(formattedUpdates);

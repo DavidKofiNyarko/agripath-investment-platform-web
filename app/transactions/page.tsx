@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { TransactionDetailDrawer } from '@/components/transaction-detail-drawer';
+import { convertTransactionsToCSV, downloadCSV, generateTransactionFilename, ExportableTransaction } from '@/lib/csvExport';
 import { 
   Search, 
   Download,
@@ -128,6 +129,43 @@ const TransactionsPage = () => {
     setFilters({ ...filters, [key]: value });
   };
 
+  // Handle CSV export
+  const handleExportCSV = () => {
+    try {
+      // Convert transactions to exportable format
+      const exportableTransactions: ExportableTransaction[] = filteredTransactions.map(transaction => ({
+        transactionId: transaction.transaction_id,
+        method: transaction.type === 'momo_topup' ? 'Mobile Money' : 
+                transaction.type === 'momo_withdrawal' || transaction.type === 'bank_withdrawal' ? 'Bank Transfer' :
+                transaction.type === 'investment' ? 'Investment' : 'Card',
+        project: transaction.project_name || 'Unknown Project',
+        amount: `GHS ${transaction.amount.toLocaleString()}`,
+        unit: transaction.unit ? transaction.unit.toString() : '',
+        status: transaction.status,
+        date: new Date(transaction.created_at).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        description: transaction.description || ''
+      }));
+
+      // Generate CSV content
+      const csvContent = convertTransactionsToCSV(exportableTransactions);
+      
+      // Download the CSV file
+      const filename = generateTransactionFilename();
+      downloadCSV(csvContent, filename);
+      
+    } catch (error) {
+      console.error('Error exporting CSV:', error);
+      // You could add a toast notification here
+      alert('Failed to export transactions. Please try again.');
+    }
+  };
+
   // Handle pagination
   const handlePageChange = (page: number) => {
     setPagination({ ...pagination, currentPage: page });
@@ -205,7 +243,11 @@ const TransactionsPage = () => {
             {/* Export */}
             <div className="p-4 sm:p-6 border-b">
               <div className="flex justify-end">
-                <Button className="bg-green-600 hover:bg-green-700 gap-2 text-sm sm:text-base py-2 sm:py-2.5">
+                <Button 
+                  className="bg-green-600 hover:bg-green-700 gap-2 text-sm sm:text-base py-2 sm:py-2.5"
+                  onClick={handleExportCSV}
+                  disabled={filteredTransactions.length === 0}
+                >
                   <Download className="h-4 w-4" />
                   <span className="hidden sm:inline">Export</span>
                   <span className="sm:hidden">Export</span>
@@ -215,27 +257,17 @@ const TransactionsPage = () => {
 
             {/* Filters */}
             <div className="p-4 sm:p-6 border-b bg-gray-50">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-1 gap-3 sm:gap-4">
                 <div>
-                  <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
-                    <SelectTrigger className="text-sm">
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="All">All</SelectItem>
-                      <SelectItem value="Payin">Payin</SelectItem>
-                      <SelectItem value="Payout">Payout</SelectItem>
-                      <SelectItem value="Refund">Refund</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Status Filter
+                  </label>
                   <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
                     <SelectTrigger className="text-sm">
-                      <SelectValue placeholder="Status" />
+                      <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="All">All</SelectItem>
+                      <SelectItem value="All">All Statuses</SelectItem>
                       <SelectItem value="Complete">Complete</SelectItem>
                       <SelectItem value="Pending">Pending</SelectItem>
                       <SelectItem value="Failed">Failed</SelectItem>

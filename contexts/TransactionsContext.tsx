@@ -53,7 +53,6 @@ interface TransactionRow {
 }
 
 interface TransactionFilters {
-  type: string;
   status: string;
 }
 
@@ -91,7 +90,6 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<TransactionFilters>({
-    type: 'All',
     status: 'All'
   });
   const [pagination, setPagination] = useState({

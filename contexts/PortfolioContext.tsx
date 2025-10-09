@@ -14,6 +14,7 @@ export interface Project {
   total_units: number;
   unit_price: number;
   expected_return_rate: number;
+  max_expected_return_rate: number;
   duration_months: number;
   project_stages: string;
   invested_amount: number;
@@ -73,6 +74,7 @@ interface SupabaseProject {
   total_units: number;
   unit_price: number;
   expected_return_rate: number;
+  max_expected_return_rate: number;
   duration_months: number;
   project_stages: 'PLANNING' | 'PREPARATION' | 'PLANTING' | 'GROWTH' | 'HARVEST' | 'COMPLETED';
   created_at: string;
@@ -222,6 +224,7 @@ const isValidProject = (project: unknown): project is SupabaseProject => {
     typeof p.id === 'string' &&
     typeof p.project_name === 'string' &&
     typeof p.expected_return_rate === 'number' &&
+    typeof p.max_expected_return_rate === 'number' &&
     typeof p.duration_months === 'number' &&
     typeof p.unit_price === 'number' &&
     typeof p.total_units === 'number' &&
@@ -336,6 +339,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             total_units,
             unit_price,
             expected_return_rate,
+            max_expected_return_rate,
             duration_months,
             project_stages,
             created_at
@@ -368,6 +372,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             total_units: project.total_units,
             unit_price: project.unit_price,
             expected_return_rate: project.expected_return_rate,
+            max_expected_return_rate: project.max_expected_return_rate,
             duration_months: project.duration_months,
             project_stages: project.project_stages,
             invested_amount: 0,
