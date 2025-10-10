@@ -98,18 +98,25 @@ const DashboardPage = () => {
     try {
       const topUpAmount = parseFloat(amount.replace(/,/g, ''));
       
+      console.log('Topup Debug:', {
+        paymentMethod,
+        topUpAmount,
+        paymentDetails,
+        user: user?.email
+      });
+      
       // Use new wallet API based on payment method
       if (paymentMethod === 'card') {
-        // For card payments, we'd need card details from the user
-        // For now, we'll use a test card
+        console.log('Processing card payment...');
+        // Use actual form data instead of hardcoded test data
         const result = await processWalletTopup({
           amount: topUpAmount,
           channel: 'card',
-          pan: '4111111111111111',
-          exp_month: '12',
-          exp_year: '25',
-          cvv: '123',
-          card_holder: 'Test User',
+          pan: paymentDetails.cardNumber,
+          exp_month: paymentDetails.expiryDate.split('/')[0],
+          exp_year: paymentDetails.expiryDate.split('/')[1],
+          cvv: paymentDetails.cvv,
+          card_holder: paymentDetails.cardholderName,
           user_email: user?.email || 'test@example.com',
           description: 'Dashboard topup via card'
         });
@@ -129,13 +136,12 @@ const DashboardPage = () => {
           setCurrentStep('error');
         }
       } else if (paymentMethod === 'mobile') {
-        // For mobile money, we'd need the user's mobile number
-        // For now, we'll use a test number
+        // Use actual form data instead of hardcoded test data
         const result = await processWalletTopup({
           amount: topUpAmount,
           channel: 'momo',
-          subscriber_number: '0241234567',
-          network: 'MTN',
+          subscriber_number: paymentDetails.phoneNumber,
+          network: paymentDetails.networkProvider,
           description: 'Dashboard topup via mobile money'
         });
         
@@ -575,6 +581,23 @@ const DashboardPage = () => {
                             <p className="text-xs text-gray-500">
                               {transaction.project_name || transaction.description || 'Transaction'}
                             </p>
+                            <div className="flex items-center gap-1 mt-1">
+                              <Badge 
+                                variant={
+                                  transaction.status === 'Complete' ? 'default' :
+                                  transaction.status === 'Pending' ? 'secondary' :
+                                  transaction.status === 'Failed' ? 'destructive' : 'outline'
+                                }
+                                className={`text-xs px-2 py-0.5 ${
+                                  transaction.status === 'Complete' ? 'bg-green-100 text-green-800 border-green-200' :
+                                  transaction.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                                  transaction.status === 'Failed' ? 'bg-red-100 text-red-800 border-red-200' :
+                                  'bg-gray-100 text-gray-800 border-gray-200'
+                                }`}
+                              >
+                                {transaction.status}
+                              </Badge>
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">

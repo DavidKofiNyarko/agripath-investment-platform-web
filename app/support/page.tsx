@@ -299,12 +299,12 @@ const SupportPage = () => {
                     </div>
 
                     {/* Chat Support Button */}
-                    <div className="pt-4">
+                    {/* <div className="pt-4">
                       <Button className="w-full bg-green-600 hover:bg-green-700 text-white">
                         <MessageCircle className="h-4 w-4 mr-2" />
                         Chat with Support
                       </Button>
-                    </div>
+                    </div> */}
                   </div>
                 </CardContent>
               </Card>

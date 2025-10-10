@@ -8,6 +8,7 @@ import UserHeader from '@/components/user-header';
 import { useProjects, Project } from '@/contexts/ProjectsContext';
 import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useWallet } from '@/contexts/WalletContext';
 import KycModal from '@/components/kyc-modal';
 import PinValidationModal from '@/components/pin-validation-modal';
 import APIConnectivityTest from '@/components/APIConnectivityTest';
@@ -87,6 +88,7 @@ const progressVariants = {
 const InvestmentsPage = () => {
   const { user } = useUser();
   const { profile } = useProfile();
+  const { wallet } = useWallet();
   const router = useRouter();
   const supabase = createClient();
   const { 
@@ -520,6 +522,39 @@ const InvestmentsPage = () => {
     setSelectedPaymentMethod(method);
   };
 
+  // Process wallet investment using the wallet investment endpoint
+  const processWalletInvestment = async (investmentData: {
+    profile_id: string;
+    project_id: string;
+    amount: number;
+    unit: number;
+    description: string;
+  }) => {
+    try {
+      console.log('Wallet investment request:', JSON.stringify(investmentData, null, 2));
+      
+      const response = await fetch('https://infra.agripath.co/api/payments/wallet/invest', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(investmentData),
+      });
+
+      const responseData = await response.json();
+      console.log('Wallet investment response:', responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.message || 'Wallet investment failed');
+      }
+
+      return responseData;
+    } catch (error) {
+      console.error('Wallet investment error:', error);
+      throw error;
+    }
+  };
+
   const handleInvestmentSubmit = async () => {
     if (!selectedInvestment || !user) {
       console.error('Missing investment or user data');
@@ -535,6 +570,13 @@ const InvestmentsPage = () => {
     } else if (selectedPaymentMethod === 'card') {
       if (!paymentDetails.cardName || !paymentDetails.cardNumber || !paymentDetails.expiryDate || !paymentDetails.cvv) {
         alert('Please fill in all card details');
+        return;
+      }
+    } else if (selectedPaymentMethod === 'agripath') {
+      // Validate wallet balance
+      const totalAmount = selectedInvestment.price * quantity;
+      if (!wallet?.balance || wallet.balance < totalAmount) {
+        alert('Insufficient wallet balance for this investment');
         return;
       }
     } else {
@@ -600,6 +642,15 @@ const InvestmentsPage = () => {
           profile_id: profile?.id,
           description: `Investment in ${selectedInvestment.name}`
         });
+      } else if (selectedPaymentMethod === 'agripath') {
+        // Wallet Investment using the wallet investment endpoint
+        paymentResult = await processWalletInvestment({
+          profile_id: profile?.id || '',
+          project_id: projectId,
+          amount: totalAmount,
+          unit: quantity,
+          description: `Investment in ${selectedInvestment.name}`
+        });
       } else {
         throw new Error('Invalid payment method selected');
       }
@@ -608,7 +659,7 @@ const InvestmentsPage = () => {
       
       // Handle payment response
       // Backend returns status: "approved" for successful payments
-      if (paymentResult.status === 'success' || paymentResult.status === 'approved' || paymentResult.code === '000') {
+      if (paymentResult.status === 'success' || paymentResult.status === 'approved' || paymentResult.code === '000' || paymentResult.status === 'completed') {
         // Update project units in database
         await updateProjectUnits(projectId, quantity, totalAmount);
         
@@ -1278,14 +1329,29 @@ const InvestmentsPage = () => {
                     <div className="flex-1 p-6 space-y-4">
                       <RadioGroup value={selectedPaymentMethod} onValueChange={handlePaymentMethodSelect}>
                         {/* AgriPath Account */}
-                        <div className="flex items-center space-x-3 p-4 border rounded-lg">
-                          <RadioGroupItem value="agripath" id="agripath" />
+                        <div className={`flex items-center space-x-3 p-4 border rounded-lg ${
+                          wallet?.balance && selectedInvestment && (wallet.balance < (selectedInvestment.price * quantity)) 
+                            ? 'border-red-200 bg-red-50' 
+                            : 'border-gray-200'
+                        }`}>
+                          <RadioGroupItem 
+                            value="agripath" 
+                            id="agripath" 
+                            disabled={!!(wallet?.balance && selectedInvestment && (wallet.balance < (selectedInvestment.price * quantity)))}
+                          />
                           <div className="flex-1">
                             <Label htmlFor="agripath" className="font-medium">Agripath Account</Label>
-                            <p className="text-sm text-red-500">Available Balance: GHS 0.00</p>
+                            <p className="text-sm text-gray-500">
+                              Pay with your Agripath wallet balance
+                              {wallet?.balance && selectedInvestment && (wallet.balance < (selectedInvestment.price * quantity)) && (
+                                <span className="block text-xs text-red-500 mt-1">
+                                  Insufficient balance for this investment
+                                </span>
+                              )}
+                            </p>
                           </div>
                           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                            <div className="w-6 h-6 bg-green-600 rounded-full"></div>
+                            <span className="text-green-600 text-lg">🌱</span>
                           </div>
                         </div>
 

@@ -29,6 +29,7 @@ interface ProfileContextType {
   profile: Profile | null;
   loading: boolean;
   isProfileComplete: boolean;
+  isProfileCompletionRequired: boolean;
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   createProfile: () => Promise<void>;
   refreshProfile: () => Promise<void>;
@@ -69,6 +70,22 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
     const hasKyc = profile.kyc_status === 'verified' || profile.kyc_status === 'pending' || profile.kyc_status === 'complete';
     
     return hasBasicInfo && hasPin && hasKyc;
+  }, []);
+
+  // Check if profile completion is required (missing essential fields)
+  const isProfileCompletionRequired = useCallback((profile: Profile | null): boolean => {
+    if (!profile) return true;
+    
+    // Check if essential fields are missing
+    const missingEssentialFields = !(
+      profile.first_name && 
+      profile.last_name && 
+      profile.email && 
+      profile.phone_number &&
+      profile.pin
+    );
+    
+    return missingEssentialFields;
   }, []);
 
   const fetchProfile = useCallback(async () => {
@@ -246,6 +263,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
     profile,
     loading,
     isProfileComplete: isProfileComplete(profile),
+    isProfileCompletionRequired: isProfileCompletionRequired(profile),
     updateProfile,
     createProfile,
     refreshProfile

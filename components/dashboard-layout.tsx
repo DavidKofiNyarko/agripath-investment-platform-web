@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 // import { motion } from 'framer-motion'; // motion unused
 import { Sidebar, MobileSidebar, SidebarProvider, useSidebar } from './sidebar';
+import ProfileGuard from './profile-guard';
 import { cn } from '@/lib/utils';
 // Legacy profile completion modal removed in favor of in-page overlay
 
@@ -39,7 +40,9 @@ const DashboardContent = ({ children, className }: DashboardLayoutProps) => {
         {/* Page Content */}
         <main className={cn('py-6 min-h-screen', className)}>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {children}
+            <ProfileGuard>
+              {children}
+            </ProfileGuard>
           </div>
         </main>
       </div>

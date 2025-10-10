@@ -305,37 +305,49 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     network?: string;
     description?: string;
   }) => {
+    console.log('processWalletTopup called with:', topupData);
+    
     if (!user) {
+      console.log('No user found');
       return { success: false, error: 'User not authenticated' };
     }
 
     try {
-      // Get user data from users table (backend expects this table)
+      console.log('Getting user data from profile table...');
+      // Get user data from profile table (backend expects this table)
       const { data: userData } = await supabase
-        .from('users')
-        .select('id, kyc_status, name, email, phone')
-        .eq('id', user.id)
+        .from('profile')
+        .select('id, user_id, kyc_status, first_name, last_name, email, phone_number')
+        .eq('user_id', user.id)
         .single();
 
+      console.log('User data:', userData);
+
       if (!userData) {
+        console.log('User not found in profile table');
         return { success: false, error: 'User not found' };
       }
 
-      // Check KYC status - only allow topup if KYC is Completed
-      if (!userData.kyc_status || userData.kyc_status !== 'Completed') {
+      // Check KYC status - only allow topup if KYC is verified
+      if (!userData.kyc_status || userData.kyc_status !== 'verified') {
+        console.log('KYC not verified:', userData.kyc_status);
         return { 
           success: false, 
           error: 'KYC verification required. Please complete your identity verification before making wallet transactions.' 
         };
       }
 
+      console.log('Getting projects...');
       // Get first available project
       const { data: projects } = await supabase
         .from('projects')
         .select('id')
         .limit(1);
 
+      console.log('Projects:', projects);
+
       if (!projects || projects.length === 0) {
+        console.log('No projects available');
         return { success: false, error: 'No projects available' };
       }
 
@@ -346,14 +358,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         channel: topupData.channel,
         description: topupData.description || `Wallet topup - ${topupData.channel}`,
         redirect_url: `${window.location.origin}/dashboard`,
-        // Send the exact KYC status from users table (backend expects "Completed")
+        // Include KYC fields that backend expects
         kyc_status: userData.kyc_status,
-        kyc_verified: userData.kyc_status === 'Completed',
-        // Include user information from users table
-        first_name: userData.name?.split(' ')[0] || '',
-        last_name: userData.name?.split(' ').slice(1).join(' ') || '',
+        kyc_verified: userData.kyc_status === 'verified',
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || '',
         email: userData.email,
-        phone_number: userData.phone || '',
+        phone_number: userData.phone_number || '',
         ...(topupData.channel === 'card' ? {
           pan: topupData.pan,
           exp_month: topupData.exp_month,
@@ -367,7 +378,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         })
       };
 
+      console.log('Calling paymentService.processWalletTopup with:', walletTopupData);
       const response = await paymentService.processWalletTopup(walletTopupData);
+      console.log('Payment service response:', response);
 
       if (response.status === 'approved') {
         // Refresh wallet balance after successful topup
@@ -399,19 +412,19 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     try {
-      // Get user data from users table (backend expects this table)
+      // Get user data from profile table (backend expects this table)
       const { data: userData } = await supabase
-        .from('users')
-        .select('id, kyc_status, name, email, phone')
-        .eq('id', user.id)
+        .from('profile')
+        .select('id, user_id, kyc_status, first_name, last_name, email, phone_number')
+        .eq('user_id', user.id)
         .single();
 
       if (!userData) {
         return { success: false, error: 'User not found' };
       }
 
-      // Check KYC status - only allow withdrawal if KYC is Completed
-      if (!userData.kyc_status || userData.kyc_status !== 'Completed') {
+      // Check KYC status - only allow withdrawal if KYC is verified
+      if (!userData.kyc_status || userData.kyc_status !== 'verified') {
         return { 
           success: false, 
           error: 'KYC verification required. Please complete your identity verification before making wallet transactions.' 
@@ -434,14 +447,14 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         amount: withdrawalData.amount,
         channel: withdrawalData.channel,
         description: withdrawalData.description || `Wallet withdrawal - ${withdrawalData.channel}`,
-        // Send the exact KYC status from users table (backend expects "Completed")
+        // Send the exact KYC status from profile table (backend expects "verified")
         kyc_status: userData.kyc_status,
-        kyc_verified: userData.kyc_status === 'Completed',
-        // Include user information from users table
-        first_name: userData.name?.split(' ')[0] || '',
-        last_name: userData.name?.split(' ').slice(1).join(' ') || '',
+        kyc_verified: userData.kyc_status === 'verified',
+        // Include user information from profile table
+        first_name: userData.first_name || '',
+        last_name: userData.last_name || '',
         email: userData.email,
-        phone_number: userData.phone || '',
+        phone_number: userData.phone_number || '',
         ...(withdrawalData.channel === 'bank' ? {
           account_number: withdrawalData.account_number,
           account_bank: withdrawalData.account_bank

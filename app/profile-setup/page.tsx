@@ -255,7 +255,7 @@ const ProfileSetupPage = () => {
                   <p className="text-gray-600">
                     Set up a 4-digit PIN to secure your account and authorize transactions.
                   </p>
-                  <PinSetupModal onComplete={handlePinComplete} />
+                  <PinSetupModal isOpen={true} onComplete={handlePinComplete} />
                 </div>
               </CardContent>
             </Card>

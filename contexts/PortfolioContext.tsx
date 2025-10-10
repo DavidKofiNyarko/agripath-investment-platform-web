@@ -169,7 +169,7 @@ const calculateProjectEndDate = (projectStartDate: Date, durationMonths: number)
 
 // Generate accurate project timeline based on real project data
 const generateProjectTimeline = (projectStage: string, durationMonths: number, projectStartDate: Date) => {
-  const timeline = [];
+  const timeline: { step: string; date: string; completed: boolean; current?: boolean }[] = [];
   const now = new Date();
   const projectEndDate = new Date(projectStartDate.getTime() + durationMonths * 30 * 24 * 60 * 60 * 1000);
   

@@ -297,7 +297,6 @@ class PaymentService {
     // KYC fields
     kyc_status?: string;
     kyc_verified?: boolean;
-    kyc_documents?: any;
     first_name?: string;
     last_name?: string;
     email?: string;
@@ -350,7 +349,7 @@ class PaymentService {
     // KYC fields
     kyc_status?: string;
     kyc_verified?: boolean;
-    kyc_documents?: any;
+    kyc_documents?: Record<string, string>;
     first_name?: string;
     last_name?: string;
     email?: string;
