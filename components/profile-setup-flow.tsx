@@ -170,7 +170,7 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onCompleted }) => {
       case 'pin':
         return profile.pin ? 'complete' : 'pending';
       case 'kyc':
-        return (profile.kyc_status === 'verified' || (profile.kyc_status as any) === 'complete') ? 'complete' : 'pending';
+        return (profile.kyc_status === 'verified' || (profile.kyc_status as string) === 'complete') ? 'complete' : 'pending';
       default:
         return 'pending';
     }
