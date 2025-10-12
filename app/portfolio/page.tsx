@@ -343,8 +343,8 @@ const PortfolioPage = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <Progress value={75} className="flex-1 h-2" />
-                            <span className="text-sm text-gray-600 w-12">75%</span>
+                            <Progress value={project.progress} className="flex-1 h-2" />
+                            <span className="text-sm text-gray-600 w-12">{project.progress}%</span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
@@ -412,9 +412,9 @@ const PortfolioPage = () => {
                         <div>
                           <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                             <span>Progress</span>
-                            <span>75%</span>
+                            <span>{project.progress}%</span>
                           </div>
-                          <Progress value={75} className="h-2" />
+                          <Progress value={project.progress} className="h-2" />
                         </div>
                         
                         <div className="flex justify-end pt-2">
