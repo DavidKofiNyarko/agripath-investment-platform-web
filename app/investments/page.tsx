@@ -804,8 +804,8 @@ const InvestmentsPage = () => {
                       <SelectItem value="All">All</SelectItem>
                       <SelectItem value="CROP">Crops</SelectItem>
                       <SelectItem value="LIVESTOCK">Livestock</SelectItem>
-                      <SelectItem value="FISHERY">Fishery</SelectItem>
-                      <SelectItem value="OTHER">Other</SelectItem>
+                      {/* <SelectItem value="FISHERY">Fishery</SelectItem> */}
+                      {/* <SelectItem value="OTHER">Other</SelectItem> */}
                     </SelectContent>
                   </Select>
                 </div>
