@@ -223,7 +223,7 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
         end_date: item.end_date || '',
         cover_image_url: item.cover_image_url || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop',
         max_expected_return_rate: item.max_expected_return_rate || 0,
-        available_unit: item.available_unit || 0,
+        available_unit: item.available_unit && item.available_unit > 0 ? item.available_unit : (item.total_units || 0) - (item.purchased_unit || 0),
         purchased_unit: item.purchased_unit || 0,
         project_stages: (item.project_stages as 'PLANNING' | 'PREPARATION' | 'PLANTING' | 'GROWTH' | 'HARVEST' | 'COMPLETED') || 'PLANNING',
         is_high_ticket: item.is_high_ticket || false,
