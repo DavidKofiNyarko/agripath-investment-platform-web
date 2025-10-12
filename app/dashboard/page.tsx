@@ -737,7 +737,7 @@ const DashboardPage = () => {
                           placeholder="0.00"
                         />
                       </div>
-                      <p className="text-xs text-green-600 mt-2">Account balance: GHS 50.70</p>
+                     
                     </div>
 
                     <div>
