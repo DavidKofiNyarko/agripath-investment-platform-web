@@ -1134,7 +1134,7 @@ const DashboardPage = () => {
                           placeholder="0.00"
                         />
                       </div>
-                      <p className="text-xs text-green-600 mt-2">Available balance: GHS {metrics?.total_invested?.toLocaleString() || '0.00'}</p>
+                      {/* <p className="text-xs text-green-600 mt-2">Available balance: GHS {metrics?.total_invested?.toLocaleString() || '0.00'}</p> */}
                     </div>
 
                     <div>
