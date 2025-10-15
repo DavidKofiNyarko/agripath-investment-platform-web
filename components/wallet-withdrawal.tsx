@@ -91,7 +91,7 @@ const WalletWithdrawal: React.FC = () => {
       }
     } else if (formData.channel === 'momo') {
       if (!formData.recipient_number || !formData.account_issuer) {
-        setError('Recipient number and network are required for mobile money');
+        setError('Recipient number and network provider are required for mobile money');
         return;
       }
     }
@@ -270,20 +270,56 @@ const WalletWithdrawal: React.FC = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="account_issuer">Network</Label>
+                <Label htmlFor="account_issuer">Network Provider *</Label>
                 <Select
                   value={formData.account_issuer}
                   onValueChange={(value) => handleInputChange('account_issuer', value)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select network" />
+                  <SelectTrigger className={!formData.account_issuer ? 'border-red-300 focus:border-red-500' : ''}>
+                    <SelectValue placeholder="Select network provider" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="MTN">MTN</SelectItem>
-                    <SelectItem value="VDF">Vodafone</SelectItem>
-                    <SelectItem value="ATL">AirtelTigo</SelectItem>
+                    <SelectItem value="MTN">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <span>MTN</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="VDF">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <span>Vodafone</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="ATL">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                        <span>Airtel</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="TGO">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                        <span>Tigo</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="ZPY">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                        <span>Zeepay</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="GMY">
+                      <div className="flex items-center space-x-2">
+                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                        <span>G-money</span>
+                      </div>
+                    </SelectItem>
                   </SelectContent>
                 </Select>
+                {!formData.account_issuer && (
+                  <p className="text-sm text-red-600">Please select a network provider</p>
+                )}
               </div>
             </>
           )}

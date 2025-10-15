@@ -766,18 +766,54 @@ const DashboardPage = () => {
                               >
                                 <div>
                                   <Label htmlFor="networkProvider" className="text-sm text-gray-600">
-                                    Select network provider
+                                    Select network provider *
                                   </Label>
                                   <Select onValueChange={(value) => setPaymentDetails({...paymentDetails, networkProvider: value})}>
-                                    <SelectTrigger className="mt-1">
-                                      <SelectValue placeholder="Eg. MTN" />
+                                    <SelectTrigger className={`mt-1 ${!paymentDetails.networkProvider ? 'border-red-300 focus:border-red-500' : ''}`}>
+                                      <SelectValue placeholder="Select network provider" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="mtn">MTN</SelectItem>
-                                      <SelectItem value="vodafone">Vodafone</SelectItem>
-                                      <SelectItem value="airteltigo">AirtelTigo</SelectItem>
+                                      <SelectItem value="MTN">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                          <span>MTN</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="VDF">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                          <span>Vodafone</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="ATL">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                          <span>Airtel</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="TGO">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                          <span>Tigo</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="ZPY">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                          <span>Zeepay</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="GMY">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                          <span>G-money</span>
+                                        </div>
+                                      </SelectItem>
                                     </SelectContent>
                                   </Select>
+                                  {!paymentDetails.networkProvider && (
+                                    <p className="text-sm text-red-600 mt-1">Please select a network provider</p>
+                                  )}
                                 </div>
                                 
                                 <div>
@@ -1029,7 +1065,7 @@ const DashboardPage = () => {
                   <Button
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={handleTopUp}
-                    disabled={!paymentMethod}
+                    disabled={!paymentMethod || (paymentMethod === 'mobile' && (!paymentDetails.phoneNumber || !paymentDetails.networkProvider))}
                   >
                     Continue
                   </Button>
@@ -1191,18 +1227,54 @@ const DashboardPage = () => {
                               >
                                 <div>
                                   <Label htmlFor="networkProviderWithdraw" className="text-sm text-gray-600">
-                                    Select network provider
+                                    Select network provider *
                                   </Label>
                                   <Select onValueChange={(value) => setWithdrawDetails({...withdrawDetails, networkProvider: value})}>
-                                    <SelectTrigger className="mt-1">
-                                      <SelectValue placeholder="Eg. MTN" />
+                                    <SelectTrigger className={`mt-1 ${!withdrawDetails.networkProvider ? 'border-red-300 focus:border-red-500' : ''}`}>
+                                      <SelectValue placeholder="Select network provider" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="mtn">MTN</SelectItem>
-                                      <SelectItem value="vodafone">Vodafone</SelectItem>
-                                      <SelectItem value="airteltigo">AirtelTigo</SelectItem>
+                                      <SelectItem value="MTN">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                          <span>MTN</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="VDF">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                          <span>Vodafone</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="ATL">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                          <span>Airtel</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="TGO">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                          <span>Tigo</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="ZPY">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                          <span>Zeepay</span>
+                                        </div>
+                                      </SelectItem>
+                                      <SelectItem value="GMY">
+                                        <div className="flex items-center space-x-2">
+                                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                          <span>G-money</span>
+                                        </div>
+                                      </SelectItem>
                                     </SelectContent>
                                   </Select>
+                                  {!withdrawDetails.networkProvider && (
+                                    <p className="text-sm text-red-600 mt-1">Please select a network provider</p>
+                                  )}
                                 </div>
                                 
                                 <div>
@@ -1316,7 +1388,7 @@ const DashboardPage = () => {
                   <Button
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={handleWithdraw}
-                    disabled={!withdrawMethod || !withdrawAmount}
+                    disabled={!withdrawMethod || !withdrawAmount || (withdrawMethod === 'mobile' && (!withdrawDetails.phoneNumber || !withdrawDetails.networkProvider))}
                   >
                     Continue
                   </Button>
