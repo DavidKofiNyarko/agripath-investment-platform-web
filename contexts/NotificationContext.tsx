@@ -36,6 +36,7 @@ interface NotificationContextType {
   markAllAsRead: () => Promise<void>;
   updatePreferences: (preferences: Partial<NotificationPreferences>) => Promise<void>;
   sendTestNotification: () => Promise<void>;
+  navigateToUpdates: (notificationId: string) => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
