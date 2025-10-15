@@ -199,15 +199,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                 )}
               </div>
               
-              {/* Test Notification Button */}
-              <div className="p-4 border-t border-gray-200">
-                <Button
-                  onClick={handleSendTestNotification}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white text-sm"
-                >
-                  Send Test Notification
-                </Button>
-              </div>
+            
             </div>
           )}
         </div>
