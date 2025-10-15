@@ -18,7 +18,20 @@ import {
   Smartphone,
   Network,
   TrendingUp,
-  Shield
+  Shield,
+  Wallet,
+  Banknote,
+  ArrowUpRight,
+  ArrowDownLeft,
+  RefreshCw,
+  MapPin,
+  Package,
+  UserCheck,
+  Mail,
+  Phone,
+  CalendarDays,
+  Clock3,
+  Receipt
 } from 'lucide-react';
 
 interface TransactionDetail {
@@ -74,7 +87,7 @@ const getStatusBadge = (status: string) => {
     case 'Pending':
       return (
         <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 flex items-center gap-1">
-          <Clock className="h-3 w-3" />
+          <Clock3 className="h-3 w-3" />
           Pending
         </Badge>
       );
@@ -110,14 +123,59 @@ const getTypeLabel = (type: string) => {
 const getTypeIcon = (type: string) => {
   switch (type) {
     case 'Payin':
-      return TrendingUp;
+    case 'investment':
+      return ArrowUpRight;
     case 'Payout':
-      return DollarSign;
+      return ArrowDownLeft;
     case 'Refund':
-      return Shield;
+      return RefreshCw;
+    case 'momo_topup':
+      return Smartphone;
+    case 'momo_withdrawal':
+    case 'bank_withdrawal':
+      return Banknote;
     default:
-      return FileText;
+      return Receipt;
   }
+};
+
+const formatHumanReadableDate = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+  const diffInDays = Math.floor(diffInHours / 24);
+  
+  let relativeTime = '';
+  if (diffInDays === 0) {
+    if (diffInHours === 0) {
+      relativeTime = 'Just now';
+    } else if (diffInHours === 1) {
+      relativeTime = '1 hour ago';
+    } else {
+      relativeTime = `${diffInHours} hours ago`;
+    }
+  } else if (diffInDays === 1) {
+    relativeTime = 'Yesterday';
+  } else if (diffInDays < 7) {
+    relativeTime = `${diffInDays} days ago`;
+  } else {
+    relativeTime = `${Math.floor(diffInDays / 7)} weeks ago`;
+  }
+  
+  return {
+    fullDate: date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    }),
+    time: date.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    }),
+    relative: relativeTime
+  };
 };
 
 export function TransactionDetailDrawer({ transactionId, open, onClose }: TransactionDetailDrawerProps) {
@@ -195,7 +253,7 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
   return (
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-lg p-0 overflow-y-auto">
-        <SheetHeader className="p-6 border-b">
+        <SheetHeader className="p-6 border-none">
           <SheetTitle className="text-xl font-semibold">Transaction Details</SheetTitle>
           <SheetDescription className="text-gray-600">
             Complete information about this transaction
@@ -204,7 +262,7 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
 
         <div className="flex-1 p-6 space-y-6">
           {/* Header Section with Status */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-xl border border-green-100">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-sm border border-green-50">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-green-100 rounded-lg">
@@ -220,9 +278,9 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
           </div>
 
           {/* Financial Summary Card */}
-          <div className="bg-white border border-gray-50/10 rounded-xl p-5 shadow-sm">
+          <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-green-600" />
+              <Banknote className="h-4 w-4 text-green-600" />
               Financial Summary
             </h3>
             
@@ -235,20 +293,20 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
               </div>
               
               {transaction.fees > 0 && (
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                <div className="flex items-center justify-between py-2 border-t border-gray-50/20">
                   <span className="text-gray-600">Transaction Fee</span>
                   <span className="font-semibold text-gray-700">GHS {transaction.fees.toLocaleString()}</span>
                 </div>
               )}
               
-              <div className="flex items-center justify-between py-2 border-t border-gray-100">
+              <div className="flex items-center justify-between py-2 border-t border-gray-50/20">
                 <span className="text-gray-600 font-medium">Net Amount</span>
                 <span className="text-lg font-bold text-gray-900">
                   GHS {transaction.net_amount.toLocaleString()}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                  <div className="flex items-center justify-between py-2 border-t border-gray-50/20">
                 <span className="text-gray-600 font-medium">Units</span>
                 <span className="text-lg font-bold text-gray-900">{transaction.unit}</span>
               </div>
@@ -256,9 +314,9 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
           </div>
 
           {/* Payment Information Card */}
-          <div className="bg-white border border-gray-50/10 rounded-xl p-5 shadow-sm">
+          <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-blue-600" />
+              <Wallet className="h-4 w-4 text-blue-600" />
               Payment Information
             </h3>
             
@@ -266,7 +324,7 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
               <div className="flex items-center justify-between py-2">
                 <span className="text-gray-600 font-medium">Method</span>
                 <Badge variant="secondary" className="capitalize bg-blue-100 text-blue-800">
-                  {transaction.channel}
+                  {transaction.channel === 'wallet' ? 'Agripath Account' : transaction.channel}
                 </Badge>
               </div>
               
@@ -282,7 +340,7 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
               
               <div className="flex items-center justify-between py-2">
                 <span className="text-gray-600 flex items-center gap-2">
-                  <Smartphone className="h-4 w-4" />
+                  <Hash className="h-4 w-4" />
                   Account Number
                 </span>
                 <span className="font-semibold text-gray-900 font-mono">{transaction.account_number}</span>
@@ -299,9 +357,9 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
 
           {/* Project Information Card */}
           {transaction.project && (
-            <div className="bg-white border border-gray-50/10 rounded-xl p-5 shadow-sm">
+            <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Building2 className="h-4 w-4 text-purple-600" />
+                <Package className="h-4 w-4 text-purple-600" />
                 Project Information
               </h3>
               
@@ -312,7 +370,10 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
                 </div>
                 
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium">Location</span>
+                  <span className="text-gray-600 font-medium flex items-center gap-2">
+                    <MapPin className="h-4 w-4" />
+                    Location
+                  </span>
                   <span className="font-semibold text-gray-900">{transaction.project.farm_location}</span>
                 </div>
                 
@@ -345,9 +406,9 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
 
           {/* Investor Information Card */}
           {transaction.profile && (
-            <div className="bg-white border border-gray-50/10 rounded-xl p-5 shadow-sm">
+            <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
               <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <User className="h-4 w-4 text-orange-600" />
+                <UserCheck className="h-4 w-4 text-orange-600" />
                 Investor Information
               </h3>
               
@@ -358,13 +419,19 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
                 </div>
                 
                 <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium">Email</span>
+                  <span className="text-gray-600 font-medium flex items-center gap-2">
+                    <Mail className="h-4 w-4" />
+                    Email
+                  </span>
                   <span className="font-semibold text-gray-900 text-sm">{transaction.profile.email}</span>
                 </div>
                 
                 {transaction.profile.phone_number && (
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-600 font-medium">Phone</span>
+                    <span className="text-gray-600 font-medium flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      Phone
+                    </span>
                     <span className="font-semibold text-gray-900">{transaction.profile.phone_number}</span>
                   </div>
                 )}
@@ -373,26 +440,51 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
           )}
 
           {/* Transaction Timeline Card */}
-          <div className="bg-white border border-gray-50/10 rounded-xl p-5 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-indigo-600" />
+          <div className="bg-gradient-to-br from-blue-50/30 to-indigo-50/30 border border-blue-100/50 rounded-lg p-6 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-6">
               Transaction Timeline
             </h3>
             
-            <div className="space-y-3">
-              <div className="flex items-center justify-between py-2">
-                <span className="text-gray-600 font-medium">Created</span>
-                <span className="font-semibold text-gray-900">
-                  {new Date(transaction.created_at).toLocaleString()}
-                </span>
+            <div className="space-y-6">
+              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/50">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Transaction Created</h4>
+                    <p className="text-sm text-gray-600">When this transaction was initiated</p>
+                  </div>
+                  <div className="text-right min-w-0 flex-shrink-0 ml-4">
+                    <div className="font-semibold text-gray-900 text-sm leading-tight">
+                      {formatHumanReadableDate(transaction.created_at).fullDate}
+                    </div>
+                    <div className="text-sm text-gray-600 mt-1">
+                      at {formatHumanReadableDate(transaction.created_at).time}
+                    </div>
+                    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mt-2">
+                      {formatHumanReadableDate(transaction.created_at).relative}
+                    </div>
+                  </div>
+                </div>
               </div>
               
               {transaction.processed_at && (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium">Processed</span>
-                  <span className="font-semibold text-gray-900">
-                    {new Date(transaction.processed_at).toLocaleString()}
-                  </span>
+                <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/50">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Transaction Processed</h4>
+                      <p className="text-sm text-gray-600">When this transaction was completed</p>
+                    </div>
+                    <div className="text-right min-w-0 flex-shrink-0 ml-4">
+                      <div className="font-semibold text-gray-900 text-sm leading-tight">
+                        {formatHumanReadableDate(transaction.processed_at).fullDate}
+                      </div>
+                      <div className="text-sm text-gray-600 mt-1">
+                        at {formatHumanReadableDate(transaction.processed_at).time}
+                      </div>
+                      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 mt-2">
+                        {formatHumanReadableDate(transaction.processed_at).relative}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>

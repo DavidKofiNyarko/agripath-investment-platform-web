@@ -23,7 +23,7 @@ import {
 const transactionTypes = [
   { id: 'investments', label: 'Investments', dbType: ['Payin', 'investment'], active: true, disabled: false },
   { id: 'topups', label: 'Top Ups', dbType: 'momo_topup', active: false, disabled: false },
-  { id: 'withdrawals', label: 'Withdrawals', dbType: 'momo_withdrawal', active: false, disabled: false },
+  { id: 'withdrawals', label: 'Withdrawals', dbType: ['momo_withdrawal', 'bank_withdrawal'], active: false, disabled: false },
   { id: 'payouts', label: 'Payouts', dbType: 'Payout', active: false, disabled: false }
 ];
 
@@ -75,17 +75,12 @@ const TransactionsPage = () => {
       return [];
     }
     
-    // Handle withdrawal types (multiple types)
-    if (activeType.id === 'withdrawals') {
-      return transactions.filter(t => t.type === 'momo_withdrawal' || t.type === 'bank_withdrawal');
+    // Handle array of types (investments, withdrawals)
+    if (Array.isArray(activeType.dbType)) {
+      return transactions.filter(t => activeType.dbType.includes(t.type));
     }
     
-    // Handle investments (multiple types: Payin and investment)
-    if (activeType.id === 'investments') {
-      return transactions.filter(t => t.type === 'Payin' || t.type === 'investment');
-    }
-    
-    // Handle single type
+    // Handle single type (topups, payouts)
     return transactions.filter(t => t.type === activeType.dbType);
   };
 
@@ -142,8 +137,9 @@ const TransactionsPage = () => {
       const exportableTransactions: ExportableTransaction[] = filteredTransactions.map(transaction => ({
         transactionId: transaction.transaction_id,
         method: transaction.channel === 'wallet' ? 'Agripath Account' :
+                transaction.channel === 'card' ? 'Card Payment' :
                 transaction.channel === 'momo' ? 'Mobile Money' :
-                transaction.channel === 'bank' ? 'Bank Transfer' : 'Card',
+                transaction.channel === 'bank' ? 'Bank Transfer' : 'Other',
         project: transaction.project_name || 'Unknown Project',
         amount: `GHS ${transaction.amount.toLocaleString()}`,
         unit: transaction.unit ? transaction.unit.toString() : '',
@@ -294,14 +290,18 @@ const TransactionsPage = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Method
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Project
-                    </th>
+                    {(activeTab === 'investments') && (
+                      <>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Project
+                        </th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                          Unit
+                        </th>
+                      </>
+                    )}
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Unit
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       Status
@@ -317,7 +317,7 @@ const TransactionsPage = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paginatedTransactions.length === 0 ? (
                     <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center text-gray-500">
+                      <td colSpan={activeTab === 'investments' ? 8 : 6} className="px-6 py-12 text-center text-gray-500">
                         <div className="flex flex-col items-center">
                           <Bell className="h-12 w-12 text-gray-300 mb-4" />
                           <p className="text-lg font-medium">No transactions found</p>
@@ -334,18 +334,28 @@ const TransactionsPage = () => {
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex items-center">
                             <span className="capitalize">
-                              {transaction.channel === 'wallet' ? 'Agripath Account' : transaction.channel}
+                              {transaction.channel === 'wallet' ? 'Agripath Account' : 
+                               transaction.channel === 'card' ? 'Card Payment' :
+                               transaction.channel === 'momo' ? 'Mobile Money' :
+                               transaction.channel}
                             </span>
                             {transaction.network && (
                               <span className="ml-2 text-xs text-gray-500">({transaction.network})</span>
                             )}
                           </div>
                         </td>
-                        <td className="px-6 py-4 text-sm text-gray-900">
-                          <div className="max-w-xs truncate">
-                            {transaction.project_name || 'Unknown Project'}
-                          </div>
-                        </td>
+                        {(activeTab === 'investments') && (
+                          <>
+                            <td className="px-6 py-4 text-sm text-gray-900">
+                              <div className="max-w-xs truncate">
+                                {transaction.project_name || 'Unknown Project'}
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {transaction.unit}
+                            </td>
+                          </>
+                        )}
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           <div>
                             <div>GHS {transaction.amount.toLocaleString()}</div>
@@ -353,9 +363,6 @@ const TransactionsPage = () => {
                               <div className="text-xs text-gray-500">Fee: GHS {transaction.fees.toLocaleString()}</div>
                             )}
                           </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {transaction.unit}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {getStatusBadge(transaction.status)}
@@ -421,37 +428,64 @@ const TransactionsPage = () => {
                               </div>
                               
                               <div className="grid grid-cols-2 gap-3 text-sm">
-                                <div>
-                                  <p className="text-xs text-gray-500">Project</p>
-                                  <p className="font-medium text-gray-900 truncate">
-                                    {transaction.project_name || 'Unknown Project'}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-gray-500">Amount</p>
-                                  <p className="font-medium text-gray-900">
-                                    GHS {transaction.amount.toLocaleString()}
-                                  </p>
-                                  {transaction.fees > 0 && (
-                                    <p className="text-xs text-gray-500">Fee: GHS {transaction.fees.toLocaleString()}</p>
-                                  )}
-                                </div>
+                                {(activeTab === 'investments') && (
+                                  <>
+                                    <div>
+                                      <p className="text-xs text-gray-500">Project</p>
+                                      <p className="font-medium text-gray-900 truncate">
+                                        {transaction.project_name || 'Unknown Project'}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="text-xs text-gray-500">Units</p>
+                                      <p className="font-medium text-gray-900">{transaction.unit}</p>
+                                    </div>
+                                  </>
+                                )}
+                                {!(activeTab === 'investments') && (
+                                  <div>
+                                    <p className="text-xs text-gray-500">Amount</p>
+                                    <p className="font-medium text-gray-900">
+                                      GHS {transaction.amount.toLocaleString()}
+                                    </p>
+                                    {transaction.fees > 0 && (
+                                      <p className="text-xs text-gray-500">Fee: GHS {transaction.fees.toLocaleString()}</p>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                               
                               <div className="grid grid-cols-2 gap-3 text-sm">
                                 <div>
                                   <p className="text-xs text-gray-500">Method</p>
                                   <p className="font-medium text-gray-900 capitalize">
-                                    {transaction.channel === 'wallet' ? 'Agripath Account' : transaction.channel}
+                                    {transaction.channel === 'wallet' ? 'Agripath Account' : 
+                                     transaction.channel === 'card' ? 'Card Payment' :
+                                     transaction.channel === 'momo' ? 'Mobile Money' :
+                                     transaction.channel}
                                     {transaction.network && (
                                       <span className="text-xs text-gray-500 ml-1">({transaction.network})</span>
                                     )}
                                   </p>
                                 </div>
-                                <div>
-                                  <p className="text-xs text-gray-500">Units</p>
-                                  <p className="font-medium text-gray-900">{transaction.unit}</p>
-                                </div>
+                                {(activeTab === 'investments') ? (
+                                  <div>
+                                    <p className="text-xs text-gray-500">Amount</p>
+                                    <p className="font-medium text-gray-900">
+                                      GHS {transaction.amount.toLocaleString()}
+                                    </p>
+                                    {transaction.fees > 0 && (
+                                      <p className="text-xs text-gray-500">Fee: GHS {transaction.fees.toLocaleString()}</p>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div>
+                                    <p className="text-xs text-gray-500">Status</p>
+                                    <div className="mt-1">
+                                      {getStatusBadge(transaction.status)}
+                                    </div>
+                                  </div>
+                                )}
                               </div>
                               
                         <div className="flex justify-end pt-2">
