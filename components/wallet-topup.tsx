@@ -286,14 +286,23 @@ const WalletTopup: React.FC = () => {
           {formData.channel === 'momo' && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="subscriber_number">Mobile Number</Label>
-                <Input
-                  id="subscriber_number"
-                  value={formData.subscriber_number}
-                  onChange={(e) => handleInputChange('subscriber_number', e.target.value)}
-                  placeholder="0241183886"
-                  required
-                />
+                <Label htmlFor="subscriber_number" className="text-sm font-medium text-gray-700 mb-2 block">
+                  Mobile Number
+                </Label>
+                <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500">
+                  <div className="flex items-center px-3 py-3 bg-gray-50 border-r border-gray-300">
+                    <span className="text-lg mr-2">🇬🇭</span>
+                    <span className="text-sm font-medium text-gray-700">+233</span>
+                  </div>
+                  <Input
+                    id="subscriber_number"
+                    value={formData.subscriber_number}
+                    onChange={(e) => handleInputChange('subscriber_number', e.target.value)}
+                    placeholder="024 567 8905"
+                    required
+                    className="flex-1 border-0 rounded-none focus:ring-0 focus:border-0 py-3 px-3 text-gray-900 placeholder-gray-500"
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="network">Network Provider *</Label>

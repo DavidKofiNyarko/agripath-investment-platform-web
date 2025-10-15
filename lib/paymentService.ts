@@ -94,8 +94,23 @@ class PaymentService {
   /**
    * Process card payment for wallet top-up
    */
-  async processCardPayment(paymentData: CardPaymentRequest): Promise<PaymentResponse> {
+  async processCardPayment(paymentData: {
+    profile_id: string;
+    project_id: string;
+    amount: number;
+    unit: number;
+    desc: string;
+    pan: string;
+    exp_month: string;
+    exp_year: string;
+    cvv: string;
+    card_holder: string;
+    user_email: string;
+    redirect_url: string;
+  }): Promise<PaymentResponse> {
     try {
+      console.log('Card payment request:', JSON.stringify(paymentData, null, 2));
+      
       const response = await fetch(`${this.baseUrl}/card/payin`, {
         method: 'POST',
         headers: {
@@ -109,7 +124,9 @@ class PaymentService {
         throw new Error(errorData.message || 'Card payment failed');
       }
 
-      return await response.json();
+      const responseData = await response.json();
+      console.log('Card payment response:', responseData);
+      return responseData;
     } catch (error) {
       console.error('Card payment error:', error);
       throw error;
@@ -386,28 +403,34 @@ class PaymentService {
     }
   }
   async processInvestmentCardPayment(investmentData: {
-    user_id: string;
+    profile_id: string;
     project_id: string;
     amount: number;
     unit: number;
-    cardDetails: {
-      pan: string;
-      exp_month: string;
-      exp_year: string;
-      cvv: string;
-      card_holder: string;
-    };
-    user_email?: string;
-    user_name?: string;
-    profile_id?: string;
-    description?: string;
+    desc: string;
+    pan: string;
+    exp_month: string;
+    exp_year: string;
+    cvv: string;
+    card_holder: string;
+    user_email: string;
+    redirect_url: string;
   }): Promise<PaymentResponse> {
     try {
       // Debug logging
       console.log('Investment card payment data:', {
+        profile_id: investmentData.profile_id,
+        project_id: investmentData.project_id,
+        amount: investmentData.amount,
+        unit: investmentData.unit,
+        desc: investmentData.desc,
+        pan: investmentData.pan,
+        exp_month: investmentData.exp_month,
+        exp_year: investmentData.exp_year,
+        cvv: investmentData.cvv,
+        card_holder: investmentData.card_holder,
         user_email: investmentData.user_email,
-        user_name: investmentData.user_name,
-        user_id: investmentData.user_id
+        redirect_url: investmentData.redirect_url
       });
 
       // Validate email if provided
@@ -419,32 +442,22 @@ class PaymentService {
       const netAmount = investmentData.amount - fees;
       const transactionId = this.generateTransactionId();
       const externalId = this.generateExternalId();
-      const cardNetwork = this.getCardNetwork(investmentData.cardDetails.pan);
+      const cardNetwork = this.getCardNetwork(investmentData.pan);
 
-      const paymentRequest: CardPaymentRequest = {
-        pan: investmentData.cardDetails.pan,
-        exp_month: investmentData.cardDetails.exp_month,
-        exp_year: investmentData.cardDetails.exp_year,
-        cvv: investmentData.cardDetails.cvv,
-        card_holder: investmentData.cardDetails.card_holder,
-        user_id: investmentData.user_id,
-        user_email: investmentData.user_email || 'user@example.com', // Provide default email
-        user_name: investmentData.user_name || 'Investment User', // Provide default name
+      // Create the payload matching the API structure
+      const paymentRequest = {
+        profile_id: investmentData.profile_id,
         project_id: investmentData.project_id,
         amount: investmentData.amount,
         unit: investmentData.unit,
-        fees: fees,
-        net_amount: netAmount,
-        transaction_id: transactionId,
-        type: 'Payin',
-        status: 'Pending',
-        desc: investmentData.description || 'Investment payment',
-        processed_at: new Date(),
-        r_switch: cardNetwork,
-        redirect_url: `${window.location.origin}/investment/callback`,
-        external_id: externalId,
-        channel: 'card',
-        profile_id: investmentData.profile_id || investmentData.user_id
+        desc: investmentData.desc,
+        pan: investmentData.pan,
+        exp_month: investmentData.exp_month,
+        exp_year: investmentData.exp_year,
+        cvv: investmentData.cvv,
+        card_holder: investmentData.card_holder,
+        user_email: investmentData.user_email,
+        redirect_url: investmentData.redirect_url
       };
 
       return await this.processCardPayment(paymentRequest);

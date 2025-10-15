@@ -817,19 +817,20 @@ const DashboardPage = () => {
                                 </div>
                                 
                                 <div>
-                                  <Label htmlFor="phoneNumber" className="text-sm text-gray-600">
+                                  <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700 mb-2 block">
                                     Phone number
                                   </Label>
-                                  <div className="flex mt-1">
-                                    <div className="flex items-center px-3 border border-r-0 border-gray-300 bg-gray-50 rounded-l-md">
-                                      <span className="text-sm text-gray-600">🇬🇭 +233</span>
+                                  <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500">
+                                    <div className="flex items-center px-3 py-3 bg-gray-50 border-r border-gray-300">
+                                      <span className="text-lg mr-2">🇬🇭</span>
+                                      <span className="text-sm font-medium text-gray-700">+233</span>
                                     </div>
                                     <Input
                                       id="phoneNumber"
-                                      placeholder="Eg. 55 567 8905"
+                                      placeholder="024 567 8905"
                                       value={paymentDetails.phoneNumber}
                                       onChange={(e) => setPaymentDetails({...paymentDetails, phoneNumber: e.target.value})}
-                                      className="rounded-l-none"
+                                      className="flex-1 border-0 rounded-none focus:ring-0 focus:border-0 py-3 px-3 text-gray-900 placeholder-gray-500"
                                     />
                                   </div>
                                 </div>
@@ -1065,7 +1066,7 @@ const DashboardPage = () => {
                   <Button
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={handleTopUp}
-                    disabled={!paymentMethod || (paymentMethod === 'mobile' && (!paymentDetails.phoneNumber || !paymentDetails.networkProvider))}
+                    disabled={!paymentMethod || (paymentMethod === 'mobile' && !paymentDetails.networkProvider)}
                   >
                     Continue
                   </Button>
@@ -1278,19 +1279,20 @@ const DashboardPage = () => {
                                 </div>
                                 
                                 <div>
-                                  <Label htmlFor="phoneNumberWithdraw" className="text-sm text-gray-600">
+                                  <Label htmlFor="phoneNumberWithdraw" className="text-sm font-medium text-gray-700 mb-2 block">
                                     Phone number
                                   </Label>
-                                  <div className="flex mt-1">
-                                    <div className="flex items-center px-3 border border-r-0 border-gray-300 bg-gray-50 rounded-l-md">
-                                      <span className="text-sm text-gray-600">🇬🇭 +233</span>
+                                  <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500">
+                                    <div className="flex items-center px-3 py-3 bg-gray-50 border-r border-gray-300">
+                                      <span className="text-lg mr-2">🇬🇭</span>
+                                      <span className="text-sm font-medium text-gray-700">+233</span>
                                     </div>
                                     <Input
                                       id="phoneNumberWithdraw"
-                                      placeholder="Eg. 55 567 8905"
+                                      placeholder="024 567 8905"
                                       value={withdrawDetails.phoneNumber}
                                       onChange={(e) => setWithdrawDetails({...withdrawDetails, phoneNumber: e.target.value})}
-                                      className="rounded-l-none"
+                                      className="flex-1 border-0 rounded-none focus:ring-0 focus:border-0 py-3 px-3 text-gray-900 placeholder-gray-500"
                                     />
                                   </div>
                                 </div>
@@ -1388,7 +1390,7 @@ const DashboardPage = () => {
                   <Button
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={handleWithdraw}
-                    disabled={!withdrawMethod || !withdrawAmount || (withdrawMethod === 'mobile' && (!withdrawDetails.phoneNumber || !withdrawDetails.networkProvider))}
+                    disabled={!withdrawMethod || !withdrawAmount || (withdrawMethod === 'mobile' && !withdrawDetails.networkProvider)}
                   >
                     Continue
                   </Button>

@@ -19,7 +19,7 @@ export interface Transaction {
   processed_at: string | null;
   created_at: string;
   updated_at: string;
-  channel: 'momo' | 'bank' | 'card';
+  channel: 'momo' | 'bank' | 'card' | 'wallet';
   external_id: string | null;
   network: string | null;
   account_number: string;

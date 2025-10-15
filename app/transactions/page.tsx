@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 
 const transactionTypes = [
-  { id: 'investments', label: 'Investments', dbType: 'Payin', active: true, disabled: false },
+  { id: 'investments', label: 'Investments', dbType: ['Payin', 'investment'], active: true, disabled: false },
   { id: 'topups', label: 'Top Ups', dbType: 'momo_topup', active: false, disabled: false },
   { id: 'withdrawals', label: 'Withdrawals', dbType: 'momo_withdrawal', active: false, disabled: false },
   { id: 'payouts', label: 'Payouts', dbType: 'Payout', active: false, disabled: false }
@@ -80,6 +80,12 @@ const TransactionsPage = () => {
       return transactions.filter(t => t.type === 'momo_withdrawal' || t.type === 'bank_withdrawal');
     }
     
+    // Handle investments (multiple types: Payin and investment)
+    if (activeType.id === 'investments') {
+      return transactions.filter(t => t.type === 'Payin' || t.type === 'investment');
+    }
+    
+    // Handle single type
     return transactions.filter(t => t.type === activeType.dbType);
   };
 
@@ -135,9 +141,9 @@ const TransactionsPage = () => {
       // Convert transactions to exportable format
       const exportableTransactions: ExportableTransaction[] = filteredTransactions.map(transaction => ({
         transactionId: transaction.transaction_id,
-        method: transaction.type === 'momo_topup' ? 'Mobile Money' : 
-                transaction.type === 'momo_withdrawal' || transaction.type === 'bank_withdrawal' ? 'Bank Transfer' :
-                transaction.type === 'investment' ? 'Investment' : 'Card',
+        method: transaction.channel === 'wallet' ? 'Agripath Account' :
+                transaction.channel === 'momo' ? 'Mobile Money' :
+                transaction.channel === 'bank' ? 'Bank Transfer' : 'Card',
         project: transaction.project_name || 'Unknown Project',
         amount: `GHS ${transaction.amount.toLocaleString()}`,
         unit: transaction.unit ? transaction.unit.toString() : '',
@@ -327,7 +333,9 @@ const TransactionsPage = () => {
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           <div className="flex items-center">
-                            <span className="capitalize">{transaction.channel}</span>
+                            <span className="capitalize">
+                              {transaction.channel === 'wallet' ? 'Agripath Account' : transaction.channel}
+                            </span>
                             {transaction.network && (
                               <span className="ml-2 text-xs text-gray-500">({transaction.network})</span>
                             )}
@@ -434,7 +442,7 @@ const TransactionsPage = () => {
                                 <div>
                                   <p className="text-xs text-gray-500">Method</p>
                                   <p className="font-medium text-gray-900 capitalize">
-                                    {transaction.channel}
+                                    {transaction.channel === 'wallet' ? 'Agripath Account' : transaction.channel}
                                     {transaction.network && (
                                       <span className="text-xs text-gray-500 ml-1">({transaction.network})</span>
                                     )}
