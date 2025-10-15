@@ -241,15 +241,37 @@ const WalletWithdrawal: React.FC = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select bank" />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ADB">ADB Bank</SelectItem>
-                    <SelectItem value="GCB">GCB Bank</SelectItem>
-                    <SelectItem value="FBN">First Bank of Nigeria</SelectItem>
-                    <SelectItem value="UBA">United Bank for Africa</SelectItem>
-                    <SelectItem value="ECB">Ecobank</SelectItem>
-                    <SelectItem value="SCB">Standard Chartered Bank</SelectItem>
-                    <SelectItem value="ABSA">Absa Bank</SelectItem>
-                    <SelectItem value="FIDELITY">Fidelity Bank</SelectItem>
+                  <SelectContent className="max-h-60 overflow-y-auto">
+                    <SelectItem value="SCH">STANDARD CHARTERED BANK</SelectItem>
+                    <SelectItem value="ABG">ABSA BANK GHANA LIMITED</SelectItem>
+                    <SelectItem value="GCB">GCB BANK LIMITED</SelectItem>
+                    <SelectItem value="NIB">NATIONAL INVESTMENT BANK</SelectItem>
+                    <SelectItem value="ADB">AGRICULTURAL DEVELOPMENT BANK</SelectItem>
+                    <SelectItem value="UMB">UNIVERSAL MERCHANT BANK</SelectItem>
+                    <SelectItem value="RBL">REPUBLIC BANK LIMITED</SelectItem>
+                    <SelectItem value="ZEN">ZENITH BANK GHANA LTD</SelectItem>
+                    <SelectItem value="ECO">ECOBANK GHANA LTD</SelectItem>
+                    <SelectItem value="CAL">CAL BANK LIMITED</SelectItem>
+                    <SelectItem value="PRD">PRUDENTIAL BANK LTD</SelectItem>
+                    <SelectItem value="STB">STANBIC BANK</SelectItem>
+                    <SelectItem value="GTB">GUARANTY TRUST BANK</SelectItem>
+                    <SelectItem value="UBA">UNITED BANK OF AFRICA</SelectItem>
+                    <SelectItem value="ACB">ACCESS BANK LTD</SelectItem>
+                    <SelectItem value="CBG">CONSOLIDATED BANK GHANA</SelectItem>
+                    <SelectItem value="SGG">SOCIETE GENERALE GHANA</SelectItem>
+                    <SelectItem value="FNB">FIRST NATIONAL BANK</SelectItem>
+                    <SelectItem value="UNL">UNITY LINK</SelectItem>
+                    <SelectItem value="FDL">FIDELITY BANK LIMITED</SelectItem>
+                    <SelectItem value="SIS">SERVICES INTEGRITY SAVINGS & LOANS</SelectItem>
+                    <SelectItem value="BOA">BANK OF AFRICA</SelectItem>
+                    <SelectItem value="DFL">DALEX FINANCE AND LEASING COMPANY</SelectItem>
+                    <SelectItem value="FBO">FIRST BANK OF NIGERIA</SelectItem>
+                    <SelectItem value="GHL">GHL Bank</SelectItem>
+                    <SelectItem value="BOG">BANK OF GHANA</SelectItem>
+                    <SelectItem value="FAB">FIRST ATLANTIC BANK</SelectItem>
+                    <SelectItem value="SSB">OmniBSIC Bank</SelectItem>
+                    <SelectItem value="GMY">G-MONEY</SelectItem>
+                    <SelectItem value="APX">ARB APEX BANK LIMITED</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
