@@ -129,6 +129,17 @@ const InvestmentsPage = () => {
   const [showKycModal, setShowKycModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
   
+  // Store investment details for success screen and receipt
+  const [successInvestmentDetails, setSuccessInvestmentDetails] = useState<{
+    investment: Investment | null;
+    quantity: number;
+    totalAmount: number;
+  }>({
+    investment: null,
+    quantity: 0,
+    totalAmount: 0
+  });
+  
   // Custom Alert State
   const [alertState, setAlertState] = useState({
     isOpen: false,
@@ -358,22 +369,30 @@ const InvestmentsPage = () => {
   };
 
   const calculateTotal = () => {
+    // Use success investment details if available (for success screen and receipt)
+    if (successInvestmentDetails.investment && successInvestmentDetails.quantity > 0) {
+      return successInvestmentDetails.totalAmount;
+    }
+    // Otherwise use current form values
     return selectedInvestment ? selectedInvestment.price * quantity : 0;
   };
 
   const calculateExpectedReturn = () => {
-    if (!selectedInvestment) return '0 - 0';
+    // Use success investment details if available
+    const investment = successInvestmentDetails.investment || selectedInvestment;
+    if (!investment) return '0 - 0';
+    
     const total = calculateTotal();
     
     // Handle both "15-25%" and "15%" formats
-    if (selectedInvestment.roi.includes('-')) {
-      const [minROI, maxROI] = selectedInvestment.roi.split('-').map((r: string) => parseFloat(r.replace('%', '')));
+    if (investment.roi.includes('-')) {
+      const [minROI, maxROI] = investment.roi.split('-').map((r: string) => parseFloat(r.replace('%', '')));
       const minReturn = Math.round(total * (minROI / 100) * 100) / 100; // Round to 2 decimal places
       const maxReturn = Math.round(total * (maxROI / 100) * 100) / 100; // Round to 2 decimal places
       return `${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)}`;
     } else {
       // Single ROI value
-      const roi = parseFloat(selectedInvestment.roi.replace('%', ''));
+      const roi = parseFloat(investment.roi.replace('%', ''));
       const expectedReturn = Math.round(total * (roi / 100) * 100) / 100; // Round to 2 decimal places
       return `${expectedReturn.toFixed(2)}`;
     }
@@ -381,7 +400,11 @@ const InvestmentsPage = () => {
 
   // Generate and download receipt
   const generateReceipt = () => {
-    if (!selectedInvestment || !profile) return;
+    // Use success investment details if available, otherwise fall back to current form
+    const investment = successInvestmentDetails.investment || selectedInvestment;
+    const receiptQuantity = successInvestmentDetails.quantity || quantity;
+    
+    if (!investment || !profile) return;
 
     const receiptData = {
       transactionId: `TXN-${Date.now()}`,
@@ -398,11 +421,11 @@ const InvestmentsPage = () => {
         phone: profile.phone_number
       },
       investment: {
-        project: selectedInvestment.name,
+        project: investment.name,
         amount: calculateTotal(),
-        units: quantity,
+        units: receiptQuantity,
         expectedReturn: calculateExpectedReturn(),
-        duration: selectedInvestment.duration,
+        duration: investment.duration,
         startDate: 'November 2025'
       }
     };
@@ -758,6 +781,13 @@ const InvestmentsPage = () => {
         if (updateResult.success) {
           console.log('Investment completed successfully with transaction ID:', updateResult.transactionId);
           
+          // Store investment details for success screen before resetting form
+          setSuccessInvestmentDetails({
+            investment: selectedInvestment,
+            quantity: quantity,
+            totalAmount: totalAmount
+          });
+          
           // Simulate processing delay
           setTimeout(() => {
             setIsProcessing(false);
@@ -780,6 +810,13 @@ const InvestmentsPage = () => {
         
         if (updateResult.success) {
           console.log('3D Secure investment completed successfully with transaction ID:', updateResult.transactionId);
+          
+          // Store investment details for success screen before resetting form
+          setSuccessInvestmentDetails({
+            investment: selectedInvestment,
+            quantity: quantity,
+            totalAmount: totalAmount
+          });
           
           // For demo purposes, assume success after redirect
           setTimeout(() => {
@@ -812,6 +849,13 @@ const InvestmentsPage = () => {
         
         if (updateResult.success) {
           console.log('P0001 investment completed successfully with transaction ID:', updateResult.transactionId);
+          
+          // Store investment details for success screen before resetting form
+          setSuccessInvestmentDetails({
+            investment: selectedInvestment,
+            quantity: quantity,
+            totalAmount: selectedInvestment.price * quantity
+          });
           
           // Show success UI
           setTimeout(() => {
@@ -1796,7 +1840,7 @@ const InvestmentsPage = () => {
                         <div>
                           <h2 className="text-2xl font-semibold mb-2">Investment Successful</h2>
                           <p className="text-gray-600">
-                            Your investment in <span className="font-medium">{selectedInvestment.name}</span> is confirmed.
+                            Your investment in <span className="font-medium">{successInvestmentDetails.investment?.name || selectedInvestment?.name}</span> is confirmed.
                           </p>
                         </div>
 
@@ -1811,7 +1855,7 @@ const InvestmentsPage = () => {
                           <div className="space-y-2">
                             <div className="flex justify-between">
                               <span className="text-gray-600">Project</span>
-                              <span className="font-medium">{selectedInvestment.name}</span>
+                              <span className="font-medium">{successInvestmentDetails.investment?.name || selectedInvestment?.name}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Expected Return</span>
@@ -1819,11 +1863,11 @@ const InvestmentsPage = () => {
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Units Selected</span>
-                              <span className="font-medium">{quantity} Unit(s)</span>
+                              <span className="font-medium">{successInvestmentDetails.quantity || quantity} Unit(s)</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Duration</span>
-                              <span className="font-medium">{selectedInvestment.duration}</span>
+                              <span className="font-medium">{successInvestmentDetails.investment?.duration || selectedInvestment?.duration}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Starting</span>
