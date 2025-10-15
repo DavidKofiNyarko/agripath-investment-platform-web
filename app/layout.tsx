@@ -8,6 +8,7 @@ import { TransactionsProvider } from "@/contexts/TransactionsContext";
 import { ProjectsProvider } from "@/contexts/ProjectsContext";
 import { UpdatesProvider } from "@/contexts/UpdatesContext";
 import { WalletProvider } from "@/contexts/WalletContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -107,17 +108,19 @@ export default function RootLayout({
       >
         <UserProvider>
           <ProfileProvider>
-            <WalletProvider>
-              <PortfolioProvider>
-                <TransactionsProvider>
-                  <ProjectsProvider>
-                    <UpdatesProvider>
-                      {children}
-                    </UpdatesProvider>
-                  </ProjectsProvider>
-                </TransactionsProvider>
-              </PortfolioProvider>
-            </WalletProvider>
+            <NotificationProvider>
+              <WalletProvider>
+                <PortfolioProvider>
+                  <TransactionsProvider>
+                    <ProjectsProvider>
+                      <UpdatesProvider>
+                        {children}
+                      </UpdatesProvider>
+                    </ProjectsProvider>
+                  </TransactionsProvider>
+                </PortfolioProvider>
+              </WalletProvider>
+            </NotificationProvider>
           </ProfileProvider>
         </UserProvider>
       </body>

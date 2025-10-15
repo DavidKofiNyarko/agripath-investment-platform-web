@@ -21,6 +21,7 @@ import { Switch } from '@/components/ui/switch';
 import { motion, AnimatePresence } from 'framer-motion';
 import { User, Shield, Bell, CreditCard, Trash2, CheckCircle, PartyPopper } from 'lucide-react';
 import { logoutAllDevices } from '@/lib/authService';
+import NotificationPreferencesComponent from '@/components/notification-preferences';
 
 function SettingsPage() {
   const { user } = useUser();
@@ -413,28 +414,7 @@ function SettingsPage() {
           {/* Notifications Tab */}
           {activeTab === 'notifications' && (
             <div className="space-y-6">
-              <Card>
-              <CardHeader>
-                <CardTitle>Notification Preferences</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {notificationSettings.map((setting) => (
-                  <div key={setting.id} className="flex items-center justify-between">
-                              <div className="flex-1">
-                      <h3 className="font-semibold text-gray-900">{setting.title}</h3>
-                      <p className="text-sm text-gray-600">{setting.description}</p>
-                              </div>
-                              <Switch
-                      checked={setting.enabled}
-                                onCheckedChange={(checked) => {
-                        // Handle notification toggle
-                        console.log(`${setting.id} notifications:`, checked);
-                                }}
-                              />
-                            </div>
-                          ))}
-                </CardContent>
-              </Card>
+              <NotificationPreferencesComponent />
             </div>
           )}
 

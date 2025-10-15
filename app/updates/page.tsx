@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import DashboardLayout from '@/components/dashboard-layout';
 import { useUpdates } from '@/contexts/UpdatesContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 interface Update {
   id: number;
@@ -48,11 +49,22 @@ const UpdatesPage = () => {
     refreshUpdates
   } = useUpdates();
   
-  const [activeTab, setActiveTab] = useState('new');
+  const { 
+    notifications, 
+    unreadCount, 
+    markAsRead, 
+    isLoading: notificationsLoading 
+  } = useNotifications();
+  
+  const [activeTab, setActiveTab] = useState('notifications');
   const [selectedUpdate, setSelectedUpdate] = useState<Update | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
+  const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   // Handle search with optimization
   const handleSearch = (value: string) => {
@@ -140,6 +152,22 @@ const UpdatesPage = () => {
   const newUpdates = formattedUpdates.filter(update => !update.isRead);
   const readUpdates = formattedUpdates.filter(update => update.isRead);
 
+  // Pagination logic
+  const getPaginatedItems = (items: any[]) => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return items.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (items: any[]) => {
+    return Math.ceil(items.length / itemsPerPage);
+  };
+
+  const paginatedNotifications = getPaginatedItems(notifications);
+  const paginatedUpdates = getPaginatedItems(newUpdates);
+  const totalNotificationPages = getTotalPages(notifications);
+  const totalUpdatePages = getTotalPages(newUpdates);
+
   const handleUpdateClick = (update: Update) => {
     setSelectedUpdate(update);
   };
@@ -147,6 +175,29 @@ const UpdatesPage = () => {
   const handleMediaClick = (media: MediaItem) => {
     setSelectedMedia(media);
     setIsModalOpen(true);
+  };
+
+  const handleNotificationClick = async (notification: any) => {
+    setSelectedNotification(notification);
+    setIsNotificationModalOpen(true);
+    
+    // Mark as read if it's unread
+    if (notification.status === 'unread') {
+      await markAsRead(notification.id);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    setCurrentPage(1); // Reset to first page when switching tabs
+    setSelectedUpdate(null);
+    setSelectedNotification(null);
   };
 
   const getCategoryColor = (category: string) => {
@@ -246,34 +297,99 @@ const UpdatesPage = () => {
             <div className="p-3 sm:p-4 border-b border-gray-200">
               <div className="flex space-x-1 overflow-x-auto">
                 <Button
+                  variant={activeTab === 'notifications' ? 'default' : 'ghost'}
+                  onClick={() => handleTabChange('notifications')}
+                  className={`px-3 sm:px-4 py-2 text-sm whitespace-nowrap flex-shrink-0 ${
+                    activeTab === 'notifications' 
+                      ? 'bg-green-600 text-white' 
+                      : 'text-gray-600 hover:text-gray-900'
+                  }`}
+                >
+                  Notifications ({notifications.length})
+                </Button>
+                <Button
                   variant={activeTab === 'new' ? 'default' : 'ghost'}
-                  onClick={() => setActiveTab('new')}
+                  onClick={() => handleTabChange('new')}
                   className={`px-3 sm:px-4 py-2 text-sm whitespace-nowrap flex-shrink-0 ${
                     activeTab === 'new' 
                       ? 'bg-green-600 text-white' 
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  New ({newUpdates.length})
-                </Button>
-                <Button
-                  variant={activeTab === 'read' ? 'default' : 'ghost'}
-                  onClick={() => setActiveTab('read')}
-                  className={`px-3 sm:px-4 py-2 text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'read' 
-                      ? 'bg-green-600 text-white' 
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Read ({readUpdates.length})
+                  Updates ({newUpdates.length})
                 </Button>
               </div>
             </div>
 
-            {/* Updates List */}
+            {/* Content List */}
             <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
               <AnimatePresence>
-                {(activeTab === 'new' ? newUpdates : readUpdates).map((update, index) => (
+                {activeTab === 'notifications' ? (
+                  notificationsLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+                      <p className="text-gray-600">Loading notifications...</p>
+                    </div>
+                  ) : notifications.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-600">No notifications yet</p>
+                    </div>
+                  ) : (
+                    paginatedNotifications.map((notification, index) => (
+                      <motion.div
+                        key={notification.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={`cursor-pointer transition-all duration-200 ${
+                          selectedNotification?.id === notification.id 
+                            ? 'bg-green-50 border-green-200' 
+                            : 'hover:bg-gray-50'
+                        }`}
+                        onClick={() => handleNotificationClick(notification)}
+                      >
+                        <Card className={`${
+                          selectedNotification?.id === notification.id 
+                            ? 'border-green-200 bg-green-50' 
+                            : 'border-gray-200'
+                        }`}>
+                          <CardContent className="p-3 sm:p-4">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Badge 
+                                    variant="secondary" 
+                                    className={`text-xs ${
+                                      notification.type === 'Email' 
+                                        ? 'bg-blue-100 text-blue-800' 
+                                        : 'bg-green-100 text-green-800'
+                                    }`}
+                                  >
+                                    {notification.type}
+                                  </Badge>
+                                  {notification.status === 'unread' && (
+                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                  )}
+                                </div>
+                                <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 line-clamp-2">
+                                  {notification.title}
+                                </h3>
+                                <p className="text-gray-600 text-xs sm:text-sm line-clamp-2">
+                                  {notification.body}
+                                </p>
+                                <p className="text-gray-500 text-xs mt-2">
+                                  {new Date(notification.created_at).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0 ml-2" />
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </motion.div>
+                    ))
+                  )
+                ) : paginatedUpdates.map((update, index) => (
                   <motion.div
                     key={update.id}
                     initial={{ opacity: 0, y: 20 }}
@@ -330,11 +446,100 @@ const UpdatesPage = () => {
                 ))}
               </AnimatePresence>
             </div>
+
+            {/* Pagination */}
+            {((activeTab === 'notifications' && totalNotificationPages > 1) || 
+              (activeTab === 'new' && totalUpdatePages > 1)) && (
+              <div className="p-3 sm:p-4 border-t border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div className="text-sm text-gray-600">
+                    Page {currentPage} of {activeTab === 'notifications' ? totalNotificationPages : totalUpdatePages}
+                  </div>
+                  <div className="flex space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1 text-xs"
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === (activeTab === 'notifications' ? totalNotificationPages : totalUpdatePages)}
+                      className="px-3 py-1 text-xs"
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* Right Panel - Selected Update Details */}
+          {/* Right Panel - Selected Content Details */}
           <div className="flex-1 bg-white overflow-y-auto">
-            {selectedUpdate ? (
+            {selectedNotification ? (
+              <div className="p-4 sm:p-6">
+                {/* Notification Header */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <Badge 
+                      variant="secondary" 
+                      className={`${
+                        selectedNotification.type === 'Email' 
+                          ? 'bg-blue-100 text-blue-800' 
+                          : 'bg-green-100 text-green-800'
+                      }`}
+                    >
+                      {selectedNotification.type}
+                    </Badge>
+                    {selectedNotification.status === 'unread' && (
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsNotificationModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Notification Title */}
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">
+                  {selectedNotification.title}
+                </h1>
+
+                {/* Notification Content */}
+                <div className="prose max-w-none mb-6">
+                  <div className="bg-gray-50 rounded-lg p-4 sm:p-6">
+                    <p className="text-sm sm:text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {selectedNotification.body}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Notification Metadata */}
+                <div className="border-t border-gray-200 pt-4">
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <Calendar className="h-4 w-4" />
+                    <span>Received on {new Date(selectedNotification.created_at).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'long',
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</span>
+                  </div>
+                </div>
+              </div>
+            ) : selectedUpdate ? (
               <div className="p-4 sm:p-6">
                 {/* Metadata Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 mb-4 text-xs sm:text-sm text-gray-600">
@@ -400,8 +605,15 @@ const UpdatesPage = () => {
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Bell className="h-8 w-8 text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Select an Update</h3>
-                  <p className="text-gray-600">Choose an update from the list to view details</p>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    {activeTab === 'notifications' ? 'Select a Notification' : 'Select an Update'}
+                  </h3>
+                  <p className="text-gray-600">
+                    {activeTab === 'notifications' 
+                      ? 'Choose a notification from the list to view details' 
+                      : 'Choose an update from the list to view details'
+                    }
+                  </p>
                 </div>
               </div>
             )}

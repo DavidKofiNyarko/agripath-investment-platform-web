@@ -1,9 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Bell, X } from 'lucide-react';
 import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
+import { useNotifications } from '@/contexts/NotificationContext';
 
 interface UserHeaderProps {
   title?: string;
@@ -18,6 +21,8 @@ const UserHeader: React.FC<UserHeaderProps> = ({
 }) => {
   const { user } = useUser();
   const { profile } = useProfile();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, sendTestNotification, navigateToUpdates } = useNotifications();
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
 
   const getUserName = () => {
     return profile?.first_name || 
@@ -62,6 +67,21 @@ const UserHeader: React.FC<UserHeaderProps> = ({
     });
   };
 
+  const handleNotificationClick = async (notificationId: string) => {
+    // Navigate to updates page and mark as read
+    navigateToUpdates(notificationId);
+    setIsNotificationOpen(false);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    await markAllAsRead();
+  };
+
+  const handleSendTestNotification = async () => {
+    await sendTestNotification();
+    setIsNotificationOpen(false);
+  };
+
   return (
     <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 ${className}`}>
       <div className="flex items-center gap-3">
@@ -85,8 +105,114 @@ const UserHeader: React.FC<UserHeaderProps> = ({
           )}
         </div>
       </div>
-      {showDate && (
-        <div className="flex items-center justify-between sm:justify-end gap-2 sm:gap-4">
+      
+      <div className="flex items-center gap-2 sm:gap-4">
+        {/* Notification Bell */}
+        <div className="relative">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setIsNotificationOpen(!isNotificationOpen)}
+            className="relative h-10 w-10 p-0 hover:bg-gray-100"
+          >
+            <Bell className="h-5 w-5 text-gray-600" />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs font-medium text-white flex items-center justify-center">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
+            )}
+          </Button>
+          
+          {/* Notification Dropdown */}
+          {isNotificationOpen && (
+            <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+              <div className="p-4 border-b border-gray-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900">Notifications</h3>
+                  <div className="flex items-center gap-2">
+                    {unreadCount > 0 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleMarkAllAsRead}
+                        className="text-xs text-green-600 hover:text-green-700"
+                      >
+                        Mark all read
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setIsNotificationOpen(false)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="max-h-80 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
+                    <p className="text-sm">No notifications yet</p>
+                  </div>
+                ) : (
+                  notifications.slice(0, 10).map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
+                        notification.status === 'unread' ? 'bg-blue-50/30' : ''
+                      }`}
+                      onClick={() => handleNotificationClick(notification.id)}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`h-2 w-2 rounded-full mt-2 flex-shrink-0 ${
+                          notification.status === 'unread' ? 'bg-blue-500' : 'bg-gray-300'
+                        }`} />
+                        <div className="min-w-0 flex-1">
+                          <h4 className="text-sm font-medium text-gray-900 truncate">
+                            {notification.title}
+                          </h4>
+                          <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                            {notification.body}
+                          </p>
+                          <div className="flex items-center justify-between mt-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-500">
+                                {new Date(notification.created_at).toLocaleDateString()}
+                              </span>
+                              <span className="text-xs text-gray-400">•</span>
+                              <span className="text-xs text-gray-500 capitalize">
+                                {notification.type}
+                              </span>
+                            </div>
+                            <span className="text-xs text-green-600 font-medium">
+                              Click to view →
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+              
+              {/* Test Notification Button */}
+              <div className="p-4 border-t border-gray-200">
+                <Button
+                  onClick={handleSendTestNotification}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white text-sm"
+                >
+                  Send Test Notification
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {showDate && (
           <div className="text-left sm:text-right text-xs sm:text-sm text-gray-600">
             <div className="sm:hidden">
               {getCurrentDate()}
@@ -98,8 +224,8 @@ const UserHeader: React.FC<UserHeaderProps> = ({
               {getCurrentTime()}
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };
