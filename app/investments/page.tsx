@@ -11,6 +11,7 @@ import { useProfile } from '@/contexts/ProfileContext';
 import { useWallet } from '@/contexts/WalletContext';
 import KycModal from '@/components/kyc-modal';
 import PinValidationModal from '@/components/pin-validation-modal';
+import CustomAlert from '@/components/custom-alert';
 import APIConnectivityTest from '@/components/APIConnectivityTest';
 import { createClient } from '@/app/utils/supabase/client';
 import { paymentService } from '@/lib/paymentService';
@@ -127,6 +128,24 @@ const InvestmentsPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
+  
+  // Custom Alert State
+  const [alertState, setAlertState] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success' | 'error' | 'warning' | 'info'
+  });
+
+  // Helper function to show custom alert
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setAlertState({
+      isOpen: true,
+      title,
+      message,
+      type
+    });
+  };
 
   // Update project units in database
   const updateProjectUnits = async (projectId: string, quantity: number, totalAmount: number) => {
@@ -564,23 +583,23 @@ const InvestmentsPage = () => {
     // Validate payment details based on selected method
     if (selectedPaymentMethod === 'mobile') {
       if (!paymentDetails.mobileNumber || !paymentDetails.provider) {
-        alert('Please fill in all mobile money details');
+        showAlert('Missing Information', 'Please fill in all mobile money details', 'warning');
         return;
       }
     } else if (selectedPaymentMethod === 'card') {
       if (!paymentDetails.cardName || !paymentDetails.cardNumber || !paymentDetails.expiryDate || !paymentDetails.cvv) {
-        alert('Please fill in all card details');
+        showAlert('Missing Information', 'Please fill in all card details', 'warning');
         return;
       }
     } else if (selectedPaymentMethod === 'agripath') {
       // Validate wallet balance
       const totalAmount = selectedInvestment.price * quantity;
       if (!wallet?.balance || wallet.balance < totalAmount) {
-        alert('Insufficient wallet balance for this investment');
+        showAlert('Insufficient Balance', 'Insufficient wallet balance for this investment', 'error');
         return;
       }
     } else {
-      alert('Please select a payment method');
+      showAlert('Payment Method Required', 'Please select a payment method', 'warning');
       return;
     }
 
@@ -1800,6 +1819,15 @@ const InvestmentsPage = () => {
           title="Confirm Investment"
           description="Enter your 4-digit PIN to confirm this investment transaction"
           action="Confirm Investment"
+        />
+
+        {/* Custom Alert */}
+        <CustomAlert
+          isOpen={alertState.isOpen}
+          onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))}
+          title={alertState.title}
+          message={alertState.message}
+          type={alertState.type}
         />
       </div>
     </DashboardLayout>
