@@ -168,7 +168,7 @@ const WalletWithdrawal: React.FC = () => {
         <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
           <div className="flex items-center gap-2 mb-2">
             <Wallet className="h-5 w-5 text-green-600" />
-            <span className="text-sm font-medium text-green-800">Available Balance</span>
+           
           </div>
           <div className="text-2xl font-bold text-green-700">
             {wallet?.currency || 'GHS'} {wallet?.balance?.toLocaleString('en-US', { 
