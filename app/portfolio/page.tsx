@@ -15,6 +15,16 @@ import { Progress } from '@/components/ui/progress';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
+  getProjectTimeline, 
+  calculateProjectProgress, 
+  mapOldStageToNew,
+  calculateProjectDates,
+  formatProjectDuration,
+  getProjectTimeProgress,
+  ProjectType,
+  ProjectStage 
+} from '@/lib/project-stages';
+import { 
   Search, 
   // Bell, // Unused import
   Eye,
@@ -531,24 +541,61 @@ const PortfolioPage = () => {
                     </div>
                     <div>
                       <p className="text-sm text-gray-600">Duration</p>
-                      <p className="font-bold text-lg text-orange-600">{selectedProject.duration}</p>
+                      <p className="font-bold text-lg text-orange-600">
+                        {formatProjectDuration(selectedProject.project_type as ProjectType)}
+                      </p>
                     </div>
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-medium text-gray-700">Project Progress</span>
-                      <span className="text-sm text-gray-600">{selectedProject.progress}% there</span>
+                      <span className="text-sm text-gray-600">
+                        {(() => {
+                          const projectType = selectedProject.project_type as ProjectType;
+                          const currentStage = selectedProject.project_stages ? mapOldStageToNew(selectedProject.project_stages) as ProjectStage : undefined;
+                          const startDate = selectedProject.start_date ? new Date(selectedProject.start_date) : new Date(selectedProject.date || Date.now());
+                          
+                          // For completed projects, show 100% progress
+                          if (selectedProject.status === 'Completed' || selectedProject.status === 'Complete') {
+                            return 100;
+                          }
+                          
+                          return getProjectTimeProgress(projectType, startDate, currentStage);
+                        })()}% complete
+                      </span>
                     </div>
                     <div className="relative">
-                      <Progress value={selectedProject.progress} className="h-2" />
+                      <Progress value={(() => {
+                        const projectType = selectedProject.project_type as ProjectType;
+                        const currentStage = selectedProject.project_stages ? mapOldStageToNew(selectedProject.project_stages) as ProjectStage : undefined;
+                        const startDate = selectedProject.start_date ? new Date(selectedProject.start_date) : new Date(selectedProject.date || Date.now());
+                        
+                        // For completed projects, show 100% progress
+                        if (selectedProject.status === 'Completed' || selectedProject.status === 'Complete') {
+                          return 100;
+                        }
+                        
+                        return getProjectTimeProgress(projectType, startDate, currentStage);
+                      })()} className="h-2" />
                       <motion.div
                         className="absolute top-0 left-0 h-2 bg-green-600 rounded-full"
                         variants={progressVariants}
                         initial="hidden"
                         animate="visible"
                         style={{ 
-                          width: `${selectedProject.progress}%`,
+                          width: `${(() => {
+                            const projectType = selectedProject.project_type as ProjectType;
+                            const currentStage = selectedProject.project_stages ? mapOldStageToNew(selectedProject.project_stages) as ProjectStage : undefined;
+                            const startDate = selectedProject.start_date ? new Date(selectedProject.start_date) : new Date(selectedProject.date || Date.now());
+                            
+                            // For completed projects, show 100% progress
+                            if (selectedProject.status === 'Completed' || selectedProject.status === 'Complete') {
+                              return 100;
+                            }
+                            
+                            return getProjectTimeProgress(projectType, startDate, currentStage);
+                          })()}%`,
                           transformOrigin: 'left'
                         }}
                       />
@@ -570,115 +617,151 @@ const PortfolioPage = () => {
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">End Date</span>
-                      <span className="font-semibold">{selectedProject.endDate}</span>
+                      <span className="font-semibold">
+                        {(() => {
+                          const projectType = selectedProject.project_type as ProjectType;
+                          const startDate = selectedProject.start_date ? new Date(selectedProject.start_date) : new Date(selectedProject.date || Date.now());
+                          const projectDates = calculateProjectDates(projectType, startDate);
+                          return projectDates.endDate.toLocaleDateString();
+                        })()}
+                      </span>
                     </div>
                   </div>
 
                   {/* Project Timeline */}
-                  {selectedProject.timeline && selectedProject.timeline.length > 0 && (
-                    <div>
-                      <Button
-                        variant="ghost"
-                        onClick={() => setShowTimeline(!showTimeline)}
-                        className="w-full justify-between p-0 h-auto"
-                      >
-                        <span className="font-semibold">Project Timeline</span>
-                        {showTimeline ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                      </Button>
-                      
-                      <AnimatePresence>
-                        {showTimeline && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.3, ease: "easeInOut" }}
-                            className="mt-4 space-y-4"
-                          >
-                            {selectedProject.timeline.map((item: { step: string; date: string; completed: boolean; current?: boolean }, index: number) => (
-                              <motion.div
-                                key={index}
-                                variants={stepVariants}
-                                initial="hidden"
-                                animate="visible"
-                                transition={{ delay: index * 0.1 }}
-                                className="flex items-start gap-3"
-                              >
-                                <div className="flex flex-col items-center">
-                                  <motion.div 
-                                    className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                      item.completed 
-                                        ? 'bg-green-600' 
-                                        : item.current 
-                                        ? 'bg-green-600 border-2 border-green-600' 
-                                        : 'bg-white border-2 border-gray-300'
-                                    }`}
-                                    whileHover={{ scale: 1.1 }}
-                                    transition={{ type: "spring", stiffness: 300 }}
-                                  >
-                                    {item.completed && (
-                                      <motion.div
-                                        initial={{ scale: 0 }}
-                                        animate={{ scale: 1 }}
-                                        transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
-                                      >
-                                        <CheckCircle className="h-4 w-4 text-white" />
-                                      </motion.div>
-                                    )}
-                                    {item.current && !item.completed && (
+                  <div>
+                    <Button
+                      variant="ghost"
+                      onClick={() => setShowTimeline(!showTimeline)}
+                      className="w-full justify-between p-0 h-auto"
+                    >
+                      <span className="font-semibold">Project Timeline</span>
+                      {showTimeline ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                    
+                    <AnimatePresence>
+                      {showTimeline && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          exit={{ opacity: 0, height: 0 }}
+                          transition={{ duration: 0.3, ease: "easeInOut" }}
+                          className="mt-4 space-y-4"
+                        >
+                          {(() => {
+                            const projectType = selectedProject.project_type as ProjectType;
+                            const currentStage = selectedProject.project_stages ? mapOldStageToNew(selectedProject.project_stages) as ProjectStage : undefined;
+                            const startDate = selectedProject.start_date ? new Date(selectedProject.start_date) : new Date(selectedProject.date || Date.now());
+                            
+                            // Calculate project dates and timeline
+                            const projectDates = calculateProjectDates(projectType, startDate, currentStage, selectedProject.status);
+                            const timeline = projectDates.stages;
+                            
+                            return timeline.map((stage, index) => {
+                              const isCompleted = stage.isCompleted;
+                              const isCurrent = stage.isCurrent;
+                              
+                              return (
+                                <motion.div
+                                  key={stage.id}
+                                  variants={stepVariants}
+                                  initial="hidden"
+                                  animate="visible"
+                                  transition={{ delay: index * 0.1 }}
+                                  className="flex items-start gap-3"
+                                >
+                                  <div className="flex flex-col items-center">
+                                    <motion.div 
+                                      className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                                        isCompleted 
+                                          ? 'bg-green-600' 
+                                          : isCurrent 
+                                          ? 'bg-green-600 border-2 border-green-600' 
+                                          : 'bg-white border-2 border-gray-300'
+                                      }`}
+                                      whileHover={{ scale: 1.1 }}
+                                      transition={{ type: "spring", stiffness: 300 }}
+                                    >
+                                      {isCompleted && (
+                                        <motion.div
+                                          initial={{ scale: 0 }}
+                                          animate={{ scale: 1 }}
+                                          transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+                                        >
+                                          <CheckCircle className="h-4 w-4 text-white" />
+                                        </motion.div>
+                                      )}
+                                      {isCurrent && !isCompleted && (
+                                        <motion.div 
+                                          className="w-2 h-2 bg-white rounded-full"
+                                          animate={{ 
+                                            scale: [1, 1.2, 1],
+                                            opacity: [1, 0.7, 1]
+                                          }}
+                                          transition={{ 
+                                            duration: 2,
+                                            repeat: Infinity,
+                                            ease: "easeInOut"
+                                          }}
+                                        />
+                                      )}
+                                    </motion.div>
+                                    {index < timeline.length - 1 && (
                                       <motion.div 
-                                        className="w-2 h-2 bg-white rounded-full"
-                                        animate={{ 
-                                          scale: [1, 1.2, 1],
-                                          opacity: [1, 0.7, 1]
-                                        }}
-                                        transition={{ 
-                                          duration: 2,
-                                          repeat: Infinity,
-                                          ease: "easeInOut"
-                                        }}
+                                        className={`w-0.5 h-8 mt-2 ${
+                                          isCompleted ? 'bg-green-600' : 'bg-gray-300'
+                                        }`}
+                                        initial={{ scaleY: 0 }}
+                                        animate={{ scaleY: 1 }}
+                                        transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
+                                        style={{ transformOrigin: 'top' }}
                                       />
                                     )}
-                                  </motion.div>
-                                  {index < (selectedProject.timeline?.length || 0) - 1 && (
-                                    <motion.div 
-                                      className={`w-0.5 h-8 mt-2 ${
-                                        item.completed ? 'bg-green-600' : 'bg-gray-300'
+                                  </div>
+                                  <div className="flex-1">
+                                    <motion.p 
+                                      className={`font-medium ${
+                                        isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-500'
                                       }`}
-                                      initial={{ scaleY: 0 }}
-                                      animate={{ scaleY: 1 }}
-                                      transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
-                                      style={{ transformOrigin: 'top' }}
-                                    />
-                                  )}
-                                </div>
-                                <div className="flex-1">
-                                  <motion.p 
-                                    className={`font-medium ${
-                                      item.completed || item.current ? 'text-gray-900' : 'text-gray-500'
-                                    }`}
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.1 + index * 0.1 }}
-                                  >
-                                    {item.step}
-                                  </motion.p>
-                                  <motion.p 
-                                    className="text-sm text-gray-500"
-                                    initial={{ opacity: 0, x: -10 }}
-                                    animate={{ opacity: 1, x: 0 }}
-                                    transition={{ delay: 0.15 + index * 0.1 }}
-                                  >
-                                    {item.date}
-                                  </motion.p>
-                                </div>
-                              </motion.div>
-                            ))}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
-                  )}
+                                      initial={{ opacity: 0, x: -10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: 0.1 + index * 0.1 }}
+                                    >
+                                      {stage.displayName}
+                                    </motion.p>
+                                    <motion.p 
+                                      className="text-sm text-gray-500"
+                                      initial={{ opacity: 0, x: -10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: 0.15 + index * 0.1 }}
+                                    >
+                                      {stage.startDate && stage.endDate ? (
+                                        `${stage.startDate.toLocaleDateString()} - ${stage.endDate.toLocaleDateString()}`
+                                      ) : (
+                                        isCompleted 
+                                          ? 'This stage has been completed successfully.' 
+                                          : isCurrent 
+                                          ? 'This stage is currently in progress.' 
+                                          : 'This stage is upcoming.'
+                                      )}
+                                    </motion.p>
+                                    <motion.p 
+                                      className="text-xs text-gray-400 mt-1"
+                                      initial={{ opacity: 0, x: -10 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      transition={{ delay: 0.2 + index * 0.1 }}
+                                    >
+                                      {stage.description}
+                                    </motion.p>
+                                  </div>
+                                </motion.div>
+                              );
+                            });
+                          })()}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
               </div>
             )}

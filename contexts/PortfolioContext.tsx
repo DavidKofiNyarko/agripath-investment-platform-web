@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useUser } from './UserContext';
+import { calculateProjectProgress as calculateStageProgress, mapOldStageToNew, ProjectType, ProjectStage, getProjectEndDate } from '@/lib/project-stages';
 
 export interface Project {
   id: string;
@@ -17,6 +18,8 @@ export interface Project {
   max_expected_return_rate: number;
   duration_months: number;
   project_stages: string;
+  start_date: string;
+  end_date: string;
   invested_amount: number;
   units_owned: number;
   last_investment: string;
@@ -70,13 +73,15 @@ interface SupabaseProject {
   description: string | null;
   cover_image_url: string | null;
   project_type: 'CROP' | 'LIVESTOCK' | 'FISHERY' | 'OTHER';
-  status: 'Active' | 'Inactive' | 'Complete' | 'Cancelled';
+  status: 'Active' | 'Inactive' | 'Complete' | 'Completed' | 'Cancelled';
   total_units: number;
   unit_price: number;
   expected_return_rate: number;
   max_expected_return_rate: number;
   duration_months: number;
   project_stages: 'PLANNING' | 'PREPARATION' | 'PLANTING' | 'GROWTH' | 'HARVEST' | 'COMPLETED';
+  start_date: string | null;
+  end_date: string | null;
   created_at: string;
 }
 
@@ -220,30 +225,36 @@ const isValidProject = (project: unknown): project is SupabaseProject => {
   if (!project || typeof project !== 'object' || project === null) return false;
   
   const p = project as Record<string, unknown>;
-  return (
-    typeof p.id === 'string' &&
-    typeof p.project_name === 'string' &&
-    typeof p.expected_return_rate === 'number' &&
-    typeof p.max_expected_return_rate === 'number' &&
-    typeof p.duration_months === 'number' &&
-    typeof p.unit_price === 'number' &&
-    typeof p.total_units === 'number' &&
-    typeof p.created_at === 'string'
-  );
+  
+  const checks = {
+    id: typeof p.id === 'string',
+    project_name: typeof p.project_name === 'string',
+    expected_return_rate: typeof p.expected_return_rate === 'number',
+    max_expected_return_rate: typeof p.max_expected_return_rate === 'number',
+    duration_months: typeof p.duration_months === 'number',
+    unit_price: typeof p.unit_price === 'number',
+    total_units: typeof p.total_units === 'number',
+    created_at: typeof p.created_at === 'string',
+    start_date: (p.start_date === null || typeof p.start_date === 'string'),
+    end_date: (p.end_date === null || typeof p.end_date === 'string')
+  };
+  
+  return Object.values(checks).every(check => check);
 };
 
 const isValidTransaction = (transaction: unknown): transaction is SupabaseTransactionWithProject => {
   if (!transaction || typeof transaction !== 'object' || transaction === null) return false;
   
   const t = transaction as Record<string, unknown>;
-  return (
-    typeof t.project_id === 'string' &&
-    typeof t.amount === 'number' &&
-    typeof t.unit === 'number' &&
-    typeof t.created_at === 'string' &&
-    !!t.projects &&
-    isValidProject(t.projects)
-  );
+  
+  // Simplified validation - just check the essential fields
+  const hasProjectId = typeof t.project_id === 'string';
+  const hasAmount = typeof t.amount === 'number';
+  const hasUnit = typeof t.unit === 'number';
+  const hasCreatedAt = typeof t.created_at === 'string';
+  const hasProjects = !!t.projects;
+  
+  return hasProjectId && hasAmount && hasUnit && hasCreatedAt && hasProjects;
 };
 
 const isValidMetricsData = (data: unknown): data is SupabaseMetricsData => {
@@ -297,7 +308,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         .from('transactions')
         .select('amount, unit, type, status')
         .eq('profile_id', user.id)
-        .eq('type', 'investment');
+        .eq('type', 'Payin');
 
       if (metricsError) {
         throw new Error(`Failed to fetch portfolio metrics: ${metricsError.message}`);
@@ -342,11 +353,12 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             max_expected_return_rate,
             duration_months,
             project_stages,
-            created_at
+            start_date,
+            end_date
           )
         `)
         .eq('profile_id', user.id)
-        .eq('type', 'investment')
+        .eq('type', 'Payin')
         .order('created_at', { ascending: false });
 
       if (projectsError) {
@@ -355,6 +367,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
 
       // Type-safe projects data processing with validation
       const validProjectsData = (projectsData as unknown as SupabaseTransactionWithProject[])?.filter(isValidTransaction) || [];
+      
       const projectMap = new Map<string, Project>();
       
       validProjectsData.forEach((item) => {
@@ -375,6 +388,8 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             max_expected_return_rate: project.max_expected_return_rate,
             duration_months: project.duration_months,
             project_stages: project.project_stages,
+            start_date: project.start_date || item.created_at.split('T')[0], // Use transaction date as fallback
+            end_date: project.end_date || '',
             invested_amount: 0,
             units_owned: 0,
             last_investment: '',
@@ -383,11 +398,13 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             amount: 0,
             units: 0,
             date: '',
-            progress: calculateProjectProgress(new Date(project.created_at || Date.now()), project.duration_months),
+            progress: project.status === 'Complete' || project.status === 'Completed'
+              ? 100 
+              : calculateStageProgress(project.project_type as ProjectType, project.project_stages ? mapOldStageToNew(project.project_stages) as ProjectStage : undefined),
             roi: `${project.expected_return_rate}% - ${project.max_expected_return_rate}%`,
             potentialReturn: `GHS ${Math.round(project.expected_return_rate / 100 * 1000)} - ${Math.round(project.expected_return_rate / 100 * 1500)}`,
             duration: `${project.duration_months} Months`,
-            endDate: calculateProjectEndDate(new Date(project.created_at || Date.now()), project.duration_months),
+            endDate: getProjectEndDate(project.project_type as ProjectType, new Date(project.created_at || Date.now())).toISOString().split('T')[0],
             timeline: generateProjectTimeline(project.project_stages, project.duration_months, new Date(project.created_at || Date.now()))
           });
         }
