@@ -308,7 +308,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         .from('transactions')
         .select('amount, unit, type, status')
         .eq('profile_id', user.id)
-        .eq('type', 'Payin');
+        .in('type', ['Payin', 'investment']);
 
       if (metricsError) {
         throw new Error(`Failed to fetch portfolio metrics: ${metricsError.message}`);
@@ -358,7 +358,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
           )
         `)
         .eq('profile_id', user.id)
-        .eq('type', 'Payin')
+        .in('type', ['Payin', 'investment'])
         .order('created_at', { ascending: false });
 
       if (projectsError) {
