@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -9,12 +9,23 @@ import {
   FileText,
   Shield,
   RefreshCw,
-  Scale
+  Scale,
+  ArrowLeft
 } from 'lucide-react';
-import DashboardLayout from '@/components/dashboard-layout';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 
 const LegalPage = () => {
   const [activeTab, setActiveTab] = useState('terms');
+  const searchParams = useSearchParams();
+
+  // Handle URL parameters to set active tab
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab && ['terms', 'privacy', 'refund', 'service'].includes(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const legalTabs = [
     { id: 'terms', label: 'Investment Terms & Conditions', icon: FileText },
@@ -339,65 +350,70 @@ const LegalPage = () => {
   const currentContent = getCurrentContent();
 
   return (
-    <DashboardLayout>
-      <div className="min-h-screen bg-gray-50/30">
-        {/* Header */}
-        <div className="bg-white  border-gray-50 px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Legal</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-sm text-gray-600">
-                Thursday, 18 September 2025 • 05:53 PM GMT
-              </div>
-              <Button variant="ghost" size="icon">
-                <Bell className="h-5 w-5" />
-              </Button>
-            </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-4">
+        <div className="flex items-center justify-between max-w-6xl mx-auto">
+          <div className="flex items-center space-x-4">
+            <Link 
+              href="/signin" 
+              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Sign In
+            </Link>
           </div>
+          <div className="text-center">
+            <h1 className="text-2xl font-bold text-gray-900">Legal Documents</h1>
+            <p className="text-sm text-gray-600">Terms, Privacy Policy, and Policies</p>
+          </div>
+          <div className="w-24"></div> {/* Spacer for centering */}
         </div>
+      </div>
 
-        <div className="p-6">
-          {/* Tab Navigation */}
-          <div className="mb-6">
-            <div className="flex space-x-1">
-              {legalTabs.map((tab) => (
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        {/* Tab Navigation */}
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-2">
+            {legalTabs.map((tab) => {
+              const Icon = tab.icon;
+              return (
                 <Button
                   key={tab.id}
                   variant={activeTab === tab.id ? 'default' : 'outline'}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`px-4 py-2 ${
-                    activeTab === tab.id
-                      ? 'bg-green-600 text-white'
-                      : 'text-gray-600 hover:text-gray-900'
+                  className={`flex items-center space-x-2 ${
+                    activeTab === tab.id 
+                      ? 'bg-green-600 hover:bg-green-700 text-white' 
+                      : 'text-gray-700 hover:bg-gray-50'
                   }`}
                 >
-                  <tab.icon className="h-4 w-4 mr-2" />
-                  {tab.label}
+                  <Icon className="w-4 h-4" />
+                  <span className="text-sm">{tab.label}</span>
                 </Button>
-              ))}
-            </div>
+              );
+            })}
           </div>
+        </div>
 
-          {/* Content */}
-          <Card>
-            <CardContent className="p-8">
-              <motion.div
-                key={activeTab}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3 }}
-              >
-                <h1 className="text-3xl font-bold text-gray-900 mb-8">
-                  {currentContent.title}
-                </h1>
-                
-                <div 
-                  className="prose max-w-none"
-                  dangerouslySetInnerHTML={{ __html: currentContent.content }}
-                />
-              </motion.div>
+        {/* Content */}
+        <Card className="shadow-sm">
+          <CardContent className="p-8">
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <h1 className="text-3xl font-bold text-gray-900 mb-8">
+                {currentContent.title}
+              </h1>
+              
+              <div 
+                className="prose max-w-none text-gray-700 leading-relaxed"
+                dangerouslySetInnerHTML={{ __html: currentContent.content }}
+              />
 
               {/* Contact Support */}
               <div className="mt-12 pt-8 border-t border-gray-200">
@@ -416,11 +432,11 @@ const LegalPage = () => {
                   </p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </motion.div>
+          </CardContent>
+        </Card>
       </div>
-    </DashboardLayout>
+    </div>
   );
 };
 

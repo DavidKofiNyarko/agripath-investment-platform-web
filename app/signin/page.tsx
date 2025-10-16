@@ -242,6 +242,20 @@ const SignInPage = () => {
                 Sign up here
               </a>
             </p>
+
+            {/* Legal Links */}
+            <div className="text-center text-xs text-gray-500 mt-4 pt-4 border-t border-gray-200">
+              <p className="mb-2">
+                By signing in, you agree to our{' '}
+                <a href="/legal?tab=service" className="text-green-600 hover:text-green-700 underline">
+                  Terms of Service
+                </a>
+                {' '}and{' '}
+                <a href="/legal?tab=privacy" className="text-green-600 hover:text-green-700 underline">
+                  Privacy Policy
+                </a>
+              </p>
+            </div>
           </form>
 
           {/* Mobile footer */}
