@@ -292,12 +292,12 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
     setError(null);
 
     try {
-      // Fetch portfolio metrics
+      // Fetch portfolio metrics - only include actual investment transactions
       const { data: metricsData, error: metricsError } = await supabase
         .from('transactions')
         .select('amount, unit, type, status')
         .eq('profile_id', user.id)
-        .eq('type', 'Payin');
+        .eq('type', 'investment');
 
       if (metricsError) {
         throw new Error(`Failed to fetch portfolio metrics: ${metricsError.message}`);
@@ -321,7 +321,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         average_investment: averageInvestment
       });
 
-      // Fetch all projects data (filtering now handled client-side)
+      // Fetch all projects data - only include actual investment transactions
       const { data: projectsData, error: projectsError } = await supabase
         .from('transactions')
         .select(`
@@ -346,7 +346,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
           )
         `)
         .eq('profile_id', user.id)
-        .eq('type', 'Payin')
+        .eq('type', 'investment')
         .order('created_at', { ascending: false });
 
       if (projectsError) {

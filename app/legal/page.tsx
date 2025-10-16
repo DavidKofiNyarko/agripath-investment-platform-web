@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { motion } from 'framer-motion';
@@ -15,7 +15,7 @@ import {
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-const LegalPage = () => {
+const LegalContent = () => {
   const [activeTab, setActiveTab] = useState('terms');
   const searchParams = useSearchParams();
 
@@ -437,6 +437,21 @@ const LegalPage = () => {
         </Card>
       </div>
     </div>
+  );
+};
+
+const LegalPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading legal documents...</p>
+        </div>
+      </div>
+    }>
+      <LegalContent />
+    </Suspense>
   );
 };
 

@@ -187,6 +187,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
             first_name: user.user_metadata?.full_name?.split(' ')[0] || user.user_metadata?.first_name || existingProfile.first_name,
             last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || user.user_metadata?.last_name || existingProfile.last_name,
             email: user.email || existingProfile.email,
+            avatar_url: user.user_metadata?.picture || user.user_metadata?.avatar_url || existingProfile.avatar_url,
             country: user.user_metadata?.country || existingProfile.country || 'Ghana',
             phone_number: user.user_metadata?.phone_number || existingProfile.phone_number
           })
@@ -209,6 +210,7 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
             first_name: user.user_metadata?.full_name?.split(' ')[0] || user.user_metadata?.first_name || '',
             last_name: user.user_metadata?.full_name?.split(' ').slice(1).join(' ') || user.user_metadata?.last_name || '',
             email: user.email || '',
+            avatar_url: user.user_metadata?.picture || user.user_metadata?.avatar_url || '',
             country: user.user_metadata?.country || 'Ghana',
             phone_number: user.user_metadata?.phone_number || '',
             user_id: user.id

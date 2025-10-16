@@ -6,7 +6,7 @@ import UserHeader from '@/components/user-header';
 import { useUser } from '@/contexts/UserContext';
 import { useProfile } from '@/contexts/ProfileContext';
 import KycModal from '@/components/kyc-modal';
-import PinValidationModal from '@/components/pin-validation-modal';
+import PinChangeModal from '@/components/pin-change-modal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Search, Filter, Plus, Minus, ChevronUp, ChevronDown, ArrowRight, X, Check, AlertTriangle, Loader2 } from 'lucide-react';
@@ -61,9 +61,8 @@ function SettingsPage() {
     return (
       profileForm.first_name !== (profile.first_name || '') ||
       profileForm.last_name !== (profile.last_name || '') ||
-      profileForm.email !== (profile.email || '') ||
-      profileForm.country !== (profile.country || '') ||
-      profileForm.phone_number !== (profile.phone_number || '')
+      profileForm.phone_number !== (profile.phone_number || '') ||
+      profileForm.country !== (profile.country || '')
     );
   };
 
@@ -91,18 +90,20 @@ function SettingsPage() {
   const handleProfileUpdate = async () => {
     setIsUpdatingProfile(true);
     try {
-      await updateProfile(profileForm);
+      // Exclude email from updates since it's read-only
+      const { email, ...updateData } = profileForm;
+      await updateProfile(updateData);
       setIsProfileSuccessOpen(true);
       // Reset form to show updated values
-      if (profile) {
-        setProfileForm({
-          first_name: profile.first_name || '',
-          last_name: profile.last_name || '',
+    if (profile) {
+      setProfileForm({
+        first_name: profile.first_name || '',
+        last_name: profile.last_name || '',
           email: profile.email || '',
           country: profile.country || '',
-          phone_number: profile.phone_number || ''
-        });
-      }
+        phone_number: profile.phone_number || ''
+      });
+    }
     } catch (error) {
       console.error('Error updating profile:', error);
       // You could add error state here to show user feedback
@@ -209,9 +210,9 @@ function SettingsPage() {
                   {/* Profile Picture Display */}
                   <div className="flex flex-col items-center space-y-4">
                     <div className="relative">
-                      {profile?.avatar_url ? (
+                      {(profile?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.avatar_url) ? (
                         <img
-                          src={profile.avatar_url}
+                        src={profile?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.avatar_url} 
                           alt="Profile Picture"
                           className="w-24 h-24 rounded-full object-cover border-4 border-gray-200 shadow-lg"
                           onError={(e) => {
@@ -221,7 +222,7 @@ function SettingsPage() {
                           }}
                         />
                       ) : null}
-                      <div className={`w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center border-4 border-gray-200 shadow-lg ${profile?.avatar_url ? 'hidden' : ''}`}>
+                      <div className={`w-24 h-24 rounded-full bg-gradient-to-br from-green-400 to-green-600 flex items-center justify-center border-4 border-gray-200 shadow-lg ${(profile?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.avatar_url) ? 'hidden' : ''}`}>
                         <User className="h-12 w-12 text-white" />
                       </div>
                     </div>
@@ -233,72 +234,73 @@ function SettingsPage() {
                         }
                       </h3>
                       <p className="text-sm text-gray-600">
-                        {profile?.avatar_url ? 'Profile picture loaded' : 'No profile picture set'}
+                        {(profile?.avatar_url || user?.user_metadata?.picture || user?.user_metadata?.avatar_url) ? 'Profile picture loaded' : 'No profile picture set'}
                       </p>
                   </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
+                        <div className="space-y-2">
                           <Label htmlFor="firstName">First Name</Label>
                           <Input 
                             id="firstName" 
                             value={profileForm.first_name} 
-                        onChange={(e) => setProfileForm({...profileForm, first_name: e.target.value})}
-                        placeholder="Enter your first name"
+                            onChange={(e) => setProfileForm({...profileForm, first_name: e.target.value})}
+                            placeholder="Enter your first name"
                           />
                         </div>
-                        <div>
+                        <div className="space-y-2">
                           <Label htmlFor="lastName">Last Name</Label>
                           <Input 
                             id="lastName" 
                             value={profileForm.last_name} 
-                        onChange={(e) => setProfileForm({...profileForm, last_name: e.target.value})}
-                        placeholder="Enter your last name"
+                            onChange={(e) => setProfileForm({...profileForm, last_name: e.target.value})}
+                            placeholder="Enter your last name"
                           />
                         </div>
-                        <div>
+                        <div className="space-y-2">
                           <Label htmlFor="email">Email Address</Label>
                           <Input 
                             id="email" 
                             type="email"
                             value={profileForm.email} 
-                            onChange={(e) => setProfileForm({...profileForm, email: e.target.value})}
-                            placeholder="Enter your email address"
+                            readOnly 
+                            className="bg-gray-50 text-gray-600 cursor-not-allowed"
+                            placeholder="Email address cannot be changed"
                           />
                         </div>
-                        <div>
+                        <div className="space-y-2">
                           <Label htmlFor="country">Country</Label>
-                      <Select onValueChange={(value) => setProfileForm({...profileForm, country: value})}>
+                          <Select onValueChange={(value) => setProfileForm({...profileForm, country: value})}>
                             <SelectTrigger>
-                          <SelectValue placeholder="Select your country" />
+                              <SelectValue placeholder="Select your country" />
                             </SelectTrigger>
                             <SelectContent>
-                          <SelectItem value="ghana">Ghana</SelectItem>
-                          <SelectItem value="nigeria">Nigeria</SelectItem>
-                          <SelectItem value="kenya">Kenya</SelectItem>
-                          <SelectItem value="south-africa">South Africa</SelectItem>
-                          <SelectItem value="uganda">Uganda</SelectItem>
-                          <SelectItem value="tanzania">Tanzania</SelectItem>
-                          <SelectItem value="ethiopia">Ethiopia</SelectItem>
-                          <SelectItem value="ivory-coast">Ivory Coast</SelectItem>
-                          <SelectItem value="senegal">Senegal</SelectItem>
-                          <SelectItem value="morocco">Morocco</SelectItem>
-                          <SelectItem value="egypt">Egypt</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                              <SelectItem value="ghana">Ghana</SelectItem>
+                              <SelectItem value="nigeria">Nigeria</SelectItem>
+                              <SelectItem value="kenya">Kenya</SelectItem>
+                              <SelectItem value="south-africa">South Africa</SelectItem>
+                              <SelectItem value="uganda">Uganda</SelectItem>
+                              <SelectItem value="tanzania">Tanzania</SelectItem>
+                              <SelectItem value="ethiopia">Ethiopia</SelectItem>
+                              <SelectItem value="ivory-coast">Ivory Coast</SelectItem>
+                              <SelectItem value="senegal">Senegal</SelectItem>
+                              <SelectItem value="morocco">Morocco</SelectItem>
+                              <SelectItem value="egypt">Egypt</SelectItem>
+                              <SelectItem value="other">Other</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
-                    <div>
-                      <Label htmlFor="phoneNumber">Phone Number</Label>
+                        <div className="space-y-2">
+                          <Label htmlFor="phoneNumber">Phone Number</Label>
                             <Input 
-                        id="phoneNumber"
+                            id="phoneNumber"
                               value={profileForm.phone_number} 
-                        onChange={(e) => setProfileForm({...profileForm, phone_number: e.target.value})}
-                        placeholder="Enter your phone number"
+                            onChange={(e) => setProfileForm({...profileForm, phone_number: e.target.value})}
+                            placeholder="Enter your phone number"
                             />
-                          </div>
                         </div>
+                      </div>
                         <Button 
                           onClick={handleProfileUpdate}
                     disabled={isUpdatingProfile || !isFormModified()}
@@ -365,13 +367,24 @@ function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <h3 className="font-semibold text-gray-900">Transaction PIN</h3>
-                    <p className="text-sm text-gray-600">Secure your transactions with a 4-digit PIN</p>
+                    <p className="text-sm text-gray-600">
+                      {profile?.pin ? 'Secure your transactions with a 4-digit PIN' : 'Set up a 4-digit PIN to secure your transactions'}
+                    </p>
+                    <div className="flex items-center mt-2">
+                      <div className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        profile?.pin 
+                          ? 'bg-green-100 text-green-800' 
+                          : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        {profile?.pin ? 'PIN Set' : 'No PIN Set'}
+                      </div>
+                    </div>
                   </div>
                   <Button
                     onClick={() => setIsPinModalOpen(true)}
                     variant="outline"
                   >
-                    Manage PIN
+                    {profile?.pin ? 'Change PIN' : 'Set PIN'}
                   </Button>
               </div>
 
@@ -428,12 +441,12 @@ function SettingsPage() {
           }}
         />
         
-        <PinValidationModal 
+        <PinChangeModal
           isOpen={isPinModalOpen} 
           onClose={() => setIsPinModalOpen(false)}
           onSuccess={() => {
             setIsPinModalOpen(false);
-            // Handle PIN validation success
+            // Handle PIN change success
           }}
         />
 
@@ -444,7 +457,7 @@ function SettingsPage() {
           exit={{ opacity: 0 }}
         >
           {isProfileSuccessOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="fixed inset-0 bg-gray-800/80 bg-opacity-50 flex items-center justify-center z-50">
             <motion.div
                 initial={{ scale: 0.9, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}

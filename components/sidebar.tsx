@@ -114,7 +114,7 @@ const SidebarContent = ({ className }: SidebarProps) => {
   };
 
   return (
-    <div className={cn('flex h-full flex-col bg-white border-r shadow-sm', className)}>
+    <div className={cn('flex h-full flex-col bg-white border-r  shadow-sm', className)}>
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-4 border-b">
         <div className="flex items-center gap-2">
