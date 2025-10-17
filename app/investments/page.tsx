@@ -1628,7 +1628,7 @@ const InvestmentsPage = () => {
                             </p>
                           </div>
                           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                            <Image  src="/s-logo.png" alt="Agripath" width={40} height={40} />
+                            <Image  src="/y-logo.svg" alt="Agripath" width={40} height={40} />
                           </div>
                         </div>
 
@@ -1983,26 +1983,25 @@ const InvestmentsPage = () => {
                     </div>
 
                     <div className="p-6 border-t bg-gray-50 space-y-3">
-                      <Button 
-                        className="w-full bg-green-600 hover:bg-green-700"
+                      <div 
+                        className="self-stretch p-4 bg-green-800 rounded-2xl w-full inline-flex justify-center items-center gap-2 cursor-pointer hover:bg-green-900 transition-colors"
                         onClick={() => {
                           setIsSheetOpen(false);
                           router.push('/portfolio');
                         }}
                       >
-                        View My Portfolio
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        className="w-full"
+                        <div className="flex-1 text-center justify-center text-white text-base  capitalize">View My Portfolio</div>
+                      </div>
+                      <div 
+                        className="self-stretch p-4 rounded-2xl w-full outline outline-1 outline-offset-[-1px] outline-green-800 inline-flex justify-center items-center gap-2 cursor-pointer hover:bg-green-50 transition-colors"
                         onClick={() => {
                           setIsSheetOpen(false);
                           setCurrentStep('details');
                           resetFlow();
                         }}
                       >
-                        Explore Other Investments
-                      </Button>
+                        <div className="flex-1 text-center justify-center text-green-800 text-base  capitalize">Explore Other Investments</div>
+                      </div>
                     </div>
                   </motion.div>
                 )}

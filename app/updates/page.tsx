@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { 
   Bell, 
@@ -323,8 +322,7 @@ const UpdatesPage = () => {
 
             {/* Content List */}
             <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-              <AnimatePresence>
-                {activeTab === 'notifications' ? (
+              {activeTab === 'notifications' ? (
                   notificationsLoading ? (
                     <div className="text-center py-8">
                       <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
@@ -337,12 +335,9 @@ const UpdatesPage = () => {
                     </div>
                   ) : (
                     paginatedNotifications.map((notification, index) => (
-                      <motion.div
+                      <div
                         key={notification.id}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className={`cursor-pointer transition-all duration-200 ${
+                        className={`cursor-pointer transition-colors duration-150 ${
                           selectedNotification?.id === notification.id 
                             ? 'bg-green-50 border-green-200' 
                             : 'hover:bg-gray-50'
@@ -386,16 +381,13 @@ const UpdatesPage = () => {
                             </div>
                           </CardContent>
                         </Card>
-                      </motion.div>
+                      </div>
                     ))
                   )
                 ) : paginatedUpdates.map((update, index) => (
-                  <motion.div
+                  <div
                     key={update.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className={`cursor-pointer transition-all duration-200 ${
+                    className={`cursor-pointer transition-colors duration-150 ${
                       selectedUpdate?.id === update.id 
                         ? 'bg-green-50 border-green-200' 
                         : 'hover:bg-gray-50'
@@ -441,10 +433,9 @@ const UpdatesPage = () => {
                           </div>
                         </div>
                       </CardContent>
-                    </Card>
-                  </motion.div>
+                        </Card>
+                      </div>
                 ))}
-              </AnimatePresence>
             </div>
 
             {/* Pagination */}
@@ -571,10 +562,9 @@ const UpdatesPage = () => {
                     <h3 className="text-base sm:text-lg font-semibold text-green-600 mb-4">Media</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {selectedUpdate.media.map((media) => (
-                        <motion.div
+                        <div
                           key={media.id}
-                          whileHover={{ scale: 1.02 }}
-                          className="cursor-pointer rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                          className="cursor-pointer rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-150"
                           onClick={() => handleMediaClick(media)}
                         >
                           <div className="aspect-square relative">
@@ -593,7 +583,7 @@ const UpdatesPage = () => {
                               </div>
                             </div>
                           </div>
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
                   </div>

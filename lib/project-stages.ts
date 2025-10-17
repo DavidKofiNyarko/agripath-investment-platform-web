@@ -138,7 +138,15 @@ const OLD_TO_NEW_MAPPINGS: Record<string, ProjectStage> = {
   'FERTILIZER_APPLICATION': 'CROP_MANAGEMENT',
   'PEST_MANAGEMENT': 'CROP_MANAGEMENT',
   'FRUITING': 'GROWTH_MONITORING',
-  'SALES': 'PROCESSING_SALES'
+  'SALES': 'PROCESSING_SALES',
+  // Ensure all current stages are properly mapped
+  'LAND_PREPARATION': 'LAND_PREPARATION',
+  'PLANTING': 'PLANTING',
+  'CROP_MANAGEMENT': 'CROP_MANAGEMENT',
+  'GROWTH_MONITORING': 'GROWTH_MONITORING',
+  'HARVESTING': 'HARVESTING',
+  'PROCESSING_SALES': 'PROCESSING_SALES',
+  'PAYOUT_CLOSURE': 'PAYOUT_CLOSURE'
 };
 
 /**
@@ -338,7 +346,7 @@ export function calculateProjectDates(
     const isProjectCompleted = projectStatus === 'Completed' || projectStatus === 'Complete';
     
     // For completed projects, all stages are completed
-    const isCompleted = isProjectCompleted || currentStageIndex > stage.order;
+    const isCompleted = isProjectCompleted || currentStageIndex >= stage.order;
     const isCurrent = !isProjectCompleted && currentStage === stage.id;
     const isUpcoming = !isProjectCompleted && currentStageIndex < stage.order;
     

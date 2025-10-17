@@ -530,20 +530,44 @@ const PortfolioPage = () => {
                     className="w-full h-48 object-cover rounded-lg"
                   />
                   
-                  <div className="grid grid-cols-3 gap-4 text-center">
-                    <div>
-                      <p className="text-sm text-gray-600">Amount Invested</p>
-                      <p className="font-bold text-lg">GHS {selectedProject.amount?.toLocaleString() || '0.00'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Return (ROI)</p>
-                      <p className="font-bold text-lg text-orange-600">{selectedProject.roi}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Duration</p>
-                      <p className="font-bold text-lg text-orange-600">
-                        {formatProjectDuration(selectedProject.project_type as ProjectType)}
-                      </p>
+                  <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                    <div className="p-4 space-y-0">
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-600 text-sm">Project</span>
+                        <div className="text-right justify-center text-green-950 text-sm font-semibold leading-tight">{selectedProject.project_name}</div>
+                      </div>
+                      <div className="border-t border-gray-200"></div>
+                      
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-600 text-sm">Amount Invested</span>
+                        <span className="font-semibold text-sm">GHS {selectedProject.amount?.toLocaleString() || '0.00'}</span>
+                      </div>
+                      <div className="border-t border-gray-200"></div>
+                      
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-600 text-sm">Return (ROI)</span>
+                        <span className="font-semibold text-sm text-orange-600">{selectedProject.roi}</span>
+                      </div>
+                      <div className="border-t border-gray-200"></div>
+                      
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-600 text-sm">Duration</span>
+                        <span className="font-semibold text-sm text-orange-600">
+                          {formatProjectDuration(selectedProject.project_type as ProjectType)}
+                        </span>
+                      </div>
+                      <div className="border-t border-gray-200"></div>
+                      
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-600 text-sm">Status</span>
+                        <span className="font-semibold text-sm">{selectedProject.status}</span>
+                      </div>
+                      <div className="border-t border-gray-200"></div>
+                      
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-600 text-sm">Units Owned</span>
+                        <span className="font-semibold text-sm">{selectedProject.units || 0} Unit(s)</span>
+                      </div>
                     </div>
                   </div>
 

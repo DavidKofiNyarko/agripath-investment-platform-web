@@ -32,7 +32,7 @@ const ErrorPage = () => {
         <div className="w-full max-w-md space-y-6 text-center">
           {/* Mobile header with logo */}
           <div className="block lg:hidden mb-6">
-            <Image src="/y-logo.png" alt="AgriPath" width={60} height={60} className="mx-auto mb-4" />
+            <Image src="/y-logo.svg" alt="AgriPath" width={60} height={60} className="mx-auto mb-4" />
             <div className="text-white/90 text-sm">
               {new Date().toLocaleString('en-GB', {
                 weekday: 'long',
@@ -132,7 +132,7 @@ const ErrorPage = () => {
 
         {/* Logo */}
         <div className="absolute top-6 right-6 z-10">
-          <Image src="/y-logo.png" alt="AgriPath" width={60} height={60} className="sm:w-20 sm:h-20" />
+          <Image src="/y-logo.svg" alt="AgriPath" width={60} height={60} className="sm:w-20 sm:h-20" />
         </div>
 
         {/* Bottom Content */}

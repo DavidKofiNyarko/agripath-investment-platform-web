@@ -1,131 +1,114 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
-import { Mail, MessageSquare, Smartphone, TrendingUp, Shield, Bell } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { useNotifications, NotificationPreferences } from '@/contexts/NotificationContext';
 
 const NotificationPreferencesComponent: React.FC = () => {
   const { preferences, updatePreferences } = useNotifications();
   const [localPreferences, setLocalPreferences] = useState<NotificationPreferences>(preferences);
-  const [isSaving, setIsSaving] = useState(false);
 
   const handleToggle = (key: keyof NotificationPreferences) => {
     const newValue = !localPreferences[key];
     setLocalPreferences(prev => ({ ...prev, [key]: newValue }));
+    // Auto-save on toggle
+    updatePreferences({ ...localPreferences, [key]: newValue });
   };
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    try {
-      await updatePreferences(localPreferences);
-    } catch (error) {
-      console.error('Error saving preferences:', error);
-    } finally {
-      setIsSaving(false);
+  const notificationCategories = [
+    {
+      title: 'Investment & Portfolio',
+      settings: [
+        {
+          key: 'investment_updates' as keyof NotificationPreferences,
+          title: 'Investment Updates',
+          description: 'Get updates when your crops/livestock are started, growth stages, or harvested.',
+          enabled: localPreferences.investment_updates,
+        },
+        {
+          key: 'market_updates' as keyof NotificationPreferences,
+          title: 'ROI & Payout Alerts',
+          description: 'Be notified when your returns are ready or payouts are sent.',
+          enabled: localPreferences.market_updates,
+        },
+      ]
+    },
+    {
+      title: 'App & System',
+      settings: [
+        {
+          key: 'email_notifications' as keyof NotificationPreferences,
+          title: 'App Announcements',
+          description: 'Stay informed about new features and updates.',
+          enabled: localPreferences.email_notifications,
+        },
+        {
+          key: 'security_alerts' as keyof NotificationPreferences,
+          title: 'Security Alerts',
+          description: 'Get notified if there\'s a login from a new device or account changes.',
+          enabled: localPreferences.security_alerts,
+        },
+      ]
+    },
+    {
+      title: 'Promotions & Marketing',
+      settings: [
+        {
+          key: 'push_notifications' as keyof NotificationPreferences,
+          title: 'Offers & Promotions',
+          description: 'Occasional offers, bonuses, and news from AgriPath.',
+          enabled: localPreferences.push_notifications,
+        },
+      ]
     }
-  };
-
-  const notificationSettings = [
-    {
-      key: 'email_notifications' as keyof NotificationPreferences,
-      title: 'Email Notifications',
-      description: 'Get notified about important updates via email',
-      icon: Mail,
-      enabled: localPreferences.email_notifications,
-    },
-    {
-      key: 'sms_notifications' as keyof NotificationPreferences,
-      title: 'SMS Notifications',
-      description: 'Receive SMS alerts for critical account activities',
-      icon: MessageSquare,
-      enabled: localPreferences.sms_notifications,
-    },
-    {
-      key: 'push_notifications' as keyof NotificationPreferences,
-      title: 'Push Notifications',
-      description: 'Get real-time notifications on your device',
-      icon: Smartphone,
-      enabled: localPreferences.push_notifications,
-    },
-    {
-      key: 'investment_updates' as keyof NotificationPreferences,
-      title: 'Investment Updates',
-      description: 'Notifications about your investment portfolio',
-      icon: TrendingUp,
-      enabled: localPreferences.investment_updates,
-    },
-    {
-      key: 'market_updates' as keyof NotificationPreferences,
-      title: 'Market Updates',
-      description: 'Stay informed about market trends and opportunities',
-      icon: Bell,
-      enabled: localPreferences.market_updates,
-    },
-    {
-      key: 'security_alerts' as keyof NotificationPreferences,
-      title: 'Security Alerts',
-      description: 'Immediate alerts for security-related activities',
-      icon: Shield,
-      enabled: localPreferences.security_alerts,
-    },
   ];
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Bell className="h-5 w-5 text-green-600" />
-          Notification Preferences
-        </CardTitle>
-        <CardDescription>
-          Choose how you want to be notified about important updates and activities.
-        </CardDescription>
-      </CardHeader>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold text-gray-900 mb-8">Notifications</h1>
       
-      <CardContent className="space-y-6">
-        {notificationSettings.map((setting) => {
-          const IconComponent = setting.icon;
-          return (
-            <div key={setting.key} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gray-100 rounded-lg">
-                  <IconComponent className="h-5 w-5 text-gray-600" />
+      <div className="space-y-8">
+        {notificationCategories.map((category, categoryIndex) => (
+          <div key={category.title}>
+            <h2 className="text-lg font-semibold text-green-600 mb-4">{category.title}</h2>
+            
+            <div className="space-y-4">
+              {category.settings.map((setting, settingIndex) => (
+                <div key={setting.key}>
+                  <div className="flex items-center justify-between py-3">
+                    <div className="flex-1">
+                      <Label htmlFor={setting.key} className="text-base font-semibold text-gray-900">
+                        {setting.title}
+                      </Label>
+                      <p className="text-sm text-gray-600 mt-1">
+                        {setting.description}
+                      </p>
+                    </div>
+                    
+                    <Switch
+                      id={setting.key}
+                      checked={setting.enabled}
+                      onCheckedChange={() => handleToggle(setting.key)}
+                      className="data-[state=checked]:bg-green-600"
+                    />
+                  </div>
+                  
+                  {settingIndex < category.settings.length - 1 && (
+                    <Separator className="my-4" />
+                  )}
                 </div>
-                <div>
-                  <Label htmlFor={setting.key} className="text-sm font-medium text-gray-900">
-                    {setting.title}
-                  </Label>
-                  <p className="text-xs text-gray-600 mt-1">
-                    {setting.description}
-                  </p>
-                </div>
-              </div>
-              
-              <Switch
-                id={setting.key}
-                checked={setting.enabled}
-                onCheckedChange={() => handleToggle(setting.key)}
-                className="data-[state=checked]:bg-green-600"
-              />
+              ))}
             </div>
-          );
-        })}
-        
-        <div className="flex justify-end pt-4 border-t border-gray-200">
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="bg-green-600 hover:bg-green-700 text-white"
-          >
-            {isSaving ? 'Saving...' : 'Save Preferences'}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            
+            {categoryIndex < notificationCategories.length - 1 && (
+              <Separator className="mt-8" />
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };
 

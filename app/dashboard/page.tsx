@@ -549,7 +549,7 @@ const DashboardPage = () => {
             />
           </div>
           
-          <div className="flex flex-wrap gap-3 sm:gap-4 overflow-x-auto pb-2">
+          <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-2 scrollbar-hide">
             {projects.slice(0, 5).map((project) => (
              <Card key={project.id} className="p-3 sm:p-4 bg-white rounded-2xl inline-flex justify-start items-start gap-3 w-60 sm:w-64 md:w-72 lg:w-80 flex-shrink-0">
                <div className="w-full inline-flex flex-col justify-start items-start gap-3">
