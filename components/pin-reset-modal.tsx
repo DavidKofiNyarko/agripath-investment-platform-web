@@ -233,7 +233,7 @@ const PinResetModal: React.FC<PinResetModalProps> = ({ isOpen, onClose, onSucces
                       {newPin.map((digit, index) => (
                         <Input
                           key={index}
-                          ref={(el) => (pinRefs.current[index] = el)}
+                          ref={(el) => { pinRefs.current[index] = el; }}
                           type={showPin ? 'text' : 'password'}
                           value={digit}
                           onChange={(e) => handlePinChange(index, e.target.value, 'pin')}
@@ -261,7 +261,7 @@ const PinResetModal: React.FC<PinResetModalProps> = ({ isOpen, onClose, onSucces
                       {confirmPin.map((digit, index) => (
                         <Input
                           key={index}
-                          ref={(el) => (confirmPinRefs.current[index] = el)}
+                          ref={(el) => { confirmPinRefs.current[index] = el; }}
                           type={showConfirmPin ? 'text' : 'password'}
                           value={digit}
                           onChange={(e) => handlePinChange(index, e.target.value, 'confirm')}
