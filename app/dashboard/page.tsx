@@ -44,6 +44,38 @@ import PinValidationModal from '@/components/pin-validation-modal';
 import WalletTestComponent from '@/components/WalletTestComponent';
 import ProfileSetupFlow from '@/components/profile-setup-flow';
 
+// --- ViewMoreButton custom component ---
+const ViewMoreButton = ({
+  onClick,
+  label = 'View more',
+  className = '',
+  ...props
+}: {
+  onClick?: () => void,
+  label?: string,
+  className?: string,
+  [x: string]: any
+}) => {
+  return (
+    <div
+      onClick={onClick}
+      className={
+        `px-3 py-2 bg-white rounded-lg outline outline-[0.50px] outline-offset-[-0.50px] outline-AG=Green inline-flex justify-center items-center gap-2.5 cursor-pointer select-none active:opacity-90 ${className}`
+      }
+      {...props}
+      tabIndex={0}
+      role="button"
+    >
+      <div className="justify-start text-[rgba(5,20,52,0.9)] text-sm font-normal  leading-tight">{label}</div>
+      <div className="w-4 h-4 relative flex items-center justify-center">
+        {/* Arrow icon */}
+        <ChevronRight className="h-4 w-4 absolute left-0 top-0 text-black" />
+      </div>
+    </div>
+  );
+};
+// -- End ViewMoreButton ---
+
 const DashboardPage = () => {
   const router = useRouter();
   const { user, loading } = useUser();
@@ -64,8 +96,10 @@ const DashboardPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('');
   const [withdrawMethod, setWithdrawMethod] = useState('');
   const [savePaymentMethod, setSavePaymentMethod] = useState(true);
-  const [currentStep, setCurrentStep] = useState('amount'); // 'amount', 'payment', 'pin', 'loading', 'success', 'error'
-  const [withdrawStep, setWithdrawStep] = useState('amount'); // 'amount', 'method', 'pin', 'success', 'error'
+  const [currentStep, setCurrentStep] = useState('amount');
+  const [withdrawStep, setWithdrawStep] = useState('amount');
+  const [amountError, setAmountError] = useState('');
+  const [withdrawAmountError, setWithdrawAmountError] = useState('');
   const [paymentDetails, setPaymentDetails] = useState({
     networkProvider: '',
     phoneNumber: '',
@@ -82,9 +116,90 @@ const DashboardPage = () => {
     phoneNumber: ''
   });
 
+  // Amount validation functions
+  const formatAmount = (value: string) => {
+    // Remove all non-numeric characters except decimal point
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    
+    // Ensure only one decimal point
+    const parts = numericValue.split('.');
+    if (parts.length > 2) {
+      return parts[0] + '.' + parts.slice(1).join('');
+    }
+    
+    // Limit to 2 decimal places
+    if (parts[1] && parts[1].length > 2) {
+      return parts[0] + '.' + parts[1].substring(0, 2);
+    }
+    
+    return numericValue;
+  };
+
+  const formatAmountWithCommas = (value: string) => {
+    if (!value || value === '') return '';
+    
+    const numericValue = formatAmount(value);
+    const parts = numericValue.split('.');
+    
+    // Add commas to the integer part
+    const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    
+    // Combine with decimal part if it exists
+    return parts[1] ? `${integerPart}.${parts[1]}` : integerPart;
+  };
+
+  const validateAmount = (value: string) => {
+    if (!value || value.trim() === '') {
+      return 'Amount is required';
+    }
+    
+    const numericValue = value.replace(/,/g, '');
+    const amount = parseFloat(numericValue);
+    
+    if (isNaN(amount)) {
+      return 'Please enter a valid number';
+    }
+    
+    if (amount <= 0) {
+      return 'Amount must be greater than 0';
+    }
+    
+    if (amount < 1) {
+      return 'Minimum amount is GHS 1.00';
+    }
+    
+    if (amount > 100000) {
+      return 'Maximum amount is GHS 100,000.00';
+    }
+    
+    return '';
+  };
+
+  const handleAmountChange = (value: string) => {
+    const formattedValue = formatAmountWithCommas(value);
+    setAmount(formattedValue);
+    
+    const error = validateAmount(formattedValue);
+    setAmountError(error);
+  };
+
+  const handleWithdrawAmountChange = (value: string) => {
+    const formattedValue = formatAmountWithCommas(value);
+    setWithdrawAmount(formattedValue);
+    
+    const error = validateAmount(formattedValue);
+    setWithdrawAmountError(error);
+  };
+
   const handleTopUp = () => {
     if (currentStep === 'amount') {
-      // If payment method is selected, go to PIN confirmation
+      // Validate amount first
+      const amountValidationError = validateAmount(amount);
+      if (amountValidationError) {
+        setAmountError(amountValidationError);
+        return;
+      }
+      
       if (paymentMethod) {
         setIsTopUpPinModalOpen(true);
       }
@@ -93,22 +208,10 @@ const DashboardPage = () => {
 
   const handleTopUpPinSuccess = async () => {
     setIsTopUpPinModalOpen(false);
-    setCurrentStep('loading'); // Show loading state
-    
+    setCurrentStep('loading');
     try {
       const topUpAmount = parseFloat(amount.replace(/,/g, ''));
-      
-      console.log('Topup Debug:', {
-        paymentMethod,
-        topUpAmount,
-        paymentDetails,
-        user: user?.email
-      });
-      
-      // Use new wallet API based on payment method
       if (paymentMethod === 'card') {
-        console.log('Processing card payment...');
-        // Use actual form data instead of hardcoded test data
         const result = await processWalletTopup({
           amount: topUpAmount,
           channel: 'card',
@@ -120,23 +223,15 @@ const DashboardPage = () => {
           user_email: user?.email || 'test@example.com',
           description: 'Dashboard topup via card'
         });
-        
         if (result.success) {
-          // Wait a moment for wallet to refresh, then show success
-          setTimeout(() => {
-            setCurrentStep('success');
-          }, 1000);
+          setTimeout(() => { setCurrentStep('success'); }, 1000);
         } else if (result.redirect_url) {
-          // Handle 3D Secure redirect
           window.open(result.redirect_url, '_blank');
-          setTimeout(() => {
-            setCurrentStep('success'); // Assume success for demo
-          }, 1000);
+          setTimeout(() => { setCurrentStep('success'); }, 1000);
         } else {
           setCurrentStep('error');
         }
       } else if (paymentMethod === 'mobile') {
-        // Use actual form data instead of hardcoded test data
         const result = await processWalletTopup({
           amount: topUpAmount,
           channel: 'momo',
@@ -144,35 +239,33 @@ const DashboardPage = () => {
           network: paymentDetails.networkProvider,
           description: 'Dashboard topup via mobile money'
         });
-        
         if (result.success) {
-          // Wait a moment for wallet to refresh, then show success
-          setTimeout(() => {
-            setCurrentStep('success');
-          }, 1000);
+          setTimeout(() => { setCurrentStep('success'); }, 1000);
         } else {
           setCurrentStep('error');
         }
       } else {
-        // Fallback to direct wallet update for other methods
         const success = await updateBalance(topUpAmount, 'Top up via ' + paymentMethod);
         if (success) {
-          setTimeout(() => {
-            setCurrentStep('success');
-          }, 1000);
+          setTimeout(() => { setCurrentStep('success'); }, 1000);
         } else {
           setCurrentStep('error');
         }
       }
     } catch (error) {
-      console.error('Top-up error:', error);
       setCurrentStep('error');
     }
   };
 
   const handleWithdraw = () => {
     if (withdrawStep === 'amount') {
-      // If withdrawal method is selected, go to PIN confirmation
+      // Validate withdraw amount first
+      const withdrawAmountValidationError = validateAmount(withdrawAmount);
+      if (withdrawAmountValidationError) {
+        setWithdrawAmountError(withdrawAmountValidationError);
+        return;
+      }
+      
       if (withdrawMethod) {
         setIsWithdrawPinModalOpen(true);
       }
@@ -181,11 +274,8 @@ const DashboardPage = () => {
 
   const handleWithdrawPinSuccess = async () => {
     setIsWithdrawPinModalOpen(false);
-    
     try {
       const withdrawAmountValue = parseFloat(withdrawAmount.replace(/,/g, ''));
-      
-      // Use new wallet API for payout
       const result = await processWalletWithdrawal({
         amount: withdrawAmountValue,
         channel: withdrawMethod === 'mobile' ? 'momo' : 'bank',
@@ -198,19 +288,15 @@ const DashboardPage = () => {
         }),
         description: 'Dashboard withdrawal'
       });
-      
       if (result.success) {
         setWithdrawStep('success');
       } else {
         setWithdrawStep('error');
       }
     } catch (error) {
-      console.error('Withdrawal error:', error);
       setWithdrawStep('error');
     }
   };
-
-
 
   const handleBalanceToggle = () => {
     if (isBalanceVisible) {
@@ -238,7 +324,6 @@ const DashboardPage = () => {
     setIsWithdrawOpen(false);
   };
 
-  // Redirect to login if not authenticated
   useEffect(() => {
     if (!loading && !user) {
       router.push('/signin');
@@ -258,14 +343,12 @@ const DashboardPage = () => {
     );
   }
 
-  // Don't render anything if user is not authenticated
   if (!user) {
     return null;
   }
 
   return (
     <DashboardLayout>
-      {/* Dim/blur background and show setup flow if profile doesn't exist */}
       {!profile && (
         <>
           <div className="pointer-events-none fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" />
@@ -283,15 +366,31 @@ const DashboardPage = () => {
         </div>
 
         {/* Account Balance Card */}
-        <Card className="bg-gradient-to-l from-green-700 via-green-700 to-green-800 text-white border-0 shadow-xl">
-          <CardContent className="p-4 sm:p-6 lg:p-8">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <Card className="flex flex-col justify-between items-end self-stretch rounded-[12px] bg-green-800/90 text-white border-0 shadow-xl p-8">
+          <CardContent className="p-0 flex  justify-between items-end self-stretch">
               <div className="flex-1">
-                <p className="text-green-50 text-sm font-semibold mb-2 sm:mb-3 tracking-wide uppercase">Account Balance</p>
-                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                <p className="text-[24px] leading-[34.8px] font-normal text-[#F7F7F7] font-inter mb-4 sm:mb-6 tracking-wide">
+                  Account Balance
+                </p>
+                <div className="flex items-center gap-3 sm:gap-4 mb-3">
                   <span className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">
                     {isBalanceVisible ? (
-                      `${wallet?.currency || 'GHS'} ${wallet?.balance?.toLocaleString() || '0.00'}`
+                      <>
+                        <span
+                          style={{
+                            color: 'rgba(247, 247, 247, 0.70)',
+                            textAlign: 'center',
+                            fontFamily: 'Inter, sans-serif',
+                            fontSize: 40,
+                            fontStyle: 'normal',
+                            fontWeight: 600,
+                            lineHeight: '125%',
+                          }}
+                        >
+                         GH&#8373;
+                        </span>
+                        <span> {wallet?.balance?.toLocaleString() || '0.00'}</span>
+                      </>
                     ) : (
                       '••••••••'
                     )}
@@ -313,23 +412,30 @@ const DashboardPage = () => {
                   {isBalanceVisible ? 'Balance visible' : 'Balance hidden'}
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
-                <Button 
-                  variant="secondary" 
-                  className="bg-white text-green-700 hover:bg-gray-50 font-medium text-sm sm:text-base py-2 sm:py-2.5"
+            <div className="flex flex-col sm:flex-row sm:items-end self-stretch sm:justify-between gap-6">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+                <div
+                  className="self-stretch px-5 py-1.5 bg-white rounded-[20px] border-r border-green-800 inline-flex justify-center items-center gap-1 cursor-pointer"
                   onClick={() => setIsTopUpOpen(true)}
+                  role="button"
+                  tabIndex={0}
                 >
-                  <Upload className="h-4 w-4 mr-2" />
-                  Top Up
-                </Button>
-                <Button 
-                  variant="outline" 
-                  className="border-white/30 text-white hover:bg-white/10 bg-green-700 font-medium text-sm sm:text-base py-2 sm:py-2.5"
+                  <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center">
+                    <Upload className="w-4 h-4 absolute left-[3px] top-[2.25px] text-green-800" />
+                  </div>
+                  <div className="text-right justify-start text-green-800 text-base font-bold  leading-snug">Top Up</div>
+                </div>
+                <div
+                  className="self-stretch px-5 py-1.5 rounded-[20px] outline  outline-offset-[-2px] outline-white inline-flex justify-center items-center gap-1 cursor-pointer"
                   onClick={() => setIsWithdrawOpen(true)}
+                  role="button"
+                  tabIndex={0}
                 >
-                  <Download className="h-4 w-4 mr-2" />
-                  Withdraw
-                </Button>
+                  <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center">
+                    <Download className="w-4 h-4 absolute left-[3px] top-[2.25px] text-white" />
+                  </div>
+                  <div className="text-right justify-start text-white text-base font-bold  leading-snug">Withdraw</div>
+                </div>
               </div>
             </div>
           </CardContent>
@@ -339,70 +445,91 @@ const DashboardPage = () => {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Portfolio</h3>
-            <Button 
-              variant="ghost" 
-              className="text-gray-600 hover:text-gray-900 text-sm sm:text-base"
+            {/* Custom View More Button for Portfolio */}
+            <ViewMoreButton
               onClick={() => router.push('/portfolio')}
-            >
-              View more
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
+              label="View more"
+            />
           </div>
           
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
-                  <div className="p-1 sm:p-1.5 bg-green-100 rounded">
-                    <Wallet className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+              <CardContent className="p-0">
+                <div className="self-stretch px-6 pt-6 pb-2 inline-flex justify-between items-center">
+                  <div className="flex-1 flex justify-start items-center gap-2">
+                    <div className="w-6 h-6 relative overflow-hidden">
+                      <Wallet className="w-5 h-4 left-[3px] top-[3px] absolute text-green-800" />
                   </div>
-                  <span className="text-xs sm:text-sm font-medium text-gray-600">Total Invested</span>
+                    <div className="flex justify-center items-center gap-2.5">
+                      <div className="justify-start text-Zinc-950 text-sm font-medium">Total Invested</div>
                 </div>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                  </div>
+                </div>
+                <div className="px-6 pb-6">
+                <div className="justify-start text-Zinc-950 text-2xl font-extrabold tracking-tight">
                   GHS {metrics?.total_invested?.toLocaleString() || '0.00'}
-                </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
-                  <div className="p-1 sm:p-1.5 bg-green-100 rounded">
-                    <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+              <CardContent className="p-0">
+                <div className="self-stretch px-6 pt-6 pb-2 inline-flex justify-between items-center">
+                  <div className="flex-1 flex justify-start items-center gap-2">
+                    <div className="w-6 h-6 relative overflow-hidden">
+                      <TrendingUp className="w-5 h-4 left-[3px] top-[3px] absolute text-green-800" />
                   </div>
-                  <span className="text-xs sm:text-sm font-medium text-gray-600">Expected Returns</span>
+                    <div className="flex justify-center items-center gap-2.5">
+                      <div className="justify-start text-Zinc-950 text-sm font-medium">Expected Returns</div>
                 </div>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                  </div>
+                </div>
+                <div className="px-6 pb-6">
+                  <div className="justify-start text-Zinc-950 text-2xl font-extrabold tracking-tight">
                   GHS {metrics?.expected_returns?.toLocaleString() || '0.00'}
-                </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
-                  <div className="p-1 sm:p-1.5 bg-green-100 rounded">
-                    <Activity className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+              <CardContent className="p-0">
+                <div className="self-stretch px-6 pt-6 pb-2 inline-flex justify-between items-center">
+                  <div className="flex-1 flex justify-start items-center gap-2">
+                    <div className="w-6 h-6 relative overflow-hidden">
+                      <Activity className="w-5 h-4 left-[3px] top-[3px] absolute text-green-800" />
                   </div>
-                  <span className="text-xs sm:text-sm font-medium text-gray-600">Active Projects</span>
+                    <div className="flex justify-center items-center gap-2.5">
+                      <div className="justify-start text-Zinc-950 text-sm font-medium">Active Projects</div>
                 </div>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                  </div>
+                </div>
+                <div className="px-6 pb-6">
+                  <div className="justify-start text-Zinc-950 text-2xl font-extrabold tracking-tight">
                   {metrics?.active_projects || 0}
-                </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
             
             <Card>
-              <CardContent className="p-3 sm:p-4">
-                <div className="flex items-center gap-1.5 sm:gap-2 mb-2">
-                  <div className="p-1 sm:p-1.5 bg-green-100 rounded">
-                    <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 text-green-600" />
+              <CardContent className="p-0">
+                <div className="self-stretch px-6 pt-6 pb-2 inline-flex justify-between items-center">
+                  <div className="flex-1 flex justify-start items-center gap-2">
+                    <div className="w-6 h-6 relative overflow-hidden">
+                      <CheckCircle className="w-5 h-4 left-[3px] top-[3px] absolute text-green-800" />
                   </div>
-                  <span className="text-xs sm:text-sm font-medium text-gray-600">Total Units</span>
+                    <div className="flex justify-center items-center gap-2.5">
+                      <div className="justify-start text-Zinc-950 text-sm font-medium">Total Units</div>
                 </div>
-                <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                  </div>
+                </div>
+                <div className="px-6 pb-6">
+                  <div className="justify-start text-Zinc-950 text-2xl font-extrabold  tracking-tight">
                   {metrics?.total_units || 0}
-                </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -414,63 +541,72 @@ const DashboardPage = () => {
         <div>
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900">Available Investment</h3>
-            <Button 
-              variant="ghost" 
-              className="text-gray-600 hover:text-gray-900 text-sm sm:text-base"
+            <ViewMoreButton
               onClick={() => router.push('/investments')}
-            >
-              View more
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
+              label="View more"
+            />
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+          <div className="flex flex-wrap gap-4 overflow-x-auto">
             {projects.slice(0, 5).map((project) => (
-              <Card key={project.id} className="overflow-hidden">
-                <div className="relative">
+             <Card key={project.id} className="p-4 bg-white rounded-2xl  inline-flex justify-start items-start gap-3 w-64 sm:w-72 md:w-80 flex-shrink-0">
+               <div className="w-full inline-flex flex-col justify-start items-start gap-3">
+                 <div className="w-full h-32 sm:h-36 md:h-40 relative rounded-2xl overflow-hidden">
                   <Image 
                     src={project.cover_image_url || `https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=200&fit=crop`}
                     alt={project.project_name}
                     width={400}
                     height={200}
-                    className="w-full h-24 sm:h-32 object-cover"
-                  />
-                  <Badge className={`absolute top-1 right-1 sm:top-2 sm:right-2 text-xs ${
-                    project.status === 'Active' 
-                      ? 'bg-green-600 hover:bg-green-700' 
-                      : project.status === 'Complete'
-                      ? 'bg-blue-600 hover:bg-blue-700'
-                      : 'bg-gray-600 hover:bg-gray-700'
-                  }`}>
+                     className="w-full h-full object-cover"
+                   />
+                   <div className="px-2 py-1.5 right-2 top-2 absolute bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
+                     <div className="px-1 flex justify-start items-start gap-2.5">
+                       <div className="text-center justify-start text-white text-xs font-semibold uppercase tracking-wide">
                     {project.status?.toUpperCase() || 'AVAILABLE'}
-                  </Badge>
                 </div>
-                <CardContent className="p-3 sm:p-4">
-                  <h4 className="font-semibold text-gray-900 mb-1 text-sm sm:text-base line-clamp-1">{project.project_name}</h4>
-                  <p className="text-xs sm:text-sm text-gray-600 mb-2">
-                    GHS {project.unit_price?.toLocaleString()} <span className="text-xs">/Per Unit</span>
-                  </p>
-                  <div className="flex justify-between items-center text-xs text-gray-500 mb-2">
-                    <span>Return (ROI)</span>
-                    <span>Duration</span>
                   </div>
-                  <div className="flex justify-between items-center mb-2 sm:mb-3">
-                    <span className="text-xs sm:text-sm font-semibold text-orange-600">
-                      {project.expected_return_rate}% - {project.max_expected_return_rate}%
-                    </span>
-                    <span className="text-xs sm:text-sm font-semibold text-orange-600">
-                      {project.duration_months}M
-                    </span>
                   </div>
-                  <p className="text-xs text-green-600 font-medium">
+                 </div>
+                 <div className="self-stretch pt-3 flex flex-col justify-start items-start gap-4">
+                   <div className="self-stretch flex flex-col justify-start items-start gap-4">
+                     <div className="self-stretch flex flex-col justify-center items-start gap-1">
+                       <div className="justify-start text-green-950 text-lg font-extrabold tracking-tight line-clamp-1">
+                         {project.project_name}
+                       </div>
+                       <div className="self-stretch inline-flex justify-center items-center gap-1">
+                         <div className="flex-1 flex justify-start items-center gap-1">
+                           <div className="justify-center text-zinc-900 text-sm font-bold">
+                             GHS {project.unit_price?.toLocaleString()}
+                           </div>
+                           <div className="justify-center text-green-800 text-xs font-bold leading-none tracking-tight">/Per Unit</div>
+                         </div>
+                       </div>
+                     </div>
+                     <div className="self-stretch inline-flex justify-between items-center">
+                       <div className="flex-1 inline-flex flex-col justify-start items-start gap-1">
+                         <div className="text-center justify-center text-neutral-800 text-xs font-semibold">Return (ROI)</div>
+                         <div className="self-stretch justify-center text-orange-500 text-sm font-bold leading-none tracking-tight">
+                           {project.expected_return_rate}-{project.max_expected_return_rate}%
+                         </div>
+                       </div>
+                       <div className="flex-1 inline-flex flex-col justify-start items-start gap-1">
+                         <div className="self-stretch text-right justify-center text-neutral-800 text-xs font-semibold">Duration</div>
+                         <div className="self-stretch text-right justify-center text-orange-500 text-sm font-bold leading-none tracking-tight">
+                           {project.duration_months} Months
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                   <div className="justify-center text-green-800 text-sm font-semibold leading-none">
                     {project.available_unit || 0} Units Available
-                  </p>
-                </CardContent>
+                   </div>
+                 </div>
+               </div>
               </Card>
             ))}
             
             {projects.length === 0 && (
-              <div className="col-span-full flex items-center justify-center py-12">
+              <div className="w-full flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Activity className="h-8 w-8 text-gray-400" />
@@ -490,14 +626,11 @@ const DashboardPage = () => {
             <CardHeader className="pb-2 sm:pb-3">
               <div className="flex items-center justify-between">
                 <h4 className="font-semibold text-gray-900 text-sm sm:text-base">Recent Transactions</h4>
-                <Button 
-                  variant="ghost" 
-                  className="text-gray-600 hover:text-gray-900 text-xs sm:text-sm"
+                <ViewMoreButton
+                  label="View all"
                   onClick={() => router.push('/transactions')}
-                >
-                  View all
-                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
-                </Button>
+                  className="!py-1.5 !px-2.5"
+                />
               </div>
             </CardHeader>
             <CardContent className="pt-0 space-y-3 sm:space-y-4">
@@ -692,7 +825,7 @@ const DashboardPage = () => {
 
       {/* Top Up Account Sheet */}
       <Sheet open={isTopUpOpen} onOpenChange={setIsTopUpOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0">
+        <SheetContent side="right" className="w-full sm:max-w-md md:max-w-lg lg:max-w-xl p-2">
           <SheetTitle className="sr-only">Top Up Account</SheetTitle>
           <div className="h-full flex flex-col">
             {/* Header */}
@@ -720,117 +853,143 @@ const DashboardPage = () => {
               >
                 {/* Amount Entry Step */}
                 {currentStep === 'amount' && (
-                  <div className="space-y-6">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <div className="space-y-8">
+                    {/* Enter Amount Section */}
+                    <div className="flex flex-col justify-start items-start gap-2">
+                      <div className="w-full justify-start text-gray-900 text-lg font-extrabold leading-tight">
                         Enter Amount
-                      </Label>
-                      <p className="text-sm text-gray-600 mb-3">How much do you want to top up?</p>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                          GHS
-                        </span>
-                        <Input
-                          value={amount}
-                          onChange={(e) => setAmount(e.target.value)}
-                          className="pl-12 text-lg font-semibold"
-                          placeholder="0.00"
-                        />
                       </div>
-                     
+                      <div className="w-full justify-start text-gray-500 text-sm font-medium leading-tight">
+                        How much do you want to top up?
+                      </div>
                     </div>
 
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-3 block">
+                    {/* Amount Input Section */}
+                    <div className="w-full flex flex-col justify-start items-center gap-4">
+                      <div className="w-full pb-3 border-b border-black/20 flex justify-between items-center">
+                        <div className="text-center justify-start text-black text-2xl sm:text-3xl font-normal tracking-tight">
+                          GHS 
+                        </div>
+                        <div className="flex-1 text-right">
+                        <Input
+                          value={amount}
+                              onChange={(e) => handleAmountChange(e.target.value)}
+                              className={`text-right text-gray-900 text-4xl sm:text-5xl md:text-6xl font-normal leading-10 border-0 outline-none p-0 bg-transparent focus:ring-0 focus:border-0 h-auto w-full transition-colors duration-200 ${amountError ? 'text-red-500' : ''}`}
+                          placeholder="0.00"
+                              type="text"
+                              inputMode="decimal"
+                        />
+                      </div>
+                      </div>
+                      {amountError && (
+                        <div className="text-red-500 text-sm mt-2 text-center">
+                          {amountError}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Payment Method Selection */}
+                    <div className="w-full pt-7 flex flex-col justify-start items-center gap-4">
+                      <div className="w-full justify-start text-gray-900 text-sm font-normal leading-tight">
                         Select Payment Method
-                      </Label>
+                      </div>
+                      
                       <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                        <div className="space-y-3">
+                        <div className="w-full flex flex-col items-center gap-6">
                           {/* Mobile Money Option */}
-                          <div className={`border rounded-lg p-4 ${paymentMethod === 'mobile' ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}>
-                            <div className="flex items-center space-x-3">
-                              <RadioGroupItem value="mobile" id="mobile" />
-                              <Label htmlFor="mobile" className="flex-1 cursor-pointer flex items-center">
-                                <Phone className="h-5 w-5 text-gray-600 mr-2" />
+                          <div className={`w-full rounded-xl border transition-all duration-200 ${paymentMethod === 'mobile' ? 'border-green-500 bg-green-50/30' : 'border-gray-200'}`}>
+                            {/* Header Row */}
+                            <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6">
+                              <div className="flex-1 flex justify-start items-center gap-3 sm:gap-4">
+                                <RadioGroupItem value="mobile" id="mobile" className={`w-6 h-6 sm:w-7 sm:h-7 rounded-[106.67px] border-[0.80px] ${paymentMethod === 'mobile' ? 'border-green-500' : 'border-gray-400'}`} />
+                                <div className="flex-1 flex justify-between items-center">
+                                  <div className={`justify-center text-base sm:text-lg font-medium leading-tight ${paymentMethod === 'mobile' ? 'text-green-700' : 'text-neutral-600'}`}>
                                 Mobile Money
-                              </Label>
+                                  </div>
+                                  <div className="w-8 h-8 sm:w-10 sm:h-10 relative overflow-hidden">
+                                    <Phone className={`w-6 h-8 sm:w-7 sm:h-10 left-[6.56px] top-[1.88px] absolute ${paymentMethod === 'mobile' ? 'text-green-600' : 'text-green-950'}`} />
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                             
+                            {/* Expanded Form Fields */}
                             {paymentMethod === 'mobile' && (
                               <motion.div
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="mt-4 space-y-4 overflow-hidden"
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden border-t border-green-200"
                               >
+                                <div className="p-8 space-y-8">
                                 <div>
                                   <Label htmlFor="networkProvider" className="text-sm text-gray-600">
-                                    Select network provider *
+                                      Select network provider *
                                   </Label>
                                   <Select onValueChange={(value) => setPaymentDetails({...paymentDetails, networkProvider: value})}>
-                                    <SelectTrigger className={`mt-1 ${!paymentDetails.networkProvider ? 'border-red-300 focus:border-red-500' : ''}`}>
-                                      <SelectValue placeholder="Select network provider" />
+                                      <SelectTrigger className={`mt-1 transition-all duration-200 border-0 outline-none focus:ring-0 focus:border-0 ${!paymentDetails.networkProvider ? 'border-red-300 focus:border-red-500' : ''}`}>
+                                      <SelectValue placeholder="Eg. MTN" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="MTN">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                                          <span>MTN</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="VDF">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                          <span>Vodafone</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="ATL">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                          <span>Airtel</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="TGO">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                                          <span>Tigo</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="ZPY">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                          <span>Zeepay</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="GMY">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                          <span>G-money</span>
-                                        </div>
-                                      </SelectItem>
+                                        <SelectItem value="MTN">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                                            <span>MTN</span>
+                                          </div>
+                                        </SelectItem>
+                                        <SelectItem value="VDF">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                                            <span>Vodafone</span>
+                                          </div>
+                                        </SelectItem>
+                                        <SelectItem value="ATL">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                                            <span>Airtel</span>
+                                          </div>
+                                        </SelectItem>
+                                        <SelectItem value="TGO">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
+                                            <span>Tigo</span>
+                                          </div>
+                                        </SelectItem>
+                                        <SelectItem value="ZPY">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                                            <span>Zeepay</span>
+                                          </div>
+                                        </SelectItem>
+                                        <SelectItem value="GMY">
+                                          <div className="flex items-center space-x-2">
+                                            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                                            <span>G-money</span>
+                                          </div>
+                                        </SelectItem>
                                     </SelectContent>
                                   </Select>
-                                  {!paymentDetails.networkProvider && (
-                                    <p className="text-sm text-red-600 mt-1">Please select a network provider</p>
-                                  )}
+                                    {!paymentDetails.networkProvider && (
+                                      <p className="text-sm text-red-600 mt-1">Please select a network provider</p>
+                                    )}
                                 </div>
                                 
                                 <div>
-                                  <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700 mb-2 block">
+                                    <Label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700 mb-2 block">
                                     Phone number
                                   </Label>
-                                  <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500">
-                                    <div className="flex items-center px-3 py-3 bg-gray-50 border-r border-gray-300">
-                                      <span className="text-lg mr-2">🇬🇭</span>
-                                      <span className="text-sm font-medium text-gray-700">+233</span>
+                                    <div className="flex rounded-lg border border-gray-300 outline-none overflow-hidden focus-within:ring-0 focus-within:border-gray-400 transition-all duration-200">
+                                      <div className="flex items-center px-3 sm:px-4 py-3 sm:py-3 bg-gray-50 border-r border-gray-300 min-w-[80px] sm:min-w-[90px]">
+                                        <span className="text-base sm:text-lg mr-2">🇬🇭</span>
+                                        <span className="text-sm sm:text-base font-medium text-gray-700">+233</span>
                                     </div>
                                     <Input
                                       id="phoneNumber"
-                                      placeholder="024 567 8905"
+                                      placeholder="Eg. 55 567 8905"
                                       value={paymentDetails.phoneNumber}
                                       onChange={(e) => setPaymentDetails({...paymentDetails, phoneNumber: e.target.value})}
-                                      className="flex-1 border-0 rounded-none focus:ring-0 focus:border-0 py-3 px-3 text-gray-900 placeholder-gray-500"
+                                        className="flex-1 border-0 outline-none rounded-none focus:ring-0 focus:border-0 py-3 sm:py-6 px-3 sm:px-4 text-gray-900 placeholder-gray-500 text-sm sm:text-base"
                                     />
                                   </div>
                                 </div>
@@ -844,29 +1003,39 @@ const DashboardPage = () => {
                                     checked={savePaymentMethod}
                                     onCheckedChange={setSavePaymentMethod}
                                   />
+                                  </div>
                                 </div>
                               </motion.div>
                             )}
                           </div>
 
                           {/* Bank Card Option */}
-                          <div className={`border rounded-lg p-4 ${paymentMethod === 'card' ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}>
-                            <div className="flex items-center space-x-3">
-                              <RadioGroupItem value="card" id="card" />
-                              <Label htmlFor="card" className="flex-1 cursor-pointer flex items-center">
-                                <CreditCard className="h-5 w-5 text-gray-600 mr-2" />
+                          <div className={`w-full rounded-xl border transition-all duration-200 ${paymentMethod === 'card' ? 'border-green-500 bg-green-50/30' : 'border-gray-200'}`}>
+                            {/* Header Row */}
+                            <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6">
+                              <div className="flex-1 flex justify-start items-center gap-3 sm:gap-4">
+                                <RadioGroupItem value="card" id="card" className={`w-6 h-6 sm:w-7 sm:h-7 rounded-[106.67px] border-[0.80px] ${paymentMethod === 'card' ? 'border-green-500' : 'border-gray-400'}`} />
+                                <div className="flex-1 flex justify-between items-center">
+                                  <div className={`justify-center text-base sm:text-lg font-medium leading-tight ${paymentMethod === 'card' ? 'text-green-700' : 'text-neutral-600'}`}>
                                 Bank Card
-                              </Label>
+                                  </div>
+                                  <div className="w-8 h-8 sm:w-10 sm:h-10 relative overflow-hidden">
+                                    <CreditCard className={`w-6 h-4 sm:w-7 sm:h-5 left-[1.50px] top-[4.50px] absolute ${paymentMethod === 'card' ? 'text-green-600' : 'text-green-950'}`} />
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                             
+                            {/* Expanded Form Fields */}
                             {paymentMethod === 'card' && (
                               <motion.div
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="mt-4 space-y-4 overflow-hidden"
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden border-t border-green-200"
                               >
+                                <div className="p-8 space-y-8">
                                 <div>
                                   <Label htmlFor="cardholderName" className="text-sm text-gray-600">
                                     Cardholder Name
@@ -875,7 +1044,7 @@ const DashboardPage = () => {
                                     id="cardholderName"
                                     value={paymentDetails.cardholderName}
                                     onChange={(e) => setPaymentDetails({...paymentDetails, cardholderName: e.target.value})}
-                                    className="mt-1"
+                                    className="mt-1 border-0 outline-none focus:ring-0 focus:border-0 transition-all duration-200"
                                   />
                                 </div>
                                 
@@ -889,7 +1058,7 @@ const DashboardPage = () => {
                                       placeholder="0000 0000 0000 0000"
                                       value={paymentDetails.cardNumber}
                                       onChange={(e) => setPaymentDetails({...paymentDetails, cardNumber: e.target.value})}
-                                      className="pr-20"
+                                        className="pr-20 border-0 outline-none focus:ring-0 focus:border-0 transition-all duration-200"
                                     />
                                     <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
                                       <Lock className="h-4 w-4 text-gray-400" />
@@ -900,7 +1069,7 @@ const DashboardPage = () => {
                                   </div>
                                 </div>
                                 
-                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                   <div>
                                     <Label htmlFor="expiryDate" className="text-sm text-gray-600">
                                       Expiry Date
@@ -911,9 +1080,9 @@ const DashboardPage = () => {
                                         placeholder="00/00"
                                         value={paymentDetails.expiryDate}
                                         onChange={(e) => setPaymentDetails({...paymentDetails, expiryDate: e.target.value})}
-                                        className="pr-8"
+                                          className="pr-8 text-sm sm:text-base border-0 outline-none focus:ring-0 focus:border-0 transition-all duration-200"
                                       />
-                                      <Calendar className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <Calendar className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
                                     </div>
                                   </div>
                                   
@@ -927,9 +1096,9 @@ const DashboardPage = () => {
                                         placeholder="000"
                                         value={paymentDetails.cvv}
                                         onChange={(e) => setPaymentDetails({...paymentDetails, cvv: e.target.value})}
-                                        className="pr-8"
+                                          className="pr-8 text-sm sm:text-base border-0 outline-none focus:ring-0 focus:border-0 transition-all duration-200"
                                       />
-                                      <Info className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                        <Info className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400" />
                                     </div>
                                   </div>
                                 </div>
@@ -943,6 +1112,7 @@ const DashboardPage = () => {
                                     checked={savePaymentMethod}
                                     onCheckedChange={setSavePaymentMethod}
                                   />
+                                  </div>
                                 </div>
                               </motion.div>
                             )}
@@ -970,7 +1140,7 @@ const DashboardPage = () => {
                         >
                           <Loader2 className="h-10 w-10 text-blue-600" />
                         </motion.div>
-                      </div>
+                        </div>
                     </motion.div>
                     
                     <div>
@@ -1053,22 +1223,22 @@ const DashboardPage = () => {
             </div>
 
             {/* Footer Buttons */}
-            <div className="p-6 border-t border-gray-200">
+            <div className="p-4 sm:p-6 border-t border-gray-200">
               {currentStep === 'amount' && (
-                <div className="flex space-x-3">
+                <div className="flex flex-col sm:flex-row gap-3 sm:space-x-3 sm:space-y-0">
                   <Button
                     variant="outline"
-                    className="flex-1"
+                    className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-600 text-green-600 hover:bg-green-50 transition-all duration-200"
                     onClick={() => setIsTopUpOpen(false)}
                   >
                     Cancel
                   </Button>
                   <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                    className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleTopUp}
-                    disabled={!paymentMethod || (paymentMethod === 'mobile' && !paymentDetails.networkProvider)}
+                    disabled={!paymentMethod || (paymentMethod === 'mobile' && !paymentDetails.networkProvider) || !!amountError}
                   >
-                    Continue
+                    Top up
                   </Button>
                 </div>
               )}
@@ -1076,7 +1246,7 @@ const DashboardPage = () => {
               
               {(currentStep === 'success' || currentStep === 'error') && (
                 <Button
-                  className="w-full bg-green-600 hover:bg-green-700"
+                  className="flex h-[50px] px-8 justify-center items-center gap-1.5 w-full rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200"
                   onClick={resetTopUp}
                 >
                   {currentStep === 'success' ? 'Done' : 'Try Again'}
@@ -1129,11 +1299,18 @@ const DashboardPage = () => {
                         </span>
                         <Input
                           value={withdrawAmount}
-                          onChange={(e) => setWithdrawAmount(e.target.value)}
-                          className="pl-12 text-lg font-semibold"
+                          onChange={(e) => handleWithdrawAmountChange(e.target.value)}
+                          className={`pl-12 text-lg font-semibold ${withdrawAmountError ? 'border-red-500 text-red-500' : ''}`}
                           placeholder="0.00"
+                          type="text"
+                          inputMode="decimal"
                         />
                       </div>
+                      {withdrawAmountError && (
+                        <div className="text-red-500 text-sm mt-2">
+                          {withdrawAmountError}
+                        </div>
+                      )}
                       {/* <p className="text-xs text-green-600 mt-2">Available balance: GHS {metrics?.total_invested?.toLocaleString() || '0.00'}</p> */}
                     </div>
 
@@ -1142,7 +1319,7 @@ const DashboardPage = () => {
                         Select Withdrawal Method
                       </Label>
                       <RadioGroup value={withdrawMethod} onValueChange={setWithdrawMethod}>
-                        <div className="space-y-3">
+                        <div className="space-y-6 flex flex-col items-start">
                           {/* Bank Transfer Option */}
                           <div className={`border rounded-lg p-4 ${withdrawMethod === 'bank' ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}>
                             <div className="flex items-center space-x-3">
@@ -1249,14 +1426,14 @@ const DashboardPage = () => {
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
                                 transition={{ duration: 0.3 }}
-                                className="mt-4 space-y-4 overflow-hidden"
+                                className="mt-6 space-y-6 overflow-hidden"
                               >
-                                <div>
-                                  <Label htmlFor="networkProviderWithdraw" className="text-sm text-gray-600">
+                                <div className="space-y-2">
+                                  <Label htmlFor="networkProviderWithdraw" className="text-sm font-medium text-gray-700">
                                     Select network provider *
                                   </Label>
                                   <Select onValueChange={(value) => setWithdrawDetails({...withdrawDetails, networkProvider: value})}>
-                                    <SelectTrigger className={`mt-1 ${!withdrawDetails.networkProvider ? 'border-red-300 focus:border-red-500' : ''}`}>
+                                    <SelectTrigger className={`${!withdrawDetails.networkProvider ? 'border-red-300 focus:border-red-500' : ''}`}>
                                       <SelectValue placeholder="Select network provider" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -1303,8 +1480,8 @@ const DashboardPage = () => {
                                   )}
                                 </div>
                                 
-                                <div>
-                                  <Label htmlFor="phoneNumberWithdraw" className="text-sm font-medium text-gray-700 mb-2 block">
+                                <div className="space-y-2">
+                                  <Label htmlFor="phoneNumberWithdraw" className="text-sm font-medium text-gray-700">
                                     Phone number
                                   </Label>
                                   <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500">
@@ -1415,7 +1592,7 @@ const DashboardPage = () => {
                   <Button
                     className="flex-1 bg-green-600 hover:bg-green-700"
                     onClick={handleWithdraw}
-                    disabled={!withdrawMethod || !withdrawAmount || (withdrawMethod === 'mobile' && !withdrawDetails.networkProvider)}
+                    disabled={!withdrawMethod || !withdrawAmount || (withdrawMethod === 'mobile' && !withdrawDetails.networkProvider) || !!withdrawAmountError}
                   >
                     Continue
                   </Button>

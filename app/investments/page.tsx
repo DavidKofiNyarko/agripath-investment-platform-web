@@ -25,6 +25,7 @@ import { Switch } from '@/components/ui/switch';
 import { Separator } from '@/components/ui/separator';
 import { Label } from '@/components/ui/label';
 import { Progress } from '@/components/ui/progress';
+import Image from 'next/image';
 import { 
   Search, 
   Filter, 
@@ -1533,7 +1534,7 @@ const InvestmentsPage = () => {
                             </p>
                           </div>
                           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                            <span className="text-green-600 text-lg">🌱</span>
+                            <Image  src="/s-logo.png" alt="Agripath" width={40} height={40} />
                           </div>
                         </div>
 
@@ -1563,8 +1564,8 @@ const InvestmentsPage = () => {
                             <div className="w-8 h-5 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">VISA</div>
                           </div>
                         </div>
+                        
                       </RadioGroup>
-
                       {selectedPaymentMethod === 'mobile' && (
                         <div className="p-4 bg-green-50 rounded-lg border border-green-200 space-y-4">
                           <div>
@@ -1670,14 +1671,7 @@ const InvestmentsPage = () => {
                         </div>
                       )}
 
-                      <div className="p-4 bg-orange-50 rounded-lg border border-orange-200">
-                        <div className="flex items-start gap-2">
-                          <AlertTriangle className="h-4 w-4 text-orange-600 mt-0.5" />
-                          <p className="text-sm text-orange-800">
-                            You can manage or change your accounts anytime in Settings &gt; Payout Accounts.
-                          </p>
-                        </div>
-                      </div>
+                      
                     </div>
 
                     <div className="p-6 border-t bg-gray-50 flex gap-3">

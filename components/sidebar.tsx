@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
+import LogoSVG from '@/components/logo-svg';
 
 // Context for sidebar state
 const SidebarContext = createContext<{
@@ -122,10 +123,12 @@ const SidebarContent = ({ className }: SidebarProps) => {
             <div className="relative w-10 h-10 flex-shrink-0">
               {/* Farm house icon */}
               <Image src="/s-logo.png" alt="Farm House" width={300} height={300} />
+              
             </div>
           ) : (
             <div className="transition-opacity duration-200">
-              <Image src="/logo.png" alt="Farm House" width={300} height={300} />
+             <LogoSVG/>
+              {/* <Image src="/logo.png" alt="Farm House" width={300} height={300} /> */}
             </div>
           )}
         </div>
