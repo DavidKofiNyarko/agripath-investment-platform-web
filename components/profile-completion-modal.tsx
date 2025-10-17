@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useProfile } from '@/contexts/ProfileContext';
 import { Loader2, User, Mail, Phone, Lock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Shield, Eye, EyeOff } from 'lucide-react';
+import PinResetModal from './pin-reset-modal';
 
 interface ProfileCompletionModalProps {
   isOpen: boolean;
@@ -35,6 +36,7 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
   const [showConfirmPin, setShowConfirmPin] = useState(false);
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
   const confirmPinRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [showPinResetModal, setShowPinResetModal] = useState(false);
 
   const totalSteps = 3;
 
@@ -419,6 +421,19 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                 {showConfirmPin ? 'Hide Confirm' : 'Show Confirm'}
               </Button>
             </div>
+
+            {/* Forgot PIN Button */}
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                onClick={() => setShowPinResetModal(true)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                Forgot your PIN? Reset it here
+              </Button>
+            </div>
           </motion.div>
         );
 
@@ -528,6 +543,17 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
           </Card>
         </motion.div>
       </motion.div>
+      
+      {/* PIN Reset Modal */}
+      <PinResetModal
+        isOpen={showPinResetModal}
+        onClose={() => setShowPinResetModal(false)}
+        onSuccess={() => {
+          setShowPinResetModal(false);
+          // Refresh profile to get updated PIN
+          window.location.reload();
+        }}
+      />
     </AnimatePresence>
   );
 };

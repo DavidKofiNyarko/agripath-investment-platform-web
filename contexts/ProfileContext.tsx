@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useUser } from '@/contexts/UserContext';
+import { hashPin, verifyPin, isValidPinFormat } from '@/lib/pin-security';
 
 interface Profile {
   id: string;
@@ -33,6 +34,8 @@ interface ProfileContextType {
   updateProfile: (updates: Partial<Profile>) => Promise<void>;
   createProfile: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  verifyUserPin: (pin: string) => Promise<boolean>;
+  updateUserPin: (newPin: string) => Promise<void>;
 }
 
 const ProfileContext = createContext<ProfileContextType | undefined>(undefined);
@@ -234,9 +237,15 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
     if (!user || !profile) return;
 
     try {
+      // Hash PIN if it's being updated
+      const processedUpdates = { ...updates };
+      if (updates.pin && isValidPinFormat(updates.pin)) {
+        processedUpdates.pin = await hashPin(updates.pin);
+      }
+
       const { data, error } = await supabase
         .from('profile')
-        .update(updates)
+        .update(processedUpdates)
         .eq('user_id', user.id)
         .select()
         .single();
@@ -257,6 +266,20 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
     await fetchProfile();
   };
 
+  const verifyUserPin = async (pin: string): Promise<boolean> => {
+    if (!profile?.pin) return false;
+    return await verifyPin(pin, profile.pin);
+  };
+
+  const updateUserPin = async (newPin: string): Promise<void> => {
+    if (!isValidPinFormat(newPin)) {
+      throw new Error('PIN must be a 4-digit number');
+    }
+    
+    const hashedPin = await hashPin(newPin);
+    await updateProfile({ pin: hashedPin });
+  };
+
   useEffect(() => {
     fetchProfile();
   }, [user, fetchProfile]); // Added fetchProfile dependency
@@ -268,7 +291,9 @@ export const ProfileProvider = ({ children }: { children: React.ReactNode }) => 
     isProfileCompletionRequired: isProfileCompletionRequired(profile),
     updateProfile,
     createProfile,
-    refreshProfile
+    refreshProfile,
+    verifyUserPin,
+    updateUserPin
   };
 
   return (

@@ -25,7 +25,7 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
   description = "Please enter your 4-digit PIN to continue",
   action = "Continue"
 }) => {
-  const { profile } = useProfile();
+  const { profile, verifyUserPin } = useProfile();
   const [pin, setPin] = useState(['', '', '', '']);
   const [showPin, setShowPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -89,30 +89,35 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
     setIsLoading(true);
     setError('');
 
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    // Validate PIN
-    if (profile?.pin === pinValue) {
-      setError('');
-      setIsLoading(false);
-      onSuccess();
-    } else {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      setIsLoading(false);
+    try {
+      // Validate PIN using the secure verification function
+      const isValid = await verifyUserPin(pinValue);
       
-      if (newAttempts >= maxAttempts) {
-        setError('Too many incorrect attempts. Please try again later.');
-        setTimeout(() => {
-          onClose();
-        }, 2000);
+      if (isValid) {
+        setError('');
+        setIsLoading(false);
+        onSuccess();
       } else {
-        setError(`Incorrect PIN. ${maxAttempts - newAttempts} attempts remaining.`);
-        triggerShake();
-        setPin(['', '', '', '']);
-        pinRefs.current[0]?.focus();
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        setIsLoading(false);
+        
+        if (newAttempts >= maxAttempts) {
+          setError('Too many incorrect attempts. Please try again later.');
+          setTimeout(() => {
+            onClose();
+          }, 2000);
+        } else {
+          setError(`Incorrect PIN. ${maxAttempts - newAttempts} attempts remaining.`);
+          triggerShake();
+          setPin(['', '', '', '']);
+          pinRefs.current[0]?.focus();
+        }
       }
+    } catch (error) {
+      console.error('PIN verification error:', error);
+      setIsLoading(false);
+      setError('An error occurred while verifying your PIN. Please try again.');
     }
   };
 
