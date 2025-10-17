@@ -32,22 +32,10 @@ const ProfileGuard: React.FC<ProfileGuardProps> = ({ children }) => {
   // Don't render children if profile completion is required
   if (user && !loading && isProfileCompletionRequired) {
     return (
-      <>
-        <ProfileCompletionModal 
-          isOpen={showProfileModal} 
-          onComplete={handleProfileComplete} 
-        />
-        {/* Render a loading state or empty div while profile completion is required */}
-        <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <div className="w-8 h-8 bg-green-600 rounded-full"></div>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">Welcome to Agripath</h3>
-            <p className="text-gray-600">Please complete your profile to continue</p>
-          </div>
-        </div>
-      </>
+      <ProfileCompletionModal 
+        isOpen={true} 
+        onComplete={handleProfileComplete} 
+      />
     );
   }
 
