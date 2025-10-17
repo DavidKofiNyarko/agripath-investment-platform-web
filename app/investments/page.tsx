@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import DashboardLayout from '@/components/dashboard-layout';
@@ -51,6 +51,7 @@ interface Investment {
   unitsAvailable: number;
   totalUnits: number;
   description: string;
+  status?: string;
 }
 
 
@@ -126,6 +127,7 @@ const InvestmentsPage = () => {
     savePayment: false
   });
   const [pin, setPin] = useState(['', '', '', '']); // Keep for potential future use
+  const [countdown, setCountdown] = useState(30); // USSD countdown timer
   const [isProcessing, setIsProcessing] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
@@ -140,6 +142,35 @@ const InvestmentsPage = () => {
     quantity: 0,
     totalAmount: 0
   });
+  
+  // Countdown timer effect
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (currentStep === 'process' && countdown > 0) {
+      interval = setInterval(() => {
+        setCountdown((prev) => {
+          if (prev <= 1) {
+            return 0; // Stop at 0
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
+  }, [currentStep, countdown]);
+  
+  // Reset countdown when entering process step
+  useEffect(() => {
+    if (currentStep === 'process') {
+      setCountdown(30);
+    }
+  }, [currentStep]);
   
   // Custom Alert State
   const [alertState, setAlertState] = useState({
@@ -338,7 +369,8 @@ const InvestmentsPage = () => {
       unitsAvailable: project.available_unit,
       image: project.cover_image_url,
       progress: Math.round((project.purchased_unit / project.total_units) * 100),
-      description: project.description || 'No description available'
+      description: project.description || 'No description available',
+      status: project.status
     };
     setSelectedInvestment(investment);
     setQuantity(1);
@@ -741,10 +773,10 @@ const InvestmentsPage = () => {
           amount: totalAmount,
           unit: quantity,
           desc: `Investment in ${selectedInvestment.name}`,
-          pan: paymentDetails.cardNumber.replace(/\s/g, ''),
-          exp_month: paymentDetails.expiryDate.split('/')[0],
-          exp_year: paymentDetails.expiryDate.split('/')[1],
-          cvv: paymentDetails.cvv,
+            pan: paymentDetails.cardNumber.replace(/\s/g, ''),
+            exp_month: paymentDetails.expiryDate.split('/')[0],
+            exp_year: paymentDetails.expiryDate.split('/')[1],
+            cvv: paymentDetails.cvv,
           card_holder: paymentDetails.cardName,
           user_email: user?.email || 'user@example.com',
           redirect_url: 'https://backoffice.agripath.co/dashboard'
@@ -788,14 +820,14 @@ const InvestmentsPage = () => {
             quantity: quantity,
             totalAmount: totalAmount
           });
-          
-          // Simulate processing delay
-          setTimeout(() => {
-            setIsProcessing(false);
-            setCurrentStep('success');
-            // Reset form after successful payment
-            resetForm();
-          }, 2000);
+        
+        // Simulate processing delay
+        setTimeout(() => {
+          setIsProcessing(false);
+          setCurrentStep('success');
+          // Reset form after successful payment
+          resetForm();
+        }, 2000);
         } else {
           throw new Error('Failed to update project units or create transaction record');
         }
@@ -819,13 +851,13 @@ const InvestmentsPage = () => {
             totalAmount: totalAmount
           });
           
-          // For demo purposes, assume success after redirect
-          setTimeout(() => {
-            setIsProcessing(false);
-            setCurrentStep('success');
-            resetForm();
-          }, 2000);
-        } else {
+        // For demo purposes, assume success after redirect
+        setTimeout(() => {
+          setIsProcessing(false);
+          setCurrentStep('success');
+          resetForm();
+        }, 2000);
+      } else {
           throw new Error('Failed to update project units or create transaction record for 3D Secure payment');
         }
       } else {
@@ -901,11 +933,11 @@ const InvestmentsPage = () => {
         {/* Header */}
         <UserHeader />
 
-       
+
 
         {/* Page Title */}
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold text-gray-900">Explore Investments</h2>
+          <div className="self-stretch justify-start text-color-Midnight-Blue-90/90 text-2xl font-semibold  leading-9">Explore Investments</div>
           {filters.search && (
             <div className="flex items-center gap-2">
               <Badge variant="secondary" className="bg-green-100 text-green-800">
@@ -1070,9 +1102,15 @@ const InvestmentsPage = () => {
                     alt={project.project_name}
                     className="w-full h-48 object-cover"
                   />
-                  <Badge className="absolute top-3 right-3 bg-green-600 hover:bg-green-700">
+                  <div className="absolute top-3 left-3">
+                    <div className="px-2 py-1.5 bg-blue-600 rounded-xl inline-flex justify-center items-center gap-1">
+                      <div className="px-1 flex justify-start items-start gap-2.5">
+                        <div className="text-center justify-start text-white text-[10px] font-semibold uppercase tracking-wide">
                     {project.project_type}
-                  </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
                 <CardContent className="p-4">
                   <motion.div
@@ -1081,18 +1119,24 @@ const InvestmentsPage = () => {
                     transition={{ delay: 0.3 }}
                   >
                     <div className="flex justify-between items-start mb-2">
-                      <h3 className="font-semibold text-lg text-gray-900">{project.project_name}</h3>
+                      <div className="justify-start text-green-950 text-lg font-extrabold tracking-tight">{project.project_name}</div>
+                      <div className="px-2 py-1.5 bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
+                        <div className="px-1 flex justify-start items-start gap-2.5">
+                          <div className="text-center justify-start text-white text-[10px] font-semibold uppercase tracking-wide">
+                            {project.status || 'Available'}
+                          </div>
+                        </div>
+                      </div>
                     </div>
                     <p className="text-gray-600 mb-1">{project.farm_location}</p>
-                    <p className="text-gray-600 mb-3">GHS {project.unit_price.toLocaleString()} <span className="text-sm">/Per Unit</span></p>
-                    
+                    <p className="text-gray-800 text-lg  mb-3"> <span className='font-semibold tracking-tight'>GHS {project.unit_price.toLocaleString()} </span> <span className="justify-center text-green-800 text-sm font-bold  leading-none tracking-tight">/Per Unit</span></p>
                     <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-                      <span>Return (ROI)</span>
-                      <span>Duration</span>
+                      <div className="text-center justify-center text-neutral-800 text-sm font-semibold ">Return (ROI)</div>
+                      <div className="self-stretch text-right justify-center text-neutral-800 text-[10px] font-semibold ">Duration</div>
                     </div>
                     <div className="flex justify-between items-center mb-3">
-                      <span className="font-semibold text-orange-600">{project.expected_return_rate}% - {project.max_expected_return_rate}%</span>
-                      <span className="font-semibold text-orange-600">{project.duration_months} months</span>
+                      <div className="self-stretch justify-center text-yellow-500 text-md font-bold leading-none tracking-tight">{project.expected_return_rate}% - {project.max_expected_return_rate}%</div>
+                      <span className="font-semibold text-yellow-500">{project.duration_months} months</span>
                     </div>
 
                     <div className="mb-4">
@@ -1118,11 +1162,11 @@ const InvestmentsPage = () => {
                     </div>
 
                     <Button 
-                      className="w-full bg-green-600 hover:bg-green-700 group"
+                      className="w-full bg-green-800 hover:bg-green-900 rounded-xl px-4 py-3 h-9 inline-flex justify-center items-center gap-2 overflow-hidden"
                       onClick={() => handleInvestmentClick(project)}
                     >
-                      Invest Now
-                      <ArrowRight className="h-4 w-4 ml-2" />
+                      <div className="justify-start text-white text-xs font-semibold">Invest Now</div>
+                      <ArrowRight className="h-3 w-3 text-white" />
                     </Button>
                   </motion.div>
                 </CardContent>
@@ -1197,8 +1241,14 @@ const InvestmentsPage = () => {
                     <div className="h-full flex flex-col">
                     <SheetHeader className="p-6 border-b">
                       <div className="flex items-center justify-between">
-                        <SheetTitle className="text-xl font-semibold">{selectedInvestment.name}</SheetTitle>
-                        <Badge className="bg-green-600">AVAILABLE</Badge>
+                        <div className="justify-start text-green-950 text-2xl font-extrabold  tracking-tight">{selectedInvestment.name}</div>
+                        <div className="px-2 py-1.5 bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
+                          <div className="px-1 flex justify-start items-start gap-2.5">
+                            <div className="text-center justify-start text-white text-[10px] font-semibold uppercase tracking-wide">
+                              {selectedInvestment.status || 'Available'}
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </SheetHeader>
                     
@@ -1209,16 +1259,18 @@ const InvestmentsPage = () => {
                         className="w-full h-48 object-cover rounded-lg"
                       />
                       
-                      <div className="grid grid-cols-3 gap-4 text-center">
-                        <div>
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1 text-center">
                           <p className="text-sm text-gray-600">Price per Unit</p>
                           <p className="font-bold text-lg">GHS {selectedInvestment.price.toLocaleString()}</p>
                         </div>
-                        <div>
+                        <div className="w-px h-12 bg-gray-300"></div>
+                        <div className="flex-1 text-center">
                           <p className="text-sm text-gray-600">Return (ROI)</p>
                           <p className="font-bold text-lg text-orange-600">{selectedInvestment.roi}</p>
                         </div>
-                        <div>
+                        <div className="w-px h-12 bg-gray-300"></div>
+                        <div className="flex-1 text-center">
                           <p className="text-sm text-gray-600">Duration</p>
                           <p className="font-bold text-lg text-orange-600">{selectedInvestment.duration}</p>
                         </div>
@@ -1240,24 +1292,24 @@ const InvestmentsPage = () => {
                           onClick={() => setShowAbout(!showAbout)}
                           className="w-full justify-between p-0 h-auto"
                         >
-                          <span className="font-semibold">About Project</span>
+                          <div className="justify-start text-neutral-800 text-sm font-semibold ">About Project</div>
                           {showAbout ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                         </Button>
                         {showAbout && (
-                          <p className="text-sm text-gray-600 mt-3 leading-relaxed">
+                          <div className="self-stretch justify-start text-zinc-900 text-sm font-normal  leading-tight mt-3">
                             {selectedInvestment.description}
-                          </p>
+                          </div>
                         )}
                       </div>
 
                         <div className="space-y-4 pt-4 border-t">
                           <div className="flex items-center justify-between">
-                            <Label className="font-semibold">Unit Quantity</Label>
+                            <div className="self-stretch justify-start text-zinc-800 text-sm font-bold ">Unit Quantity</div>
                             <div className="flex items-center gap-3">
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 w-8 p-0"
+                                className="h-8 w-8 p-0 rounded-full hover:bg-green-100"
                                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                                 disabled={quantity <= 1}
                               >
@@ -1269,7 +1321,7 @@ const InvestmentsPage = () => {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8 w-8 p-0"
+                                className="h-8 w-8 p-0 rounded-full hover:bg-green-100"
                                 onClick={() => setQuantity(Math.min(selectedInvestment.unitsAvailable, quantity + 1))}
                                 disabled={quantity >= selectedInvestment.unitsAvailable}
                               >
@@ -1293,13 +1345,13 @@ const InvestmentsPage = () => {
                     <div className="p-6 border-t bg-gray-50 flex gap-3">
                       <Button 
                         variant="outline" 
-                        className="flex-1"
+                        className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-700 text-green-700 hover:bg-green-50 transition-all duration-200"
                         onClick={() => setIsSheetOpen(false)}
                       >
                         Cancel
                       </Button>
                       <Button 
-                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleInvestNow}
                       >
                         Invest Now
@@ -1374,56 +1426,97 @@ const InvestmentsPage = () => {
                       </div>
 
                       <div className="text-center">
-                        <h2 className="text-xl font-semibold">Review Your Investment</h2>
+                        <div className="self-stretch text-center justify-start text-black text-lg font-extrabold  tracking-tight">Review Your Investment</div>
                         <p className="text-gray-600 text-sm mt-1">Secure your spot in our current farm projects in just a few steps.</p>
                       </div>
                     </div>
 
                     <div className="flex-1 p-6 space-y-6">
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Project</span>
-                          <span className="font-semibold">{selectedInvestment.name}</span>
+                      <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
+                        <div className="p-4 space-y-0">
+                        <div className="flex justify-between items-center py-3">
+                          <span className="text-gray-600 text-sm">Project</span>
+                          <div className="text-right justify-center text-green-950 text-sm font-semibold leading-tight">{selectedInvestment.name}</div>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">ROI</span>
-                          <span className="font-semibold">{selectedInvestment.roi}</span>
+                        <div className="border-t border-gray-200"></div>
+                        
+                        <div className="flex justify-between items-center py-3">
+                          <span className="text-gray-600 text-sm">ROI</span>
+                          <span className="font-semibold text-sm">{selectedInvestment.roi}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Expected Return</span>
-                          <span className="font-semibold">GHS {calculateExpectedReturn()}</span>
+                        <div className="border-t border-gray-200"></div>
+                        
+                        <div className="flex justify-between items-center py-3">
+                          <span className="text-gray-600 text-sm">Expected Return</span>
+                          <span className="font-semibold text-sm">GHS {calculateExpectedReturn()}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Units Selected</span>
-                          <span className="font-semibold">{quantity} Unit(s)</span>
+                        <div className="border-t border-gray-200"></div>
+                        
+                        <div className="flex justify-between items-center py-3">
+                          <span className="text-gray-600 text-sm">Units Selected</span>
+                          <span className="font-semibold text-sm">{quantity} Unit(s)</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Total Amount</span>
-                          <span className="font-semibold">GHS {calculateTotal().toLocaleString()}</span>
+                        <div className="border-t border-gray-200"></div>
+                        
+                        <div className="flex justify-between items-center py-3">
+                          <span className="text-gray-600 text-sm">Total Amount</span>
+                          <span className="font-semibold text-sm">GHS {calculateTotal().toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Duration</span>
-                          <span className="font-semibold">{selectedInvestment.duration}</span>
+                        <div className="border-t border-gray-200"></div>
+                        
+                        <div className="flex justify-between items-center py-3">
+                          <span className="text-gray-600 text-sm">Duration</span>
+                          <span className="font-semibold text-sm">{selectedInvestment.duration}</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Starting</span>
-                          <span className="font-semibold">November 2025</span>
+                        <div className="border-t border-gray-200"></div>
+                        
+                        <div className="flex justify-between items-center py-3">
+                          <span className="text-gray-600 text-sm">Starting</span>
+                          <span className="font-semibold text-sm">November 2025</span>
+                        </div>
+                        </div>
                         </div>
                       </div>
 
                       <Separator />
 
-                      <div>
+                      <div className="p-6">
                         <h3 className="font-semibold mb-3">Terms and Agreement</h3>
                         <div className="flex items-start space-x-3">
                           <div className="flex items-center">
+                             <div className="relative">
                             <input
                               type="checkbox"
                               id="terms"
                               checked={agreedToTerms}
                               onChange={(e) => setAgreedToTerms(e.target.checked)}
-                              className="w-4 h-4 text-green-600 border-gray-300 rounded focus:ring-green-500"
-                            />
+                                 className="sr-only"
+                               />
+                               <label
+                                 htmlFor="terms"
+                                 className={`flex items-center justify-center w-5 h-5 border-2 rounded-full cursor-pointer transition-all duration-200 ${
+                                   agreedToTerms
+                                     ? 'bg-green-600 border-green-600'
+                                     : 'bg-white border-gray-300 hover:border-green-400'
+                                 }`}
+                               >
+                                 {agreedToTerms && (
+                                   <svg
+                                     className="w-3 h-3 text-white"
+                                     fill="none"
+                                     stroke="currentColor"
+                                     viewBox="0 0 24 24"
+                                   >
+                                     <path
+                                       strokeLinecap="round"
+                                       strokeLinejoin="round"
+                                       strokeWidth={3}
+                                       d="M5 13l4 4L19 7"
+                                     />
+                                   </svg>
+                                 )}
+                               </label>
+                             </div>
                           </div>
                           <div className="flex-1">
                             <label htmlFor="terms" className="text-sm text-gray-700">
@@ -1432,7 +1525,6 @@ const InvestmentsPage = () => {
                             <Button variant="link" className="p-0 h-auto text-green-600 text-sm">
                               Read More...
                             </Button>
-                          </div>
                         </div>
                       </div>
                     </div>
@@ -1444,13 +1536,13 @@ const InvestmentsPage = () => {
                       <div className="flex gap-3">
                         <Button 
                           variant="outline" 
-                          className="flex-1"
+                          className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-700 text-green-700 hover:bg-green-50 transition-all duration-200"
                           onClick={() => setCurrentStep('details')}
                         >
                           Cancel
                         </Button>
                         <Button 
-                          className="flex-1 bg-green-600 hover:bg-green-700"
+                          className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           onClick={handleContinueToPayment}
                           disabled={!agreedToTerms}
                         >
@@ -1512,10 +1604,12 @@ const InvestmentsPage = () => {
                     <div className="flex-1 p-6 space-y-4">
                       <RadioGroup value={selectedPaymentMethod} onValueChange={handlePaymentMethodSelect}>
                         {/* AgriPath Account */}
-                        <div className={`flex items-center space-x-3 p-4 border rounded-lg ${
-                          wallet?.balance && selectedInvestment && (wallet.balance < (selectedInvestment.price * quantity)) 
-                            ? 'border-red-200 bg-red-50' 
-                            : 'border-gray-200'
+                        <div className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
+                          selectedPaymentMethod === 'agripath'
+                            ? 'border-green-500 bg-green-50'
+                            : wallet?.balance && selectedInvestment && (wallet.balance < (selectedInvestment.price * quantity)) 
+                              ? 'border-red-200 bg-red-50' 
+                              : 'border-gray-200 hover:border-gray-300'
                         }`}>
                           <RadioGroupItem 
                             value="agripath" 
@@ -1539,7 +1633,11 @@ const InvestmentsPage = () => {
                         </div>
 
                         {/* Mobile Money */}
-                        <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                        <div className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
+                          selectedPaymentMethod === 'mobile'
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}>
                           <RadioGroupItem value="mobile" id="mobile" />
                           <div className="flex-1">
                             <Label htmlFor="mobile" className="font-medium">Mobile Money</Label>
@@ -1553,7 +1651,11 @@ const InvestmentsPage = () => {
                         </div>
 
                         {/* Bank Card */}
-                        <div className="flex items-center space-x-3 p-4 border rounded-lg">
+                        <div className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
+                          selectedPaymentMethod === 'card'
+                            ? 'border-green-500 bg-green-50'
+                            : 'border-gray-200 hover:border-gray-300'
+                        }`}>
                           <RadioGroupItem value="card" id="card" />
                           <div className="flex-1">
                             <Label htmlFor="card" className="font-medium">Bank Card</Label>
@@ -1564,7 +1666,7 @@ const InvestmentsPage = () => {
                             <div className="w-8 h-5 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">VISA</div>
                           </div>
                         </div>
-                        
+
                       </RadioGroup>
                       {selectedPaymentMethod === 'mobile' && (
                         <div className="p-4 bg-green-50 rounded-lg border border-green-200 space-y-4">
@@ -1585,14 +1687,14 @@ const InvestmentsPage = () => {
                           <div>
                             <Label className="text-sm font-medium">Phone number</Label>
                             <div className="flex mt-1">
-                              <div className="flex items-center px-3 border border-r-0 rounded-l-md bg-green-100">
-                                <span className="text-sm">🇬🇭 +233</span>
+                              <div className="flex items-center px-3  border border-r-0 rounded-l-md bg-green-100">
+                                <span className="text-sm">+233</span>
                               </div>
                               <Input
                                 placeholder="Eg. 55 567 8905"
                                 value={paymentDetails.mobileNumber}
                                 onChange={(e) => setPaymentDetails({...paymentDetails, mobileNumber: e.target.value})}
-                                className="rounded-l-none"
+                                className="rounded-l-none px-3 py-2 "
                               />
                             </div>
                           </div>
@@ -1677,13 +1779,13 @@ const InvestmentsPage = () => {
                     <div className="p-6 border-t bg-gray-50 flex gap-3">
                       <Button 
                         variant="outline" 
-                        className="flex-1"
+                        className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-700 text-green-700 hover:bg-green-50 transition-all duration-200"
                         onClick={() => setCurrentStep('review')}
                       >
                         Cancel
                       </Button>
                       <Button 
-                        className="flex-1 bg-green-600 hover:bg-green-700"
+                        className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleInvestmentSubmit}
                         disabled={!selectedPaymentMethod || isProcessing}
                       >
@@ -1744,7 +1846,7 @@ const InvestmentsPage = () => {
                             Hang tight! We&apos;re confirming your payment with your provider. This usually takes a few seconds.
                         </p>
                         <p className="text-sm text-gray-500">
-                          You will receive a USSD prompt in <span className="font-medium">00:30s</span>
+                          You will receive a USSD prompt in <span className="font-medium">{countdown > 0 ? `${countdown.toString().padStart(2, '0')}:00s` : '00:00s'}</span>
                         </p>
                       </div>
                     </div>
@@ -1953,7 +2055,7 @@ const InvestmentsPage = () => {
 
                     <div className="mt-8 w-full">
                       <Button 
-                        className="w-full bg-green-600 hover:bg-green-700"
+                        className="flex h-[50px] px-8 justify-center items-center gap-1.5 w-full rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200"
                         onClick={() => {
                           setCurrentStep('payment');
                         }}

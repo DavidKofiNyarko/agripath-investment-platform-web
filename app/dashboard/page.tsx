@@ -25,21 +25,22 @@ import Image from 'next/image';
 import { 
   Upload, 
   Download, 
-  EyeOff, 
+  EyeSlash, 
   Eye,
-  ChevronRight,
+  CaretRight,
   Wallet,
-  TrendingUp,
-  Activity,
+  TrendUp,
+  ChartLine,
   CheckCircle,
-  Loader2,
+  Spinner,
   Phone,
   CreditCard,
   Lock,
   Calendar,
   Info,
-  X
-} from 'lucide-react';
+  X,
+  Buildings
+} from '@phosphor-icons/react';
 import PinValidationModal from '@/components/pin-validation-modal';
 import WalletTestComponent from '@/components/WalletTestComponent';
 import ProfileSetupFlow from '@/components/profile-setup-flow';
@@ -69,7 +70,7 @@ const ViewMoreButton = ({
       <div className="justify-start text-[rgba(5,20,52,0.9)] text-sm font-normal  leading-tight">{label}</div>
       <div className="w-4 h-4 relative flex items-center justify-center">
         {/* Arrow icon */}
-        <ChevronRight className="h-4 w-4 absolute left-0 top-0 text-black" />
+        <CaretRight className="h-4 w-4 absolute left-0 top-0 text-black" />
       </div>
     </div>
   );
@@ -110,6 +111,7 @@ const DashboardPage = () => {
   });
   const [withdrawDetails, setWithdrawDetails] = useState({
     bankName: '',
+    bankCode: '',
     accountNumber: '',
     accountName: '',
     networkProvider: '',
@@ -355,7 +357,7 @@ const DashboardPage = () => {
           <ProfileSetupFlow onCompleted={() => { /* context will re-render */ }} />
         </>
       )}
-      <div className={`space-y-4 sm:space-y-6 px-4 sm:px-0 transition-all duration-300 ${isTopUpOpen || isWithdrawOpen ? 'main-content-blur' : ''}`}>
+      <div className={`space-y-4 sm:space-y-6 px-3 sm:px-4 lg:px-6 transition-all duration-300 ${isTopUpOpen || isWithdrawOpen ? 'main-content-blur' : ''}`}>
        
         {/* Header */}
         <UserHeader />
@@ -366,14 +368,14 @@ const DashboardPage = () => {
         </div>
 
         {/* Account Balance Card */}
-        <Card className="flex flex-col justify-between items-end self-stretch rounded-[12px] bg-green-800/90 text-white border-0 shadow-xl p-8">
-          <CardContent className="p-0 flex  justify-between items-end self-stretch">
-              <div className="flex-1">
-                <p className="text-[24px] leading-[34.8px] font-normal text-[#F7F7F7] font-inter mb-4 sm:mb-6 tracking-wide">
+        <Card className="flex flex-col justify-between items-end self-stretch rounded-[12px] bg-green-800/90 text-white border-0 shadow-xl p-4 sm:p-6 lg:p-8">
+          <CardContent className="p-0 flex flex-col sm:flex-row justify-between items-end self-stretch gap-4 sm:gap-6">
+              <div className="flex-1 w-full sm:w-auto">
+                <p className="text-lg sm:text-xl lg:text-[24px] leading-tight font-normal text-[#F7F7F7] mb-3 sm:mb-4 lg:mb-6 tracking-wide">
                   Account Balance
                 </p>
-                <div className="flex items-center gap-3 sm:gap-4 mb-3">
-                  <span className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight">
+                <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 mb-2 sm:mb-3">
+                  <span className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-black tracking-tight">
                     {isBalanceVisible ? (
                       <>
                         <span
@@ -381,7 +383,7 @@ const DashboardPage = () => {
                             color: 'rgba(247, 247, 247, 0.70)',
                             textAlign: 'center',
                             fontFamily: 'Inter, sans-serif',
-                            fontSize: 40,
+                            fontSize: 'clamp(24px, 4vw, 40px)',
                             fontStyle: 'normal',
                             fontWeight: 600,
                             lineHeight: '125%',
@@ -402,7 +404,7 @@ const DashboardPage = () => {
                     onClick={handleBalanceToggle}
                   >
                     {isBalanceVisible ? (
-                      <EyeOff className="h-4 w-4" />
+                      <EyeSlash className="h-4 w-4" />
                     ) : (
                       <Eye className="h-4 w-4" />
                     )}
@@ -412,29 +414,29 @@ const DashboardPage = () => {
                   {isBalanceVisible ? 'Balance visible' : 'Balance hidden'}
                 </p>
               </div>
-            <div className="flex flex-col sm:flex-row sm:items-end self-stretch sm:justify-between gap-6">
-              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row sm:items-end self-stretch sm:justify-between gap-3 sm:gap-4 w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 lg:gap-4 w-full sm:w-auto">
                 <div
-                  className="self-stretch px-5 py-1.5 bg-white rounded-[20px] border-r border-green-800 inline-flex justify-center items-center gap-1 cursor-pointer"
+                  className="self-stretch px-4 sm:px-5 py-1.5 bg-white rounded-[20px] border-r border-green-800 inline-flex justify-center items-center gap-1 cursor-pointer"
                   onClick={() => setIsTopUpOpen(true)}
                   role="button"
                   tabIndex={0}
                 >
-                  <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center">
-                    <Upload className="w-4 h-4 absolute left-[3px] top-[2.25px] text-green-800" />
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden flex items-center justify-center">
+                    <Upload className="w-3 h-3 sm:w-4 sm:h-4 absolute left-[3px] top-[2.25px] text-green-800" />
                   </div>
-                  <div className="text-right justify-start text-green-800 text-base font-bold  leading-snug">Top Up</div>
+                  <div className="text-right justify-start text-green-800 text-sm sm:text-base font-bold leading-snug">Top Up</div>
                 </div>
                 <div
-                  className="self-stretch px-5 py-1.5 rounded-[20px] outline  outline-offset-[-2px] outline-white inline-flex justify-center items-center gap-1 cursor-pointer"
+                  className="self-stretch px-4 sm:px-5 py-1.5 rounded-[20px] outline outline-offset-[-2px] outline-white inline-flex justify-center items-center gap-1 cursor-pointer"
                   onClick={() => setIsWithdrawOpen(true)}
                   role="button"
                   tabIndex={0}
                 >
-                  <div className="w-6 h-6 relative overflow-hidden flex items-center justify-center">
-                    <Download className="w-4 h-4 absolute left-[3px] top-[2.25px] text-white" />
+                  <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden flex items-center justify-center">
+                    <Download className="w-3 h-3 sm:w-4 sm:h-4 absolute left-[3px] top-[2.25px] text-white" />
                   </div>
-                  <div className="text-right justify-start text-white text-base font-bold  leading-snug">Withdraw</div>
+                  <div className="text-right justify-start text-white text-sm sm:text-base font-bold leading-snug">Withdraw</div>
                 </div>
               </div>
             </div>
@@ -452,21 +454,21 @@ const DashboardPage = () => {
             />
           </div>
           
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card>
               <CardContent className="p-0">
-                <div className="self-stretch px-6 pt-6 pb-2 inline-flex justify-between items-center">
+                <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
                   <div className="flex-1 flex justify-start items-center gap-2">
-                    <div className="w-6 h-6 relative overflow-hidden">
-                      <Wallet className="w-5 h-4 left-[3px] top-[3px] absolute text-green-800" />
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden">
+                      <Wallet className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-green-800" />
                   </div>
                     <div className="flex justify-center items-center gap-2.5">
-                      <div className="justify-start text-Zinc-950 text-sm font-medium">Total Invested</div>
+                      <div className="justify-start text-Zinc-950 text-xs sm:text-sm font-medium">Total Invested</div>
                 </div>
                   </div>
                 </div>
-                <div className="px-6 pb-6">
-                <div className="justify-start text-Zinc-950 text-2xl font-extrabold tracking-tight">
+                <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                <div className="justify-start text-Zinc-950 text-xl sm:text-2xl font-extrabold tracking-tight">
                   GHS {metrics?.total_invested?.toLocaleString() || '0.00'}
                   </div>
                 </div>
@@ -475,18 +477,18 @@ const DashboardPage = () => {
             
             <Card>
               <CardContent className="p-0">
-                <div className="self-stretch px-6 pt-6 pb-2 inline-flex justify-between items-center">
+                <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
                   <div className="flex-1 flex justify-start items-center gap-2">
-                    <div className="w-6 h-6 relative overflow-hidden">
-                      <TrendingUp className="w-5 h-4 left-[3px] top-[3px] absolute text-green-800" />
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden">
+                      <TrendUp className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-green-800" />
                   </div>
                     <div className="flex justify-center items-center gap-2.5">
-                      <div className="justify-start text-Zinc-950 text-sm font-medium">Expected Returns</div>
+                      <div className="justify-start text-Zinc-950 text-xs sm:text-sm font-medium">Expected Returns</div>
                 </div>
                   </div>
                 </div>
-                <div className="px-6 pb-6">
-                  <div className="justify-start text-Zinc-950 text-2xl font-extrabold tracking-tight">
+                <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                  <div className="justify-start text-Zinc-950 text-xl sm:text-2xl font-extrabold tracking-tight">
                   GHS {metrics?.expected_returns?.toLocaleString() || '0.00'}
                   </div>
                 </div>
@@ -495,18 +497,18 @@ const DashboardPage = () => {
             
             <Card>
               <CardContent className="p-0">
-                <div className="self-stretch px-6 pt-6 pb-2 inline-flex justify-between items-center">
+                <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
                   <div className="flex-1 flex justify-start items-center gap-2">
-                    <div className="w-6 h-6 relative overflow-hidden">
-                      <Activity className="w-5 h-4 left-[3px] top-[3px] absolute text-green-800" />
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden">
+                      <ChartLine className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-green-800" />
                   </div>
                     <div className="flex justify-center items-center gap-2.5">
-                      <div className="justify-start text-Zinc-950 text-sm font-medium">Active Projects</div>
+                      <div className="justify-start text-Zinc-950 text-xs sm:text-sm font-medium">Active Projects</div>
                 </div>
                   </div>
                 </div>
-                <div className="px-6 pb-6">
-                  <div className="justify-start text-Zinc-950 text-2xl font-extrabold tracking-tight">
+                <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                  <div className="justify-start text-Zinc-950 text-xl sm:text-2xl font-extrabold tracking-tight">
                   {metrics?.active_projects || 0}
                   </div>
                 </div>
@@ -515,18 +517,18 @@ const DashboardPage = () => {
             
             <Card>
               <CardContent className="p-0">
-                <div className="self-stretch px-6 pt-6 pb-2 inline-flex justify-between items-center">
+                <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
                   <div className="flex-1 flex justify-start items-center gap-2">
-                    <div className="w-6 h-6 relative overflow-hidden">
-                      <CheckCircle className="w-5 h-4 left-[3px] top-[3px] absolute text-green-800" />
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden">
+                      <CheckCircle className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-green-800" />
                   </div>
                     <div className="flex justify-center items-center gap-2.5">
-                      <div className="justify-start text-Zinc-950 text-sm font-medium">Total Units</div>
+                      <div className="justify-start text-Zinc-950 text-xs sm:text-sm font-medium">Total Units</div>
                 </div>
                   </div>
                 </div>
-                <div className="px-6 pb-6">
-                  <div className="justify-start text-Zinc-950 text-2xl font-extrabold  tracking-tight">
+                <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                  <div className="justify-start text-Zinc-950 text-xl sm:text-2xl font-extrabold  tracking-tight">
                   {metrics?.total_units || 0}
                   </div>
                 </div>
@@ -547,11 +549,11 @@ const DashboardPage = () => {
             />
           </div>
           
-          <div className="flex flex-wrap gap-4 overflow-x-auto">
+          <div className="flex flex-wrap gap-3 sm:gap-4 overflow-x-auto pb-2">
             {projects.slice(0, 5).map((project) => (
-             <Card key={project.id} className="p-4 bg-white rounded-2xl  inline-flex justify-start items-start gap-3 w-64 sm:w-72 md:w-80 flex-shrink-0">
+             <Card key={project.id} className="p-3 sm:p-4 bg-white rounded-2xl inline-flex justify-start items-start gap-3 w-60 sm:w-64 md:w-72 lg:w-80 flex-shrink-0">
                <div className="w-full inline-flex flex-col justify-start items-start gap-3">
-                 <div className="w-full h-32 sm:h-36 md:h-40 relative rounded-2xl overflow-hidden">
+                 <div className="w-full h-28 sm:h-32 md:h-36 lg:h-40 relative rounded-2xl overflow-hidden">
                   <Image 
                     src={project.cover_image_url || `https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=400&h=200&fit=crop`}
                     alt={project.project_name}
@@ -559,7 +561,7 @@ const DashboardPage = () => {
                     height={200}
                      className="w-full h-full object-cover"
                    />
-                   <div className="px-2 py-1.5 right-2 top-2 absolute bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
+                   <div className="px-2 py-1 sm:py-1.5 right-2 top-2 absolute bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
                      <div className="px-1 flex justify-start items-start gap-2.5">
                        <div className="text-center justify-start text-white text-xs font-semibold uppercase tracking-wide">
                     {project.status?.toUpperCase() || 'AVAILABLE'}
@@ -567,15 +569,15 @@ const DashboardPage = () => {
                   </div>
                   </div>
                  </div>
-                 <div className="self-stretch pt-3 flex flex-col justify-start items-start gap-4">
-                   <div className="self-stretch flex flex-col justify-start items-start gap-4">
+                 <div className="self-stretch pt-2 sm:pt-3 flex flex-col justify-start items-start gap-3 sm:gap-4">
+                   <div className="self-stretch flex flex-col justify-start items-start gap-3 sm:gap-4">
                      <div className="self-stretch flex flex-col justify-center items-start gap-1">
-                       <div className="justify-start text-green-950 text-lg font-extrabold tracking-tight line-clamp-1">
+                       <div className="justify-start text-green-950 text-base sm:text-lg font-extrabold tracking-tight line-clamp-1">
                          {project.project_name}
                        </div>
                        <div className="self-stretch inline-flex justify-center items-center gap-1">
                          <div className="flex-1 flex justify-start items-center gap-1">
-                           <div className="justify-center text-zinc-900 text-sm font-bold">
+                           <div className="justify-center text-zinc-900 text-sm sm:text-base font-bold">
                              GHS {project.unit_price?.toLocaleString()}
                            </div>
                            <div className="justify-center text-green-800 text-xs font-bold leading-none tracking-tight">/Per Unit</div>
@@ -609,7 +611,7 @@ const DashboardPage = () => {
               <div className="w-full flex items-center justify-center py-12">
                 <div className="text-center">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Activity className="h-8 w-8 text-gray-400" />
+                    <ChartLine className="h-8 w-8 text-gray-400" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No Projects Available</h3>
                   <p className="text-gray-600">Check back later for new investment opportunities.</p>
@@ -642,11 +644,11 @@ const DashboardPage = () => {
                         case 'Payin':
                           return <Upload className="h-4 w-4 text-green-600" />;
                         case 'Payout':
-                          return <TrendingUp className="h-4 w-4 text-green-600" />;
+                          return <TrendUp className="h-4 w-4 text-green-600" />;
                         case 'Refund':
                           return <Download className="h-4 w-4 text-orange-600" />;
                         default:
-                          return <Activity className="h-4 w-4 text-gray-600" />;
+                          return <ChartLine className="h-4 w-4 text-gray-600" />;
                       }
                     };
 
@@ -694,12 +696,12 @@ const DashboardPage = () => {
                     };
 
                     return (
-                      <div 
+                      <div
                         key={transaction.id} 
-                        className={`flex items-center justify-between p-3 rounded-lg border ${getTransactionColor(transaction.type)}`}
+                        className={`flex items-center justify-between p-3 sm:p-4 rounded-lg border ${getTransactionColor(transaction.type)}`}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-full ${
+                        <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                          <div className={`p-1.5 sm:p-2 rounded-full flex-shrink-0 ${
                             transaction.type === 'Payin' ? 'bg-green-100' :
                             transaction.type === 'Payout' ? 'bg-green-100' :
                             transaction.type === 'Refund' ? 'bg-orange-100' :
@@ -707,11 +709,11 @@ const DashboardPage = () => {
                           }`}>
                             {getTransactionIcon(transaction.type)}
                           </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900 capitalize">
+                          <div className="min-w-0 flex-1">
+                            <p className="text-xs sm:text-sm font-medium text-gray-900 capitalize truncate">
                               {transaction.type.replace('_', ' ')}
                             </p>
-                            <p className="text-xs text-gray-500">
+                            <p className="text-xs text-gray-500 truncate">
                               {transaction.project_name || transaction.description || 'Transaction'}
                             </p>
                             <div className="flex items-center gap-1 mt-1">
@@ -721,7 +723,7 @@ const DashboardPage = () => {
                                   transaction.status === 'Pending' ? 'secondary' :
                                   transaction.status === 'Failed' ? 'destructive' : 'outline'
                                 }
-                                className={`text-xs px-2 py-0.5 ${
+                                className={`text-xs px-1.5 sm:px-2 py-0.5 ${
                                   transaction.status === 'Complete' ? 'bg-green-100 text-green-800 border-green-200' :
                                   transaction.status === 'Pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
                                   transaction.status === 'Failed' ? 'bg-red-100 text-red-800 border-red-200' :
@@ -733,8 +735,8 @@ const DashboardPage = () => {
                             </div>
                           </div>
                         </div>
-                        <div className="text-right">
-                          <p className={`text-sm font-semibold ${getAmountColor(transaction.type)}`}>
+                        <div className="text-right flex-shrink-0 ml-2">
+                          <p className={`text-xs sm:text-sm font-semibold ${getAmountColor(transaction.type)}`}>
                             {formatAmount(transaction.amount, transaction.type)}
                           </p>
                           <p className="text-xs text-gray-500">
@@ -748,7 +750,7 @@ const DashboardPage = () => {
               ) : (
                 <div className="text-center py-8">
                   <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                    <Activity className="h-6 w-6 text-gray-400" />
+                    <ChartLine className="h-6 w-6 text-gray-400" />
                   </div>
                   <h3 className="text-sm font-medium text-gray-900 mb-1">No Recent Transactions</h3>
                   <p className="text-xs text-gray-500 mb-3">Your transaction history will appear here</p>
@@ -775,7 +777,7 @@ const DashboardPage = () => {
                   onClick={() => router.push('/updates')}
                 >
                   View more
-                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
+                  <CaretRight className="h-3 w-3 sm:h-4 sm:w-4 ml-1" />
                 </Button>
               </div>
             </CardHeader>
@@ -804,7 +806,7 @@ const DashboardPage = () => {
                       })}
                     </p>
                   </div>
-                  <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
+                  <CaretRight className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
                 </div>
               ))}
               
@@ -812,7 +814,7 @@ const DashboardPage = () => {
                 <div className="flex items-center justify-center py-8">
                   <div className="text-center">
                     <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <Activity className="h-6 w-6 text-gray-400" />
+                      <ChartLine className="h-6 w-6 text-gray-400" />
                     </div>
                     <p className="text-sm text-gray-600">No updates available</p>
                   </div>
@@ -831,14 +833,7 @@ const DashboardPage = () => {
             {/* Header */}
             <div className="flex items-center justify-between p-6 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">Top Up Account</h2>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsTopUpOpen(false)}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-4 w-4" />
-              </Button>
+             
             </div>
 
             {/* Content */}
@@ -889,28 +884,23 @@ const DashboardPage = () => {
                     </div>
 
                     {/* Payment Method Selection */}
-                    <div className="w-full pt-7 flex flex-col justify-start items-center gap-4">
-                      <div className="w-full justify-start text-gray-900 text-sm font-normal leading-tight">
+                    <div className="space-y-4">
+                      <div className="w-full flex justify-start text-gray-900 text-lg font-extrabold leading-tight">
                         Select Payment Method
                       </div>
                       
+                      <div className="w-full px-4">
                       <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod}>
-                        <div className="w-full flex flex-col items-center gap-6">
+                          <div className="w-full space-y-4">
                           {/* Mobile Money Option */}
                           <div className={`w-full rounded-xl border transition-all duration-200 ${paymentMethod === 'mobile' ? 'border-green-500 bg-green-50/30' : 'border-gray-200'}`}>
                             {/* Header Row */}
-                            <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6">
-                              <div className="flex-1 flex justify-start items-center gap-3 sm:gap-4">
-                                <RadioGroupItem value="mobile" id="mobile" className={`w-6 h-6 sm:w-7 sm:h-7 rounded-[106.67px] border-[0.80px] ${paymentMethod === 'mobile' ? 'border-green-500' : 'border-gray-400'}`} />
-                                <div className="flex-1 flex justify-between items-center">
-                                  <div className={`justify-center text-base sm:text-lg font-medium leading-tight ${paymentMethod === 'mobile' ? 'text-green-700' : 'text-neutral-600'}`}>
-                                Mobile Money
-                                  </div>
-                                  <div className="w-8 h-8 sm:w-10 sm:h-10 relative overflow-hidden">
-                                    <Phone className={`w-6 h-8 sm:w-7 sm:h-10 left-[6.56px] top-[1.88px] absolute ${paymentMethod === 'mobile' ? 'text-green-600' : 'text-green-950'}`} />
-                                  </div>
-                                </div>
-                              </div>
+                            <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6 w-full">
+                              <RadioGroupItem value="mobile" id="mobile" className="w-6 h-6 sm:w-7 sm:h-7" />
+                              <Label htmlFor="mobile" className="flex-1 cursor-pointer">
+                                <span className="text-base sm:text-lg font-medium">Mobile Money</span>
+                              </Label>
+                              <Phone className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
                             </div>
                             
                             {/* Expanded Form Fields */}
@@ -922,52 +912,20 @@ const DashboardPage = () => {
                                 transition={{ duration: 0.2 }}
                                 className="overflow-hidden border-t border-green-200"
                               >
-                                <div className="p-8 space-y-8">
+                                <div className="p-6 space-y-8">
                                 <div>
-                                  <Label htmlFor="networkProvider" className="text-sm text-gray-600">
-                                      Select network provider *
-                                  </Label>
+                                  <Label className="text-sm font-medium text-gray-700">Select Network Provider</Label>
                                   <Select onValueChange={(value) => setPaymentDetails({...paymentDetails, networkProvider: value})}>
-                                      <SelectTrigger className={`mt-1 transition-all duration-200 border-0 outline-none focus:ring-0 focus:border-0 ${!paymentDetails.networkProvider ? 'border-red-300 focus:border-red-500' : ''}`}>
+                                      <SelectTrigger className="mt-1 border-0 outline-none focus:ring-0 focus:border-0">
                                       <SelectValue placeholder="Eg. MTN" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="MTN">
-                                          <div className="flex items-center space-x-2">
-                                            <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                                            <span>MTN</span>
-                                          </div>
-                                        </SelectItem>
-                                        <SelectItem value="VDF">
-                                          <div className="flex items-center space-x-2">
-                                            <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                            <span>Vodafone</span>
-                                          </div>
-                                        </SelectItem>
-                                        <SelectItem value="ATL">
-                                          <div className="flex items-center space-x-2">
-                                            <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                            <span>Airtel</span>
-                                          </div>
-                                        </SelectItem>
-                                        <SelectItem value="TGO">
-                                          <div className="flex items-center space-x-2">
-                                            <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                                            <span>Tigo</span>
-                                          </div>
-                                        </SelectItem>
-                                        <SelectItem value="ZPY">
-                                          <div className="flex items-center space-x-2">
-                                            <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                            <span>Zeepay</span>
-                                          </div>
-                                        </SelectItem>
-                                        <SelectItem value="GMY">
-                                          <div className="flex items-center space-x-2">
-                                            <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                            <span>G-money</span>
-                                          </div>
-                                        </SelectItem>
+                                      <SelectItem value="MTN">MTN</SelectItem>
+                                      <SelectItem value="VDF">Vodafone</SelectItem>
+                                      <SelectItem value="ATL">Airtel</SelectItem>
+                                      <SelectItem value="TGO">Tigo</SelectItem>
+                                      <SelectItem value="ZPY">Zeepay</SelectItem>
+                                      <SelectItem value="GMY">G-money</SelectItem>
                                     </SelectContent>
                                   </Select>
                                     {!paymentDetails.networkProvider && (
@@ -1012,18 +970,12 @@ const DashboardPage = () => {
                           {/* Bank Card Option */}
                           <div className={`w-full rounded-xl border transition-all duration-200 ${paymentMethod === 'card' ? 'border-green-500 bg-green-50/30' : 'border-gray-200'}`}>
                             {/* Header Row */}
-                            <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6">
-                              <div className="flex-1 flex justify-start items-center gap-3 sm:gap-4">
-                                <RadioGroupItem value="card" id="card" className={`w-6 h-6 sm:w-7 sm:h-7 rounded-[106.67px] border-[0.80px] ${paymentMethod === 'card' ? 'border-green-500' : 'border-gray-400'}`} />
-                                <div className="flex-1 flex justify-between items-center">
-                                  <div className={`justify-center text-base sm:text-lg font-medium leading-tight ${paymentMethod === 'card' ? 'text-green-700' : 'text-neutral-600'}`}>
-                                Bank Card
-                                  </div>
-                                  <div className="w-8 h-8 sm:w-10 sm:h-10 relative overflow-hidden">
-                                    <CreditCard className={`w-6 h-4 sm:w-7 sm:h-5 left-[1.50px] top-[4.50px] absolute ${paymentMethod === 'card' ? 'text-green-600' : 'text-green-950'}`} />
-                                  </div>
-                                </div>
-                              </div>
+                            <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6 w-full">
+                              <RadioGroupItem value="card" id="card" className="w-6 h-6 sm:w-7 sm:h-7" />
+                              <Label htmlFor="card" className="flex-1 cursor-pointer">
+                                <span className="text-base sm:text-lg font-medium">Bank Card</span>
+                              </Label>
+                              <CreditCard className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
                             </div>
                             
                             {/* Expanded Form Fields */}
@@ -1035,11 +987,9 @@ const DashboardPage = () => {
                                 transition={{ duration: 0.2 }}
                                 className="overflow-hidden border-t border-green-200"
                               >
-                                <div className="p-8 space-y-8">
+                                <div className="p-6 space-y-8">
                                 <div>
-                                  <Label htmlFor="cardholderName" className="text-sm text-gray-600">
-                                    Cardholder Name
-                                  </Label>
+                                  <Label className="text-sm font-medium text-gray-700">Cardholder Name</Label>
                                   <Input
                                     id="cardholderName"
                                     value={paymentDetails.cardholderName}
@@ -1049,9 +999,7 @@ const DashboardPage = () => {
                                 </div>
                                 
                                 <div>
-                                  <Label htmlFor="cardNumber" className="text-sm text-gray-600">
-                                    Card number
-                                  </Label>
+                                  <Label className="text-sm font-medium text-gray-700">Card number</Label>
                                   <div className="relative mt-1">
                                     <Input
                                       id="cardNumber"
@@ -1071,9 +1019,7 @@ const DashboardPage = () => {
                                 
                                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                                   <div>
-                                    <Label htmlFor="expiryDate" className="text-sm text-gray-600">
-                                      Expiry Date
-                                    </Label>
+                                    <Label className="text-sm font-medium text-gray-700">Expiry Date</Label>
                                     <div className="relative mt-1">
                                       <Input
                                         id="expiryDate"
@@ -1087,9 +1033,7 @@ const DashboardPage = () => {
                                   </div>
                                   
                                   <div>
-                                    <Label htmlFor="cvv" className="text-sm text-gray-600">
-                                      CVC/CVV
-                                    </Label>
+                                    <Label className="text-sm font-medium text-gray-700">CVC/CVV</Label>
                                     <div className="relative mt-1">
                                       <Input
                                         id="cvv"
@@ -1119,10 +1063,10 @@ const DashboardPage = () => {
                           </div>
                         </div>
                       </RadioGroup>
+                      </div>
                     </div>
                   </div>
                 )}
-
 
                 {/* Loading Step */}
                 {currentStep === 'loading' && (
@@ -1138,7 +1082,7 @@ const DashboardPage = () => {
                           animate={{ rotate: 360 }}
                           transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         >
-                          <Loader2 className="h-10 w-10 text-blue-600" />
+                          <Spinner className="h-10 w-10 text-blue-600" />
                         </motion.div>
                         </div>
                     </motion.div>
@@ -1259,243 +1203,195 @@ const DashboardPage = () => {
 
       {/* Withdraw Account Sheet */}
       <Sheet open={isWithdrawOpen} onOpenChange={setIsWithdrawOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md p-0">
-          <SheetTitle className="sr-only">Withdraw Account</SheetTitle>
-          <div className="h-full flex flex-col">
+        <SheetContent className="w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl p-2">
+          <div className="flex flex-col h-full">
             {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-900">Withdraw Funds</h2>
+            <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
+              <h2 className="text-xl sm:text-2xl font-bold text-gray-900">Withdraw Funds</h2>
               <Button
                 variant="ghost"
-                size="icon"
+                size="sm"
+                className="h-8 w-8 p-0 hover:bg-gray-100"
                 onClick={() => setIsWithdrawOpen(false)}
-                className="h-8 w-8 p-0"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
             {/* Content */}
-            <div className="flex-1 p-6 overflow-y-auto">
-              <motion.div
-                key={withdrawStep}
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.3 }}
-                className="h-full"
-              >
-                {/* Amount Entry Step */}
-                {withdrawStep === 'amount' && (
-                  <div className="space-y-6">
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-2 block">
+            <div className="flex-1 p-4 sm:p-6 space-y-6 overflow-y-auto">
+              {/* Amount Input */}
+              <div className="space-y-2">
+                <div className="w-full flex justify-start text-gray-900 text-lg font-extrabold leading-tight">
                         Enter Amount
-                      </Label>
-                      <p className="text-sm text-gray-600 mb-3">How much do you want to withdraw?</p>
-                      <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-sm">
-                          GHS
-                        </span>
+                </div>
+                <div className="w-full flex justify-start text-gray-500 text-sm font-medium leading-tight">
+                  How much do you want to withdraw?
+                </div>
+                <div className="w-full pb-3 border-b border-black/20 flex justify-between items-center">
                         <Input
-                          value={withdrawAmount}
-                          onChange={(e) => handleWithdrawAmountChange(e.target.value)}
-                          className={`pl-12 text-lg font-semibold ${withdrawAmountError ? 'border-red-500 text-red-500' : ''}`}
+                    type="text"
                           placeholder="0.00"
-                          type="text"
-                          inputMode="decimal"
+                    value={withdrawAmount}
+                    onChange={(e) => handleWithdrawAmountChange(e.target.value)}
+                    className={`text-right text-gray-900 text-4xl sm:text-5xl md:text-6xl font-normal leading-10 border-0 p-0 bg-transparent focus:ring-0 focus:border-0 h-auto w-full ${withdrawAmountError ? 'text-red-500' : ''}`}
                         />
+                  <div className="text-center justify-start text-black text-2xl sm:text-3xl font-normal tracking-tight">
+                    GHS
                       </div>
-                      {withdrawAmountError && (
-                        <div className="text-red-500 text-sm mt-2">
-                          {withdrawAmountError}
-                        </div>
-                      )}
-                      {/* <p className="text-xs text-green-600 mt-2">Available balance: GHS {metrics?.total_invested?.toLocaleString() || '0.00'}</p> */}
+                </div>
+                {withdrawAmountError && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    transition={{ duration: 0.3 }}
+                    className="text-sm text-red-500"
+                  >
+                    {withdrawAmountError}
+                  </motion.div>
+                )}
                     </div>
 
-                    <div>
-                      <Label className="text-sm font-medium text-gray-700 mb-3 block">
+              {/* Payment Method Selection */}
+              <div className="space-y-4">
+                <div className="w-full flex justify-start text-gray-900 text-lg font-extrabold leading-tight">
                         Select Withdrawal Method
-                      </Label>
+                </div>
+                <div className="w-full px-4">
                       <RadioGroup value={withdrawMethod} onValueChange={setWithdrawMethod}>
-                        <div className="space-y-6 flex flex-col items-start">
+                    <div className="w-full space-y-4">
                           {/* Bank Transfer Option */}
-                          <div className={`border rounded-lg p-4 ${withdrawMethod === 'bank' ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}>
-                            <div className="flex items-center space-x-3">
-                              <RadioGroupItem value="bank" id="bank" />
-                              <Label htmlFor="bank" className="flex-1 cursor-pointer flex items-center">
-                                <CreditCard className="h-5 w-5 text-gray-600 mr-2" />
-                                Bank Transfer
+                    <div className={`w-full rounded-xl border transition-all duration-200 ${withdrawMethod === 'bank' ? 'border-green-500 bg-green-50/30' : 'border-gray-200'}`}>
+                      {/* Header Row */}
+                      <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6 w-full">
+                        <RadioGroupItem value="bank" id="withdraw-bank" className="w-6 h-6 sm:w-7 sm:h-7" />
+                        <Label htmlFor="withdraw-bank" className="flex-1 cursor-pointer">
+                          <span className="text-base sm:text-lg font-medium">Bank Transfer</span>
                               </Label>
+                        <Buildings className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
                             </div>
-                            
+                      {/* Bank Transfer Details */}
                             {withdrawMethod === 'bank' && (
                               <motion.div
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="mt-4 space-y-4 overflow-hidden"
+                          transition={{ duration: 0.2 }}
+                          className="border-t border-green-200 overflow-hidden "
                               >
+                          <div className="p-6 space-y-8">
                                 <div>
-                                  <Label htmlFor="bankName" className="text-sm text-gray-600">
-                                    Bank Name
-                                  </Label>
-                                  <Select onValueChange={(value) => setWithdrawDetails({...withdrawDetails, bankName: value})}>
-                                    <SelectTrigger className="mt-1">
+                              <Label className="text-sm font-medium text-gray-700">Select Bank</Label>
+                              <Select value={withdrawDetails.bankCode} onValueChange={(value) => setWithdrawDetails({...withdrawDetails, bankCode: value})}>
+                                <SelectTrigger className="mt-1 border-0 outline-none focus:ring-0 focus:border-0">
                                       <SelectValue placeholder="Select bank" />
                                     </SelectTrigger>
-                                    <SelectContent className="max-h-60 overflow-y-auto">
-                                      <SelectItem value="SCH">STANDARD CHARTERED BANK</SelectItem>
-                                      <SelectItem value="ABG">ABSA BANK GHANA LIMITED</SelectItem>
-                                      <SelectItem value="GCB">GCB BANK LIMITED</SelectItem>
-                                      <SelectItem value="NIB">NATIONAL INVESTMENT BANK</SelectItem>
-                                      <SelectItem value="ADB">AGRICULTURAL DEVELOPMENT BANK</SelectItem>
-                                      <SelectItem value="UMB">UNIVERSAL MERCHANT BANK</SelectItem>
-                                      <SelectItem value="RBL">REPUBLIC BANK LIMITED</SelectItem>
-                                      <SelectItem value="ZEN">ZENITH BANK GHANA LTD</SelectItem>
-                                      <SelectItem value="ECO">ECOBANK GHANA LTD</SelectItem>
-                                      <SelectItem value="CAL">CAL BANK LIMITED</SelectItem>
-                                      <SelectItem value="PRD">PRUDENTIAL BANK LTD</SelectItem>
-                                      <SelectItem value="STB">STANBIC BANK</SelectItem>
-                                      <SelectItem value="GTB">GUARANTY TRUST BANK</SelectItem>
-                                      <SelectItem value="UBA">UNITED BANK OF AFRICA</SelectItem>
-                                      <SelectItem value="ACB">ACCESS BANK LTD</SelectItem>
-                                      <SelectItem value="CBG">CONSOLIDATED BANK GHANA</SelectItem>
-                                      <SelectItem value="SGG">SOCIETE GENERALE GHANA</SelectItem>
-                                      <SelectItem value="FNB">FIRST NATIONAL BANK</SelectItem>
-                                      <SelectItem value="UNL">UNITY LINK</SelectItem>
-                                      <SelectItem value="FDL">FIDELITY BANK LIMITED</SelectItem>
-                                      <SelectItem value="SIS">SERVICES INTEGRITY SAVINGS & LOANS</SelectItem>
-                                      <SelectItem value="BOA">BANK OF AFRICA</SelectItem>
-                                      <SelectItem value="DFL">DALEX FINANCE AND LEASING COMPANY</SelectItem>
-                                      <SelectItem value="FBO">FIRST BANK OF NIGERIA</SelectItem>
-                                      <SelectItem value="GHL">GHL Bank</SelectItem>
-                                      <SelectItem value="BOG">BANK OF GHANA</SelectItem>
-                                      <SelectItem value="FAB">FIRST ATLANTIC BANK</SelectItem>
-                                      <SelectItem value="SSB">OmniBSIC Bank</SelectItem>
-                                      <SelectItem value="GMY">G-MONEY</SelectItem>
-                                      <SelectItem value="APX">ARB APEX BANK LIMITED</SelectItem>
+                                    <SelectContent>
+                                  <SelectItem value="001">Ghana Commercial Bank</SelectItem>
+                                  <SelectItem value="002">Standard Chartered Bank</SelectItem>
+                                  <SelectItem value="003">Barclays Bank</SelectItem>
+                                  <SelectItem value="004">Ecobank Ghana</SelectItem>
+                                  <SelectItem value="005">Fidelity Bank</SelectItem>
+                                  <SelectItem value="006">Zenith Bank</SelectItem>
+                                  <SelectItem value="007">Access Bank</SelectItem>
+                                  <SelectItem value="008">Cal Bank</SelectItem>
+                                  <SelectItem value="009">First National Bank</SelectItem>
+                                  <SelectItem value="010">Guaranty Trust Bank</SelectItem>
+                                  <SelectItem value="011">Republic Bank</SelectItem>
+                                  <SelectItem value="012">Stanbic Bank</SelectItem>
+                                  <SelectItem value="013">United Bank for Africa</SelectItem>
+                                  <SelectItem value="014">Agricultural Development Bank</SelectItem>
+                                  <SelectItem value="015">National Investment Bank</SelectItem>
+                                  <SelectItem value="016">Prudential Bank</SelectItem>
+                                  <SelectItem value="017">Bank of Africa</SelectItem>
+                                  <SelectItem value="018">Consolidated Bank Ghana</SelectItem>
+                                  <SelectItem value="019">OmniBank</SelectItem>
+                                  <SelectItem value="020">Ghana International Bank</SelectItem>
+                                  <SelectItem value="021">Societe Generale Ghana</SelectItem>
+                                  <SelectItem value="022">First Atlantic Bank</SelectItem>
+                                  <SelectItem value="023">Bank of Ghana</SelectItem>
+                                  <SelectItem value="024">Opportunity International Savings and Loans</SelectItem>
+                                  <SelectItem value="025">Sinapi Aba Savings and Loans</SelectItem>
+                                  <SelectItem value="026">Advans Ghana Savings and Loans</SelectItem>
+                                  <SelectItem value="027">Express Savings and Loans</SelectItem>
+                                  <SelectItem value="028">First National Savings and Loans</SelectItem>
+                                  <SelectItem value="029">Ideal Finance</SelectItem>
+                                  <SelectItem value="030">UniCredit Ghana</SelectItem>
                                     </SelectContent>
                                   </Select>
                                 </div>
-                                
                                 <div>
-                                  <Label htmlFor="accountNumber" className="text-sm text-gray-600">
-                                    Account Number
-                                  </Label>
+                              <Label className="text-sm font-medium text-gray-700">Account Number</Label>
                                   <Input
-                                    id="accountNumber"
                                     placeholder="Enter account number"
                                     value={withdrawDetails.accountNumber}
                                     onChange={(e) => setWithdrawDetails({...withdrawDetails, accountNumber: e.target.value})}
-                                    className="mt-1"
+                                className="border-0 outline-none focus:ring-0 focus:border-0"
                                   />
                                 </div>
-                                
                                 <div>
-                                  <Label htmlFor="accountName" className="text-sm text-gray-600">
-                                    Account Holder Name
-                                  </Label>
+                              <Label className="text-sm font-medium text-gray-700">Account Name</Label>
                                   <Input
-                                    id="accountName"
                                     placeholder="Enter account holder name"
                                     value={withdrawDetails.accountName}
                                     onChange={(e) => setWithdrawDetails({...withdrawDetails, accountName: e.target.value})}
-                                    className="mt-1"
+                                className="border-0 outline-none focus:ring-0 focus:border-0"
                                   />
+                            </div>
                                 </div>
                               </motion.div>
                             )}
                           </div>
 
                           {/* Mobile Money Option */}
-                          <div className={`border rounded-lg p-4 ${withdrawMethod === 'mobile' ? 'border-green-500 bg-green-50' : 'border-gray-200'}`}>
-                            <div className="flex items-center space-x-3">
-                              <RadioGroupItem value="mobile" id="mobile-withdraw" />
-                              <Label htmlFor="mobile-withdraw" className="flex-1 cursor-pointer flex items-center">
-                                <Phone className="h-5 w-5 text-gray-600 mr-2" />
-                                Mobile Money
+                    <div className={`w-full rounded-xl border transition-all duration-200 ${withdrawMethod === 'mobile' ? 'border-green-500 bg-green-50/30' : 'border-gray-200'}`}>
+                      {/* Header Row */}
+                      <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6">
+                        <RadioGroupItem value="mobile" id="withdraw-mobile" className="w-6 h-6 sm:w-7 sm:h-7" />
+                        <Label htmlFor="withdraw-mobile" className="flex-1 cursor-pointer">
+                          <span className="text-base sm:text-lg font-medium">Mobile Money</span>
                               </Label>
+                        <Phone className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
                             </div>
                             
+                      {/* Mobile Money Details */}
                             {withdrawMethod === 'mobile' && (
                               <motion.div
                                 initial={{ height: 0, opacity: 0 }}
                                 animate={{ height: 'auto', opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="mt-6 space-y-6 overflow-hidden"
+                          transition={{ duration: 0.2 }}
+                          className="border-t border-green-200 overflow-hidden"
                               >
-                                <div className="space-y-2">
-                                  <Label htmlFor="networkProviderWithdraw" className="text-sm font-medium text-gray-700">
-                                    Select network provider *
-                                  </Label>
-                                  <Select onValueChange={(value) => setWithdrawDetails({...withdrawDetails, networkProvider: value})}>
-                                    <SelectTrigger className={`${!withdrawDetails.networkProvider ? 'border-red-300 focus:border-red-500' : ''}`}>
-                                      <SelectValue placeholder="Select network provider" />
+                          <div className="p-8 space-y-8">
+                                <div>
+                              <Label className="text-sm font-medium text-gray-700">Select Network Provider</Label>
+                              <Select value={withdrawDetails.networkProvider} onValueChange={(value) => setWithdrawDetails({...withdrawDetails, networkProvider: value})}>
+                                <SelectTrigger className="mt-1 border-0 outline-none focus:ring-0 focus:border-0">
+                                      <SelectValue placeholder="Eg. MTN" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      <SelectItem value="MTN">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                                          <span>MTN</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="VDF">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                                          <span>Vodafone</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="ATL">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                                          <span>Airtel</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="TGO">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                                          <span>Tigo</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="ZPY">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                                          <span>Zeepay</span>
-                                        </div>
-                                      </SelectItem>
-                                      <SelectItem value="GMY">
-                                        <div className="flex items-center space-x-2">
-                                          <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                                          <span>G-money</span>
-                                        </div>
-                                      </SelectItem>
+                                  <SelectItem value="MTN">MTN</SelectItem>
+                                  <SelectItem value="VDF">Vodafone</SelectItem>
+                                  <SelectItem value="ATL">Airtel</SelectItem>
+                                  <SelectItem value="TGO">Tigo</SelectItem>
+                                  <SelectItem value="ZPY">Zeepay</SelectItem>
+                                  <SelectItem value="GMY">G-money</SelectItem>
                                     </SelectContent>
                                   </Select>
-                                  {!withdrawDetails.networkProvider && (
-                                    <p className="text-sm text-red-600 mt-1">Please select a network provider</p>
-                                  )}
                                 </div>
-                                
-                                <div className="space-y-2">
-                                  <Label htmlFor="phoneNumberWithdraw" className="text-sm font-medium text-gray-700">
-                                    Phone number
-                                  </Label>
-                                  <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500">
-                                    <div className="flex items-center px-3 py-3 bg-gray-50 border-r border-gray-300">
-                                      <span className="text-lg mr-2">🇬🇭</span>
-                                      <span className="text-sm font-medium text-gray-700">+233</span>
+                                <div>
+                              <Label className="text-sm font-medium text-gray-700">Phone number</Label>
+                              <div className="flex rounded-lg border border-gray-300 outline-none overflow-hidden focus-within:ring-0 focus-within:border-gray-400 transition-all duration-200">
+                                <div className="flex items-center px-3 sm:px-4 py-3 sm:py-3 bg-gray-50 border-r border-gray-300 min-w-[80px] sm:min-w-[90px]">
+                                  <span className="text-base sm:text-lg mr-2">🇬🇭</span>
+                                  <span className="text-sm sm:text-base font-medium text-gray-700">+233</span>
                                     </div>
                                     <Input
-                                      id="phoneNumberWithdraw"
-                                      placeholder="024 567 8905"
+                                      placeholder="Eg. 55 567 8905"
                                       value={withdrawDetails.phoneNumber}
                                       onChange={(e) => setWithdrawDetails({...withdrawDetails, phoneNumber: e.target.value})}
-                                      className="flex-1 border-0 rounded-none focus:ring-0 focus:border-0 py-3 px-3 text-gray-900 placeholder-gray-500"
+                                  className="flex-1 border-0 outline-none rounded-none focus:ring-0 focus:border-0 py-3 sm:py-6 px-3 sm:px-4 text-gray-900 placeholder-gray-500 text-sm sm:text-base"
                                     />
+                              </div>
                                   </div>
                                 </div>
                               </motion.div>
@@ -1505,109 +1401,26 @@ const DashboardPage = () => {
                       </RadioGroup>
                     </div>
                   </div>
-                )}
-
-
-                {/* Success Step */}
-                {withdrawStep === 'success' && (
-                  <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                      className="relative"
-                    >
-                      <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-                        <CheckCircle className="h-10 w-10 text-green-600" />
                       </div>
-                      {/* Confetti animation */}
-                      <div className="absolute inset-0 pointer-events-none">
-                        {[...Array(20)].map((_, i) => (
-                          <motion.div
-                            key={i}
-                            className="absolute w-2 h-2 rounded-full"
-                            style={{
-                              backgroundColor: ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57'][i % 5],
-                              left: '50%',
-                              top: '50%',
-                            }}
-                            initial={{ x: 0, y: 0, opacity: 1 }}
-                            animate={{
-                              x: (Math.random() - 0.5) * 200,
-                              y: (Math.random() - 0.5) * 200,
-                              opacity: 0,
-                            }}
-                            transition={{ duration: 1, delay: i * 0.05 }}
-                          />
-                        ))}
-                      </div>
-                    </motion.div>
-                    
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">Withdrawal Successful</h3>
-                      <p className="text-gray-600">
-                        <span className="font-semibold text-orange-600">GHS {withdrawAmount}</span> has been sent to your {withdrawMethod === 'bank' ? 'bank account' : 'mobile money'}. 
-                        Your new balance is <span className="font-semibold text-orange-600">GHS {(parseFloat(metrics?.total_invested?.toString() || '0') - parseFloat(withdrawAmount || '0')).toLocaleString()}</span>.
-                      </p>
-                    </div>
-                  </div>
-                )}
 
-                {/* Error Step */}
-                {withdrawStep === 'error' && (
-                  <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{ type: "spring", stiffness: 200, damping: 10 }}
-                      className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center"
-                    >
-                      <div className="w-12 h-12 bg-red-500 rounded-full flex items-center justify-center">
-                        <X className="h-6 w-6 text-white" />
-                      </div>
-                    </motion.div>
-                    
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">Withdrawal Failed</h3>
-                      <p className="text-gray-600">
-                        We couldn&apos;t process your withdrawal. Please check your details and try again.
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </motion.div>
-            </div>
-
-            {/* Footer Buttons */}
-            <div className="p-6 border-t border-gray-200">
-              {withdrawStep === 'amount' && (
-                <div className="flex space-x-3">
+            {/* Footer */}
+            <div className="p-4 sm:p-6 border-t border-gray-200">
+              <div className="flex flex-col sm:flex-row gap-3 sm:space-x-3 sm:space-y-0">
                   <Button
                     variant="outline"
-                    className="flex-1"
+                  className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-600 text-green-600 hover:bg-green-50 transition-all duration-200"
                     onClick={() => setIsWithdrawOpen(false)}
                   >
                     Cancel
                   </Button>
                   <Button
-                    className="flex-1 bg-green-600 hover:bg-green-700"
+                  className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleWithdraw}
-                    disabled={!withdrawMethod || !withdrawAmount || (withdrawMethod === 'mobile' && !withdrawDetails.networkProvider) || !!withdrawAmountError}
+                  disabled={!withdrawMethod || !!withdrawAmountError || parseFloat(withdrawAmount) <= 0}
                   >
-                    Continue
+                  Withdraw
                   </Button>
                 </div>
-              )}
-              
-              
-              {(withdrawStep === 'success' || withdrawStep === 'error') && (
-                <Button
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  onClick={resetWithdraw}
-                >
-                  {withdrawStep === 'success' ? 'Done' : 'Try Again'}
-                </Button>
-              )}
             </div>
           </div>
         </SheetContent>
