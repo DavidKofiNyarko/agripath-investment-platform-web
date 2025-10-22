@@ -1309,40 +1309,66 @@ const InvestmentsPage = () => {
 
                       <div className="mb-4">
                         <div className="relative">
-                          <Progress
-                            value={
-                              (project.purchased_unit / project.total_units) *
-                              100
-                            }
-                            className="h-2"
-                          />
-                          <motion.div
-                            className="absolute top-0 left-0 h-2 bg-green-600 rounded-full"
-                            variants={progressVariants}
-                            initial="hidden"
-                            animate="visible"
-                            style={{
-                              width: `${
-                                (project.purchased_unit / project.total_units) *
-                                100
-                              }%`,
-                              transformOrigin: "left",
-                            }}
-                          />
+                          {(project.available_unit || 0) > 0 && (
+                            <>
+                              <Progress
+                                value={
+                                  (project.purchased_unit /
+                                    project.total_units) *
+                                  100
+                                }
+                                className="h-2"
+                              />
+                              <motion.div
+                                className="absolute top-0 left-0 h-2 bg-green-600 rounded-full"
+                                variants={progressVariants}
+                                initial="hidden"
+                                animate="visible"
+                                style={{
+                                  width: `${
+                                    (project.purchased_unit /
+                                      project.total_units) *
+                                    100
+                                  }%`,
+                                  transformOrigin: "left",
+                                }}
+                              />
+                            </>
+                          )}
                         </div>
                         <p className="text-sm text-green-600 font-medium mt-1">
-                          {project.available_unit} Units Available
+                          {(project.available_unit || 0) > 0
+                            ? `${project.available_unit} Units Available`
+                            : "Sold Out"}
                         </p>
                       </div>
 
                       <Button
-                        className="w-full bg-green-800 hover:bg-green-900 rounded-xl px-4 py-3 h-9 inline-flex justify-center items-center gap-2 overflow-hidden"
-                        onClick={() => handleInvestmentClick(project)}
+                        className={`w-full rounded-xl px-4 py-3 h-9 inline-flex justify-center items-center gap-2 overflow-hidden ${
+                          (project.available_unit || 0) > 0
+                            ? "bg-green-800 hover:bg-green-900"
+                            : "bg-gray-400 cursor-not-allowed"
+                        }`}
+                        onClick={() =>
+                          (project.available_unit || 0) > 0 &&
+                          handleInvestmentClick(project)
+                        }
+                        disabled={(project.available_unit || 0) <= 0}
                       >
-                        <div className="justify-start text-white text-xs font-semibold">
-                          Invest Now
+                        <div
+                          className={`text-xs font-semibold ${
+                            (project.available_unit || 0) > 0
+                              ? "text-white"
+                              : "text-gray-600"
+                          }`}
+                        >
+                          {(project.available_unit || 0) > 0
+                            ? "Invest Now"
+                            : "Sold Out"}
                         </div>
-                        <ArrowRight className="h-3 w-3 text-white" />
+                        {(project.available_unit || 0) > 0 && (
+                          <ArrowRight className="h-3 w-3 text-white" />
+                        )}
                       </Button>
                     </motion.div>
                   </CardContent>
@@ -1475,16 +1501,20 @@ const InvestmentsPage = () => {
                         </div>
 
                         <div>
-                          <Progress
-                            value={
-                              (selectedInvestment.unitsAvailable /
-                                selectedInvestment.totalUnits) *
-                              100
-                            }
-                            className="h-2"
-                          />
+                          {(selectedInvestment.unitsAvailable || 0) > 0 && (
+                            <Progress
+                              value={
+                                (selectedInvestment.unitsAvailable /
+                                  selectedInvestment.totalUnits) *
+                                100
+                              }
+                              className="h-2"
+                            />
+                          )}
                           <p className="text-sm text-green-600 font-medium mt-1">
-                            {selectedInvestment.unitsAvailable} Units Available
+                            {(selectedInvestment.unitsAvailable || 0) > 0
+                              ? `${selectedInvestment.unitsAvailable} Units Available`
+                              : "Sold Out"}
                           </p>
                         </div>
 

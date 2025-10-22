@@ -680,7 +680,9 @@ const DashboardPage = () => {
                       </div>
                     </div>
                     <div className="justify-center text-green-800 text-sm font-semibold leading-none">
-                      {project.available_unit || 0} Units Available
+                      {(project.available_unit || 0) > 0
+                        ? `${project.available_unit} Units Available`
+                        : "Sold Out"}
                     </div>
                   </div>
                 </div>

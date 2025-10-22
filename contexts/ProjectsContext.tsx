@@ -1,7 +1,13 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { createClient } from '@/app/utils/supabase/client';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
+import { createClient } from "@/app/utils/supabase/client";
 
 export interface Project {
   id: string;
@@ -9,14 +15,14 @@ export interface Project {
   project_name: string;
   project_date: string;
   description: string;
-  project_type: 'CROP' | 'LIVESTOCK' | 'FISHERY' | 'OTHER';
+  project_type: "CROP" | "LIVESTOCK" | "FISHERY" | "OTHER";
   farm_location: string;
   total_units: number;
   unit_price: number;
   total_value: number;
   expected_return_rate: number;
   duration_months: number;
-  status: 'Active' | 'Inactive' | 'Complete' | 'Cancelled';
+  status: "Active" | "Inactive" | "Complete" | "Cancelled";
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -27,11 +33,17 @@ export interface Project {
   max_expected_return_rate: number;
   available_unit: number;
   purchased_unit: number;
-  project_stages: 'PLANNING' | 'PREPARATION' | 'PLANTING' | 'GROWTH' | 'HARVEST' | 'COMPLETED';
+  project_stages:
+    | "PLANNING"
+    | "PREPARATION"
+    | "PLANTING"
+    | "GROWTH"
+    | "HARVEST"
+    | "COMPLETED";
   is_high_ticket: boolean;
   min_investment_amount: number;
   max_investment_amount: number;
-  payout_type: 'MONTHLY' | 'QUARTERLY' | 'ANNUAL' | 'END_OF_PROJECT';
+  payout_type: "MONTHLY" | "QUARTERLY" | "ANNUAL" | "END_OF_PROJECT";
 }
 
 interface ProjectRow {
@@ -93,34 +105,40 @@ interface ProjectsContextType {
   setPagination: React.Dispatch<React.SetStateAction<Pagination>>;
 }
 
-const ProjectsContext = createContext<ProjectsContextType | undefined>(undefined);
+const ProjectsContext = createContext<ProjectsContextType | undefined>(
+  undefined
+);
 
 export const useProjects = () => {
   const context = useContext(ProjectsContext);
   if (context === undefined) {
-    throw new Error('useProjects must be used within a ProjectsProvider');
+    throw new Error("useProjects must be used within a ProjectsProvider");
   }
   return context;
 };
 
-export const ProjectsProvider = ({ children }: { children: React.ReactNode }) => {
+export const ProjectsProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<ProjectFilters>({
-    search: '',
-    category: 'All',
-    status: 'All',
+    search: "",
+    category: "All",
+    status: "All",
     minPrice: 0,
     maxPrice: 100000,
-    duration: 'All',
-    returnRate: 'All'
+    duration: "All",
+    returnRate: "All",
   });
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: 12
+    itemsPerPage: 12,
   });
   const supabase = createClient();
 
@@ -129,64 +147,70 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
     setError(null);
 
     try {
-      console.log('🔄 Fetching projects from database...');
-      
+      console.log("🔄 Fetching projects from database...");
+
       // Build query with filters
       let query = supabase
-        .from('projects')
-        .select('*', { count: 'exact' })
-        .eq('status', 'Active') // Only show active projects by default
-        .order('created_at', { ascending: false });
+        .from("projects")
+        .select("*", { count: "exact" })
+        .eq("status", "Active") // Only show active projects by default
+        .order("created_at", { ascending: false });
 
       // Apply search filter
       if (filters.search) {
-        query = query.or(`project_name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,farm_location.ilike.%${filters.search}%`);
+        query = query.or(
+          `project_name.ilike.%${filters.search}%,description.ilike.%${filters.search}%,farm_location.ilike.%${filters.search}%`
+        );
       }
 
       // Apply category filter
-      if (filters.category !== 'All') {
-        query = query.eq('project_type', filters.category);
+      if (filters.category !== "All") {
+        query = query.eq("project_type", filters.category);
       }
 
       // Apply status filter
-      if (filters.status !== 'All') {
-        query = query.eq('status', filters.status);
+      if (filters.status !== "All") {
+        query = query.eq("status", filters.status);
       }
 
       // Apply price range filter
       if (filters.minPrice > 0) {
-        query = query.gte('unit_price', filters.minPrice);
+        query = query.gte("unit_price", filters.minPrice);
       }
       if (filters.maxPrice < 100000) {
-        query = query.lte('unit_price', filters.maxPrice);
+        query = query.lte("unit_price", filters.maxPrice);
       }
 
       // Apply duration filter
-      if (filters.duration !== 'All') {
+      if (filters.duration !== "All") {
         switch (filters.duration) {
-          case 'Short (1-3 months)':
-            query = query.lte('duration_months', 3);
+          case "Short (1-3 months)":
+            query = query.lte("duration_months", 3);
             break;
-          case 'Medium (4-8 months)':
-            query = query.gte('duration_months', 4).lte('duration_months', 8);
+          case "Medium (4-8 months)":
+            query = query.gte("duration_months", 4).lte("duration_months", 8);
             break;
-          case 'Long (9+ months)':
-            query = query.gte('duration_months', 9);
+          case "Long (9+ months)":
+            query = query.gte("duration_months", 9);
             break;
         }
       }
 
       // Apply return rate filter
-      if (filters.returnRate !== 'All') {
+      if (filters.returnRate !== "All") {
         switch (filters.returnRate) {
-          case 'Low (5-15%)':
-            query = query.gte('expected_return_rate', 5).lte('expected_return_rate', 15);
+          case "Low (5-15%)":
+            query = query
+              .gte("expected_return_rate", 5)
+              .lte("expected_return_rate", 15);
             break;
-          case 'Medium (16-25%)':
-            query = query.gte('expected_return_rate', 16).lte('expected_return_rate', 25);
+          case "Medium (16-25%)":
+            query = query
+              .gte("expected_return_rate", 16)
+              .lte("expected_return_rate", 25);
             break;
-          case 'High (26%+)':
-            query = query.gte('expected_return_rate', 26);
+          case "High (26%+)":
+            query = query.gte("expected_return_rate", 26);
             break;
         }
       }
@@ -203,45 +227,75 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
       }
 
       // Format projects data
-      const formattedProjects = data?.map((item: ProjectRow) => ({
-        id: item.id,
-        project_code: item.project_code,
-        project_name: item.project_name,
-        project_date: item.project_date,
-        description: item.description || '',
-        project_type: (item.project_type as 'CROP' | 'LIVESTOCK' | 'FISHERY' | 'OTHER') || 'CROP',
-        farm_location: item.farm_location || '',
-        total_units: item.total_units || 0,
-        unit_price: item.unit_price || 0,
-        total_value: item.total_value || 0,
-        expected_return_rate: item.expected_return_rate || 0,
-        duration_months: item.duration_months || 0,
-        status: (item.status as 'Active' | 'Inactive' | 'Complete' | 'Cancelled') || 'Active',
-        created_by: item.created_by || '',
-        created_at: item.created_at,
-        updated_at: item.updated_at,
-        image: item.image || '',
-        start_date: item.start_date || '',
-        end_date: item.end_date || '',
-        cover_image_url: item.cover_image_url || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop',
-        max_expected_return_rate: item.max_expected_return_rate || 0,
-        available_unit: item.available_unit && item.available_unit > 0 ? item.available_unit : (item.total_units || 0) - (item.purchased_unit || 0),
-        purchased_unit: item.purchased_unit || 0,
-        project_stages: (item.project_stages as 'PLANNING' | 'PREPARATION' | 'PLANTING' | 'GROWTH' | 'HARVEST' | 'COMPLETED') || 'PLANNING',
-        is_high_ticket: item.is_high_ticket || false,
-        min_investment_amount: item.min_investment_amount || 0,
-        max_investment_amount: item.max_investment_amount || 0,
-        payout_type: (item.payout_type as 'MONTHLY' | 'QUARTERLY' | 'ANNUAL' | 'END_OF_PROJECT') || 'END_OF_PROJECT'
-      })) || [];
+      const formattedProjects =
+        data?.map((item: ProjectRow) => ({
+          id: item.id,
+          project_code: item.project_code,
+          project_name: item.project_name,
+          project_date: item.project_date,
+          description: item.description || "",
+          project_type:
+            (item.project_type as "CROP" | "LIVESTOCK" | "FISHERY" | "OTHER") ||
+            "CROP",
+          farm_location: item.farm_location || "",
+          total_units: item.total_units || 0,
+          unit_price: item.unit_price || 0,
+          total_value: item.total_value || 0,
+          expected_return_rate: item.expected_return_rate || 0,
+          duration_months: item.duration_months || 0,
+          status:
+            (item.status as "Active" | "Inactive" | "Complete" | "Cancelled") ||
+            "Active",
+          created_by: item.created_by || "",
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          image: item.image || "",
+          start_date: item.start_date || "",
+          end_date: item.end_date || "",
+          cover_image_url:
+            item.cover_image_url ||
+            "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop",
+          max_expected_return_rate: item.max_expected_return_rate || 0,
+          available_unit: Math.max(
+            0,
+            item.available_unit && item.available_unit > 0
+              ? item.available_unit
+              : (item.total_units || 0) - (item.purchased_unit || 0)
+          ),
+          purchased_unit: item.purchased_unit || 0,
+          project_stages:
+            (item.project_stages as
+              | "PLANNING"
+              | "PREPARATION"
+              | "PLANTING"
+              | "GROWTH"
+              | "HARVEST"
+              | "COMPLETED") || "PLANNING",
+          is_high_ticket: item.is_high_ticket || false,
+          min_investment_amount: item.min_investment_amount || 0,
+          max_investment_amount: item.max_investment_amount || 0,
+          payout_type:
+            (item.payout_type as
+              | "MONTHLY"
+              | "QUARTERLY"
+              | "ANNUAL"
+              | "END_OF_PROJECT") || "END_OF_PROJECT",
+        })) || [];
 
-      console.log('📊 Projects fetched from database:', formattedProjects?.length || 0, 'projects');
-      const tomatoProject = formattedProjects.find(p => p.project_name.toLowerCase().includes('tomato'));
+      console.log(
+        "📊 Projects fetched from database:",
+        formattedProjects?.length || 0,
+        "projects"
+      );
+      const tomatoProject = formattedProjects.find((p) =>
+        p.project_name.toLowerCase().includes("tomato")
+      );
       if (tomatoProject) {
-        console.log('🍅 Tomato project from DB:', {
+        console.log("🍅 Tomato project from DB:", {
           name: tomatoProject.project_name,
           available_unit: tomatoProject.available_unit,
           purchased_unit: tomatoProject.purchased_unit,
-          total_units: tomatoProject.total_units
+          total_units: tomatoProject.total_units,
         });
       }
 
@@ -250,16 +304,17 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
       // Update pagination
       const totalItems = count || 0;
       const totalPages = Math.ceil(totalItems / pagination.itemsPerPage);
-      
-      setPagination(prev => ({
+
+      setPagination((prev) => ({
         ...prev,
         totalPages,
-        totalItems
+        totalItems,
       }));
-
     } catch (error) {
-      console.error('Error fetching projects:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch projects');
+      console.error("Error fetching projects:", error);
+      setError(
+        error instanceof Error ? error.message : "Failed to fetch projects"
+      );
     } finally {
       setLoading(false);
     }
@@ -272,58 +327,60 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
   // Set up real-time subscription for projects table
   useEffect(() => {
     let channel: any = null;
-    
+
     try {
       channel = supabase
-        .channel('projects-changes')
+        .channel("projects-changes")
         .on(
-          'postgres_changes',
+          "postgres_changes",
           {
-            event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
-            schema: 'public',
-            table: 'projects'
+            event: "*", // Listen to all events (INSERT, UPDATE, DELETE)
+            schema: "public",
+            table: "projects",
           },
           (payload) => {
-            console.log('Projects table changed:', payload);
-            
+            console.log("Projects table changed:", payload);
+
             // Handle different event types
-            if (payload.eventType === 'UPDATE') {
+            if (payload.eventType === "UPDATE") {
               // Update the specific project in our state
-              setProjects(prevProjects => 
-                prevProjects.map(project => 
-                  project.id === payload.new.id 
+              setProjects((prevProjects) =>
+                prevProjects.map((project) =>
+                  project.id === payload.new.id
                     ? { ...project, ...payload.new }
                     : project
                 )
               );
-            } else if (payload.eventType === 'INSERT') {
+            } else if (payload.eventType === "INSERT") {
               // Add new project if it's active
-              if (payload.new.status === 'Active') {
-                setProjects(prevProjects => [payload.new, ...prevProjects]);
+              if (payload.new.status === "Active") {
+                setProjects((prevProjects) => [payload.new, ...prevProjects]);
               }
-            } else if (payload.eventType === 'DELETE') {
+            } else if (payload.eventType === "DELETE") {
               // Remove deleted project
-              setProjects(prevProjects => 
-                prevProjects.filter(project => project.id !== payload.old.id)
+              setProjects((prevProjects) =>
+                prevProjects.filter((project) => project.id !== payload.old.id)
               );
             }
           }
         )
         .subscribe((status) => {
-          console.log('Real-time subscription status:', status);
-          if (status === 'SUBSCRIBED') {
-            console.log('✅ Successfully subscribed to projects table changes');
-            console.log('Real-time is now active for projects table');
-          } else if (status === 'CHANNEL_ERROR') {
-            console.warn('❌ Real-time subscription failed. This might be because real-time is not enabled for the projects table.');
-          } else if (status === 'TIMED_OUT') {
-            console.warn('⏰ Real-time subscription timed out');
-          } else if (status === 'CLOSED') {
-            console.warn('🔒 Real-time subscription closed');
+          console.log("Real-time subscription status:", status);
+          if (status === "SUBSCRIBED") {
+            console.log("✅ Successfully subscribed to projects table changes");
+            console.log("Real-time is now active for projects table");
+          } else if (status === "CHANNEL_ERROR") {
+            console.warn(
+              "❌ Real-time subscription failed. This might be because real-time is not enabled for the projects table."
+            );
+          } else if (status === "TIMED_OUT") {
+            console.warn("⏰ Real-time subscription timed out");
+          } else if (status === "CLOSED") {
+            console.warn("🔒 Real-time subscription closed");
           }
         });
     } catch (error) {
-      console.error('Failed to set up real-time subscription:', error);
+      console.error("Failed to set up real-time subscription:", error);
     }
 
     // Cleanup subscription on unmount
@@ -335,20 +392,21 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
   }, [supabase]);
 
   const refreshProjects = useCallback(() => {
-    console.log('🔄 Manual refresh triggered');
+    console.log("🔄 Manual refresh triggered");
     fetchProjects();
   }, [fetchProjects]);
 
   // Fallback: Periodic refresh every 30 seconds to ensure data is up-to-date
-  // This helps when real-time is not enabled or fails
-  useEffect(() => {
-    const interval = setInterval(() => {
-      console.log('Periodic projects refresh...');
-      fetchProjects();
-    }, 30000); // 30 seconds
+  // Periodic refresh disabled to prevent unnecessary page refreshes
+  // Real-time updates should handle data changes
+  // useEffect(() => {
+  //   const interval = setInterval(() => {
+  //     console.log("Periodic projects refresh...");
+  //     fetchProjects();
+  //   }, 30000); // 30 seconds
 
-    return () => clearInterval(interval);
-  }, [fetchProjects]);
+  //   return () => clearInterval(interval);
+  // }, [fetchProjects]);
 
   const value = {
     projects,
@@ -358,7 +416,7 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
     setFilters,
     refreshProjects,
     pagination,
-    setPagination
+    setPagination,
   };
 
   return (
