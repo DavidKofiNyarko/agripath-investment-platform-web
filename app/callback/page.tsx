@@ -1,13 +1,13 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
-const PaymentCallbackPage = () => {
+const PaymentCallbackContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
@@ -233,6 +233,30 @@ const PaymentCallbackPage = () => {
         </CardContent>
       </Card>
     </div>
+  );
+};
+
+const PaymentCallbackPage = () => {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+          <div className="bg-white p-8 rounded-lg shadow-lg max-w-md w-full">
+            <div className="flex flex-col items-center justify-center text-center">
+              <Loader2 className="h-16 w-16 text-blue-600 mb-4 animate-spin" />
+              <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                Loading...
+              </h2>
+              <p className="text-gray-600">
+                Please wait while we process your payment...
+              </p>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <PaymentCallbackContent />
+    </Suspense>
   );
 };
 

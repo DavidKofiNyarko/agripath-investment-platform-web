@@ -3,7 +3,7 @@ import { createClient } from "@/app/utils/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     // Get the current user
     const {

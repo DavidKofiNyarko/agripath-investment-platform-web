@@ -344,22 +344,27 @@ export const ProjectsProvider = ({
             // Handle different event types
             if (payload.eventType === "UPDATE") {
               // Update the specific project in our state
+              const updatedProject = payload.new as Project;
               setProjects((prevProjects) =>
                 prevProjects.map((project) =>
-                  project.id === payload.new.id
-                    ? { ...project, ...payload.new }
+                  project.id === updatedProject.id
+                    ? { ...project, ...updatedProject }
                     : project
                 )
               );
             } else if (payload.eventType === "INSERT") {
               // Add new project if it's active
-              if (payload.new.status === "Active") {
-                setProjects((prevProjects) => [payload.new, ...prevProjects]);
+              const newProject = payload.new as Project;
+              if (newProject.status === "Active") {
+                setProjects((prevProjects) => [newProject, ...prevProjects]);
               }
             } else if (payload.eventType === "DELETE") {
               // Remove deleted project
+              const deletedProject = payload.old as Project;
               setProjects((prevProjects) =>
-                prevProjects.filter((project) => project.id !== payload.old.id)
+                prevProjects.filter(
+                  (project) => project.id !== deletedProject.id
+                )
               );
             }
           }
@@ -391,9 +396,9 @@ export const ProjectsProvider = ({
     };
   }, [supabase]);
 
-  const refreshProjects = useCallback(() => {
+  const refreshProjects = useCallback(async () => {
     console.log("🔄 Manual refresh triggered");
-    fetchProjects();
+    await fetchProjects();
   }, [fetchProjects]);
 
   // Fallback: Periodic refresh every 30 seconds to ensure data is up-to-date
