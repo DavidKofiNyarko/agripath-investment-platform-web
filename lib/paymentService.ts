@@ -8,26 +8,26 @@ export interface CardPaymentRequest {
   exp_year: string;
   cvv: string;
   card_holder: string;
-  
+
   // User Details
   user_id: string;
   user_email: string;
   user_name: string;
-  
+
   // Project Details
   project_id: string;
   amount: number;
   unit: number;
   fees: number;
   net_amount: number;
-  
+
   // Transaction Details
   transaction_id: string;
   type: "Payin";
   status: "Pending";
   desc: string;
   processed_at: Date;
-  
+
   // Payment Gateway Details
   r_switch: string;
   redirect_url: string;
@@ -38,20 +38,37 @@ export interface CardPaymentRequest {
 
 export interface MobileMoneyPaymentRequest {
   profile_id: string;
-  user_id: string;
   project_id: string;
   subscriber_number: string;
   network: string;
   description: string;
   amount: number;
   unit: number;
+  user_email: string; // Required field based on API testing
 }
 
 export interface PaymentResponse {
   status: string;
   transaction_id: string;
   redirect_url?: string;
-  code: string;
+  reference?: string;
+  details?: {
+    authorization_url?: string;
+    access_code?: string;
+    reference?: string;
+  };
+  methodName?: string;
+  payerEmail?: string;
+  payerName?: string;
+  payerPhone?: string;
+  requestId?: string;
+  paymentMethod?: string;
+  transactionDate?: string;
+  currency?: string;
+  amount?: number;
+  fees?: number;
+  metadata?: Record<string, unknown>;
+  code?: string;
   reason?: string;
   message?: string;
   error?: string;
@@ -88,7 +105,9 @@ class PaymentService {
 
   constructor() {
     // Use environment variable or default to production URL
-    this.baseUrl = process.env.NEXT_PUBLIC_PAYMENT_API_URL || 'https://infra.agripath.co/api/payments';
+    this.baseUrl =
+      process.env.NEXT_PUBLIC_PAYMENT_API_URL ||
+      "https://infra.agripath.co/api/payments";
   }
 
   /**
@@ -109,26 +128,29 @@ class PaymentService {
     redirect_url: string;
   }): Promise<PaymentResponse> {
     try {
-      console.log('Card payment request:', JSON.stringify(paymentData, null, 2));
-      
+      console.log(
+        "Card payment request:",
+        JSON.stringify(paymentData, null, 2)
+      );
+
       const response = await fetch(`${this.baseUrl}/card/payin`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(paymentData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Card payment failed');
+        throw new Error(errorData.message || "Card payment failed");
       }
 
       const responseData = await response.json();
-      console.log('Card payment response:', responseData);
+      console.log("Card payment response:", responseData);
       return responseData;
     } catch (error) {
-      console.error('Card payment error:', error);
+      console.error("Card payment error:", error);
       throw error;
     }
   }
@@ -136,24 +158,26 @@ class PaymentService {
   /**
    * Process mobile money payment for wallet top-up
    */
-  async processMobileMoneyPayment(paymentData: MobileMoneyPaymentRequest): Promise<PaymentResponse> {
+  async processMobileMoneyPayment(
+    paymentData: MobileMoneyPaymentRequest
+  ): Promise<PaymentResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/momo/payin`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(paymentData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Mobile money payment failed');
+        throw new Error(errorData.message || "Mobile money payment failed");
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Mobile money payment error:', error);
+      console.error("Mobile money payment error:", error);
       throw error;
     }
   }
@@ -164,21 +188,21 @@ class PaymentService {
   async processPayout(payoutData: PayoutRequest): Promise<PayoutResponse> {
     try {
       const response = await fetch(`${this.baseUrl}/payout`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(payoutData),
       });
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Payout failed');
+        throw new Error(errorData.message || "Payout failed");
       }
 
       return await response.json();
     } catch (error) {
-      console.error('Payout error:', error);
+      console.error("Payout error:", error);
       throw error;
     }
   }
@@ -187,7 +211,7 @@ class PaymentService {
    * Generate unique transaction ID
    */
   generateTransactionId(): string {
-    return Date.now().toString().padStart(12, '0');
+    return Date.now().toString().padStart(12, "0");
   }
 
   /**
@@ -200,9 +224,9 @@ class PaymentService {
   /**
    * Calculate fees based on amount and payment method
    */
-  calculateFees(amount: number, paymentMethod: 'card' | 'momo'): number {
+  calculateFees(amount: number, paymentMethod: "card" | "momo"): number {
     // Simple fee calculation - you can make this more sophisticated
-    if (paymentMethod === 'card') {
+    if (paymentMethod === "card") {
       return Math.max(amount * 0.035, 5); // 3.5% or minimum 5 GHS
     } else {
       return Math.max(amount * 0.02, 2); // 2% or minimum 2 GHS
@@ -213,14 +237,14 @@ class PaymentService {
    * Determine card network based on PAN
    */
   getCardNetwork(pan: string): string {
-    const cleanPan = pan.replace(/\s/g, '');
-    
-    if (cleanPan.startsWith('4')) {
-      return 'VIS'; // Visa
-    } else if (cleanPan.startsWith('5') || cleanPan.startsWith('2')) {
-      return 'MAS'; // Mastercard
+    const cleanPan = pan.replace(/\s/g, "");
+
+    if (cleanPan.startsWith("4")) {
+      return "VIS"; // Visa
+    } else if (cleanPan.startsWith("5") || cleanPan.startsWith("2")) {
+      return "MAS"; // Mastercard
     } else {
-      return 'VIS'; // Default to Visa
+      return "VIS"; // Default to Visa
     }
   }
 
@@ -228,8 +252,8 @@ class PaymentService {
    * Validate card number using Luhn algorithm
    */
   validateCardNumber(pan: string): boolean {
-    const cleanPan = pan.replace(/\s/g, '');
-    
+    const cleanPan = pan.replace(/\s/g, "");
+
     if (!/^\d{12,19}$/.test(cleanPan)) {
       return false;
     }
@@ -259,7 +283,7 @@ class PaymentService {
    * Validate mobile number format
    */
   validateMobileNumber(number: string): boolean {
-    const cleanNumber = number.replace(/\s/g, '');
+    const cleanNumber = number.replace(/\s/g, "");
     return /^0[2-9]\d{8}$/.test(cleanNumber);
   }
 
@@ -276,10 +300,10 @@ class PaymentService {
    * Ensures Ghana format: 0XXXXXXXXX
    */
   formatMobileNumber(number: string): string {
-    const cleanNumber = number.replace(/\s/g, '');
+    const cleanNumber = number.replace(/\s/g, "");
     // Add leading 0 if missing and number is 9 digits
-    if (cleanNumber.length === 9 && !cleanNumber.startsWith('0')) {
-      return '0' + cleanNumber;
+    if (cleanNumber.length === 9 && !cleanNumber.startsWith("0")) {
+      return "0" + cleanNumber;
     }
     return cleanNumber;
   }
@@ -288,16 +312,20 @@ class PaymentService {
    * Get network provider from mobile number
    */
   getNetworkProvider(number: string): string {
-    const cleanNumber = number.replace(/\s/g, '');
-    
-    if (cleanNumber.startsWith('024') || cleanNumber.startsWith('054') || cleanNumber.startsWith('055')) {
-      return 'MTN';
-    } else if (cleanNumber.startsWith('020') || cleanNumber.startsWith('050')) {
-      return 'VDF'; // Vodafone
-    } else if (cleanNumber.startsWith('026') || cleanNumber.startsWith('056')) {
-      return 'ATL'; // AirtelTigo
+    const cleanNumber = number.replace(/\s/g, "");
+
+    if (
+      cleanNumber.startsWith("024") ||
+      cleanNumber.startsWith("054") ||
+      cleanNumber.startsWith("055")
+    ) {
+      return "MTN";
+    } else if (cleanNumber.startsWith("020") || cleanNumber.startsWith("050")) {
+      return "VOD"; // Vodafone - updated to match API
+    } else if (cleanNumber.startsWith("026") || cleanNumber.startsWith("056")) {
+      return "ATL"; // AirtelTigo
     } else {
-      return 'MTN'; // Default
+      return "MTN"; // Default
     }
   }
 
@@ -308,7 +336,7 @@ class PaymentService {
     profile_id: string;
     project_id: string;
     amount: number;
-    channel: 'card' | 'momo';
+    channel: "card" | "momo";
     description?: string;
     redirect_url?: string;
     // KYC fields
@@ -330,26 +358,26 @@ class PaymentService {
     network?: string;
   }): Promise<PaymentResponse> {
     try {
-      console.log('Wallet topup request:', JSON.stringify(topupData, null, 2));
-      
+      console.log("Wallet topup request:", JSON.stringify(topupData, null, 2));
+
       const response = await fetch(`${this.baseUrl}/wallet/topup`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(topupData),
       });
 
       const responseData = await response.json();
-      console.log('Wallet topup response:', responseData);
+      console.log("Wallet topup response:", responseData);
 
       if (!response.ok) {
-        throw new Error(responseData.message || 'Wallet topup failed');
+        throw new Error(responseData.message || "Wallet topup failed");
       }
 
       return responseData;
     } catch (error) {
-      console.error('Wallet topup error:', error);
+      console.error("Wallet topup error:", error);
       throw error;
     }
   }
@@ -361,7 +389,7 @@ class PaymentService {
     profile_id: string;
     project_id: string;
     amount: number;
-    channel: 'bank' | 'momo';
+    channel: "bank" | "momo";
     description?: string;
     // KYC fields
     kyc_status?: string;
@@ -379,26 +407,29 @@ class PaymentService {
     account_issuer?: string;
   }): Promise<PaymentResponse> {
     try {
-      console.log('Wallet withdrawal request:', JSON.stringify(withdrawalData, null, 2));
-      
+      console.log(
+        "Wallet withdrawal request:",
+        JSON.stringify(withdrawalData, null, 2)
+      );
+
       const response = await fetch(`${this.baseUrl}/wallet/withdrawal`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(withdrawalData),
       });
 
       const responseData = await response.json();
-      console.log('Wallet withdrawal response:', responseData);
+      console.log("Wallet withdrawal response:", responseData);
 
       if (!response.ok) {
-        throw new Error(responseData.message || 'Wallet withdrawal failed');
+        throw new Error(responseData.message || "Wallet withdrawal failed");
       }
 
       return responseData;
     } catch (error) {
-      console.error('Wallet withdrawal error:', error);
+      console.error("Wallet withdrawal error:", error);
       throw error;
     }
   }
@@ -418,7 +449,7 @@ class PaymentService {
   }): Promise<PaymentResponse> {
     try {
       // Debug logging
-      console.log('Investment card payment data:', {
+      console.log("Investment card payment data:", {
         profile_id: investmentData.profile_id,
         project_id: investmentData.project_id,
         amount: investmentData.amount,
@@ -430,15 +461,18 @@ class PaymentService {
         cvv: investmentData.cvv,
         card_holder: investmentData.card_holder,
         user_email: investmentData.user_email,
-        redirect_url: investmentData.redirect_url
+        redirect_url: investmentData.redirect_url,
       });
 
       // Validate email if provided
-      if (investmentData.user_email && !this.validateEmail(investmentData.user_email)) {
-        throw new Error('Invalid email address');
+      if (
+        investmentData.user_email &&
+        !this.validateEmail(investmentData.user_email)
+      ) {
+        throw new Error("Invalid email address");
       }
 
-      const fees = this.calculateFees(investmentData.amount, 'card');
+      const fees = this.calculateFees(investmentData.amount, "card");
       const netAmount = investmentData.amount - fees;
       const transactionId = this.generateTransactionId();
       const externalId = this.generateExternalId();
@@ -457,48 +491,56 @@ class PaymentService {
         cvv: investmentData.cvv,
         card_holder: investmentData.card_holder,
         user_email: investmentData.user_email,
-        redirect_url: investmentData.redirect_url
+        redirect_url: investmentData.redirect_url,
       };
 
       return await this.processCardPayment(paymentRequest);
     } catch (error) {
-      console.error('Investment card payment error:', error);
+      console.error("Investment card payment error:", error);
       throw error;
     }
   }
 
   /**
    * Process investment payment via mobile money
-   * Note: Backend requires both profile_id and user_id (they should be the same profile ID)
+   * Updated to match working API structure
    */
   async processInvestmentMobileMoneyPayment(investmentData: {
-    user_id: string; // This should be the profile ID from the profile table
+    profile_id: string; // Profile ID from the profile table
     project_id: string;
     amount: number;
     unit: number;
     subscriber_number: string;
     network?: string;
     description?: string;
+    user_email: string; // Required field based on API testing
   }): Promise<PaymentResponse> {
     try {
-      const network = investmentData.network || this.getNetworkProvider(investmentData.subscriber_number);
-      const formattedNumber = this.formatMobileNumber(investmentData.subscriber_number);
+      const network =
+        investmentData.network ||
+        this.getNetworkProvider(investmentData.subscriber_number);
+      const formattedNumber = this.formatMobileNumber(
+        investmentData.subscriber_number
+      );
 
       const paymentRequest: MobileMoneyPaymentRequest = {
-        profile_id: investmentData.user_id, // Backend requires profile_id
-        user_id: investmentData.user_id,    // Backend also requires user_id
+        profile_id: investmentData.profile_id,
         project_id: investmentData.project_id,
         subscriber_number: formattedNumber,
         network: network,
-        description: investmentData.description || 'Investment payment',
+        description: investmentData.description || "Investment payment",
         amount: investmentData.amount,
-        unit: investmentData.unit
+        unit: investmentData.unit,
+        user_email: investmentData.user_email, // Required field
       };
 
-      console.log('Momo Payment Request:', JSON.stringify(paymentRequest, null, 2));
+      console.log(
+        "Momo Payment Request:",
+        JSON.stringify(paymentRequest, null, 2)
+      );
       return await this.processMobileMoneyPayment(paymentRequest);
     } catch (error) {
-      console.error('Investment mobile money payment error:', error);
+      console.error("Investment mobile money payment error:", error);
       throw error;
     }
   }

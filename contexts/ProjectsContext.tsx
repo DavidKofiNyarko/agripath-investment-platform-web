@@ -129,6 +129,8 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
     setError(null);
 
     try {
+      console.log('🔄 Fetching projects from database...');
+      
       // Build query with filters
       let query = supabase
         .from('projects')
@@ -232,6 +234,17 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
         payout_type: (item.payout_type as 'MONTHLY' | 'QUARTERLY' | 'ANNUAL' | 'END_OF_PROJECT') || 'END_OF_PROJECT'
       })) || [];
 
+      console.log('📊 Projects fetched from database:', formattedProjects?.length || 0, 'projects');
+      const tomatoProject = formattedProjects.find(p => p.project_name.toLowerCase().includes('tomato'));
+      if (tomatoProject) {
+        console.log('🍅 Tomato project from DB:', {
+          name: tomatoProject.project_name,
+          available_unit: tomatoProject.available_unit,
+          purchased_unit: tomatoProject.purchased_unit,
+          total_units: tomatoProject.total_units
+        });
+      }
+
       setProjects(formattedProjects);
 
       // Update pagination
@@ -256,7 +269,86 @@ export const ProjectsProvider = ({ children }: { children: React.ReactNode }) =>
     fetchProjects();
   }, [fetchProjects]);
 
-  const refreshProjects = useCallback(() => fetchProjects(), [fetchProjects]);
+  // Set up real-time subscription for projects table
+  useEffect(() => {
+    let channel: any = null;
+    
+    try {
+      channel = supabase
+        .channel('projects-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*', // Listen to all events (INSERT, UPDATE, DELETE)
+            schema: 'public',
+            table: 'projects'
+          },
+          (payload) => {
+            console.log('Projects table changed:', payload);
+            
+            // Handle different event types
+            if (payload.eventType === 'UPDATE') {
+              // Update the specific project in our state
+              setProjects(prevProjects => 
+                prevProjects.map(project => 
+                  project.id === payload.new.id 
+                    ? { ...project, ...payload.new }
+                    : project
+                )
+              );
+            } else if (payload.eventType === 'INSERT') {
+              // Add new project if it's active
+              if (payload.new.status === 'Active') {
+                setProjects(prevProjects => [payload.new, ...prevProjects]);
+              }
+            } else if (payload.eventType === 'DELETE') {
+              // Remove deleted project
+              setProjects(prevProjects => 
+                prevProjects.filter(project => project.id !== payload.old.id)
+              );
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log('Real-time subscription status:', status);
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Successfully subscribed to projects table changes');
+            console.log('Real-time is now active for projects table');
+          } else if (status === 'CHANNEL_ERROR') {
+            console.warn('❌ Real-time subscription failed. This might be because real-time is not enabled for the projects table.');
+          } else if (status === 'TIMED_OUT') {
+            console.warn('⏰ Real-time subscription timed out');
+          } else if (status === 'CLOSED') {
+            console.warn('🔒 Real-time subscription closed');
+          }
+        });
+    } catch (error) {
+      console.error('Failed to set up real-time subscription:', error);
+    }
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [supabase]);
+
+  const refreshProjects = useCallback(() => {
+    console.log('🔄 Manual refresh triggered');
+    fetchProjects();
+  }, [fetchProjects]);
+
+  // Fallback: Periodic refresh every 30 seconds to ensure data is up-to-date
+  // This helps when real-time is not enabled or fails
+  useEffect(() => {
+    const interval = setInterval(() => {
+      console.log('Periodic projects refresh...');
+      fetchProjects();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [fetchProjects]);
 
   const value = {
     projects,

@@ -1,34 +1,45 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import DashboardLayout from '@/components/dashboard-layout';
-import UserHeader from '@/components/user-header';
-import { useProjects, Project } from '@/contexts/ProjectsContext';
-import { useUser } from '@/contexts/UserContext';
-import { useProfile } from '@/contexts/ProfileContext';
-import { useWallet } from '@/contexts/WalletContext';
-import KycModal from '@/components/kyc-modal';
-import PinValidationModal from '@/components/pin-validation-modal';
-import CustomAlert from '@/components/custom-alert';
-import APIConnectivityTest from '@/components/APIConnectivityTest';
-import { createClient } from '@/app/utils/supabase/client';
-import { paymentService } from '@/lib/paymentService';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Switch } from '@/components/ui/switch';
-import { Separator } from '@/components/ui/separator';
-import { Label } from '@/components/ui/label';
-import { Progress } from '@/components/ui/progress';
-import Image from 'next/image';
-import { 
-  Search, 
-  Filter, 
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
+import DashboardLayout from "@/components/dashboard-layout";
+import UserHeader from "@/components/user-header";
+import { useProjects, Project } from "@/contexts/ProjectsContext";
+import { useUser } from "@/contexts/UserContext";
+import { useProfile } from "@/contexts/ProfileContext";
+import { useWallet } from "@/contexts/WalletContext";
+import KycModal from "@/components/kyc-modal";
+import PinValidationModal from "@/components/pin-validation-modal";
+import CustomAlert from "@/components/custom-alert";
+import APIConnectivityTest from "@/components/APIConnectivityTest";
+import { createClient } from "@/app/utils/supabase/client";
+import { paymentService } from "@/lib/paymentService";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
+import Image from "next/image";
+import {
+  Search,
+  Filter,
   Plus,
   Minus,
   ChevronUp,
@@ -37,9 +48,9 @@ import {
   X,
   Check,
   AlertTriangle,
-  Loader2
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
+  Loader2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface Investment {
   id: string;
@@ -54,39 +65,37 @@ interface Investment {
   status?: string;
 }
 
-
 // Animation variants
 const cardVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  hover: { 
+  hover: {
     y: -2,
-    transition: { duration: 0.2 }
-  }
+    transition: { duration: 0.2 },
+  },
 };
 
 const stepVariants = {
   hidden: { opacity: 0, x: 20 },
-  visible: { 
-    opacity: 1, 
-    x: 0, 
-    transition: { duration: 0.4 }
+  visible: {
+    opacity: 1,
+    x: 0,
+    transition: { duration: 0.4 },
   },
-  exit: { 
-    opacity: 0, 
-    x: -20, 
-    transition: { duration: 0.3 }
-  }
+  exit: {
+    opacity: 0,
+    x: -20,
+    transition: { duration: 0.3 },
+  },
 };
 
 const progressVariants = {
   hidden: { scaleX: 0 },
-  visible: { 
-    scaleX: 1, 
-    transition: { duration: 0.6 }
-  }
+  visible: {
+    scaleX: 1,
+    transition: { duration: 0.6 },
+  },
 };
-
 
 const InvestmentsPage = () => {
   const { user } = useUser();
@@ -94,44 +103,44 @@ const InvestmentsPage = () => {
   const { wallet } = useWallet();
   const router = useRouter();
   const supabase = createClient();
-  const { 
-    projects, 
-    loading, 
-    error, 
-    filters, 
-    setFilters, 
+  const {
+    projects,
+    loading,
+    error,
+    filters,
+    setFilters,
     refreshProjects,
     pagination,
-    setPagination
+    setPagination,
   } = useProjects();
-  
-  const [searchQuery, setSearchQuery] = useState('');
+
+  const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedInvestment, setSelectedInvestment] = useState<Investment | null>(null);
+  const [selectedInvestment, setSelectedInvestment] =
+    useState<Investment | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [showAbout, setShowAbout] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  
-  
+
   // Multi-step flow state
-  const [currentStep, setCurrentStep] = useState('details'); // details, review, payment, process, success
+  const [currentStep, setCurrentStep] = useState("details"); // details, review, payment, process, success
   const [agreedToTerms, setAgreedToTerms] = useState(false);
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const [paymentDetails, setPaymentDetails] = useState({
-    mobileNumber: '',
-    provider: 'MTN',
-    cardName: '',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    savePayment: false
+    mobileNumber: "",
+    provider: "MTN",
+    cardName: "",
+    cardNumber: "",
+    expiryDate: "",
+    cvv: "",
+    savePayment: false,
   });
-  const [pin, setPin] = useState(['', '', '', '']); // Keep for potential future use
+  const [pin, setPin] = useState(["", "", "", ""]); // Keep for potential future use
   const [countdown, setCountdown] = useState(30); // USSD countdown timer
   const [isProcessing, setIsProcessing] = useState(false);
   const [showKycModal, setShowKycModal] = useState(false);
   const [showPinModal, setShowPinModal] = useState(false);
-  
+
   // Store investment details for success screen and receipt
   const [successInvestmentDetails, setSuccessInvestmentDetails] = useState<{
     investment: Investment | null;
@@ -140,14 +149,14 @@ const InvestmentsPage = () => {
   }>({
     investment: null,
     quantity: 0,
-    totalAmount: 0
+    totalAmount: 0,
   });
-  
+
   // Countdown timer effect
   useEffect(() => {
     let interval: NodeJS.Timeout;
-    
-    if (currentStep === 'process' && countdown > 0) {
+
+    if (currentStep === "process" && countdown > 0) {
       interval = setInterval(() => {
         setCountdown((prev) => {
           if (prev <= 1) {
@@ -157,93 +166,116 @@ const InvestmentsPage = () => {
         });
       }, 1000);
     }
-    
+
     return () => {
       if (interval) {
         clearInterval(interval);
       }
     };
   }, [currentStep, countdown]);
-  
+
   // Reset countdown when entering process step
   useEffect(() => {
-    if (currentStep === 'process') {
+    if (currentStep === "process") {
       setCountdown(30);
     }
   }, [currentStep]);
-  
+
   // Custom Alert State
   const [alertState, setAlertState] = useState({
     isOpen: false,
-    title: '',
-    message: '',
-    type: 'info' as 'success' | 'error' | 'warning' | 'info'
+    title: "",
+    message: "",
+    type: "info" as "success" | "error" | "warning" | "info",
   });
 
+  // Store current error message for display in error step
+  const [currentErrorMessage, setCurrentErrorMessage] = useState("");
+
   // Helper function to show custom alert
-  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+  const showAlert = (
+    title: string,
+    message: string,
+    type: "success" | "error" | "warning" | "info" = "info"
+  ) => {
     setAlertState({
       isOpen: true,
       title,
       message,
-      type
+      type,
     });
   };
 
   // Update project units in database
-  const updateProjectUnits = async (projectId: string, quantity: number, totalAmount: number) => {
+  const updateProjectUnits = async (
+    projectId: string,
+    quantity: number,
+    totalAmount: number
+  ) => {
     try {
       // Get current project data first
       const { data: projectData, error: fetchError } = await supabase
-        .from('projects')
-        .select('available_unit, purchased_unit')
-        .eq('id', projectId)
+        .from("projects")
+        .select("available_unit, purchased_unit")
+        .eq("id", projectId)
         .single();
 
       if (fetchError) throw fetchError;
 
       // Update available_unit and purchased_unit in projects table
       const { error: projectError } = await supabase
-        .from('projects')
+        .from("projects")
         .update({
           available_unit: projectData.available_unit - quantity,
-          purchased_unit: projectData.purchased_unit + quantity
+          purchased_unit: projectData.purchased_unit + quantity,
         })
-        .eq('id', projectId);
+        .eq("id", projectId);
 
       if (projectError) throw projectError;
 
       // Create transaction record (since backend doesn't populate transactions)
-      const transactionId = `TXN${Date.now()}${Math.floor(Math.random() * 1000)}`;
-      
+      const transactionId = `TXN${Date.now()}${Math.floor(
+        Math.random() * 1000
+      )}`;
+
       const { error: transactionError } = await supabase
-        .from('transactions')
+        .from("transactions")
         .insert({
           transaction_id: transactionId,
           profile_id: profile?.id,
           project_id: projectId,
-          type: 'investment',
+          type: "investment",
           amount: totalAmount,
           unit: quantity,
-          status: 'Complete',
+          status: "Complete",
           fees: 0.0,
           net_amount: totalAmount,
           description: `Investment in project ${projectId}`,
-          channel: selectedPaymentMethod === 'mobile' ? 'momo' : 
-                   selectedPaymentMethod === 'card' ? 'card' : 
-                   selectedPaymentMethod === 'agripath' ? 'wallet' : 'momo',
-          account_number: paymentDetails.mobileNumber || paymentDetails.cardNumber || 'Agripath Wallet'
+          channel:
+            selectedPaymentMethod === "mobile"
+              ? "momo"
+              : selectedPaymentMethod === "card"
+              ? "card"
+              : selectedPaymentMethod === "agripath"
+              ? "wallet"
+              : "momo",
+          account_number:
+            paymentDetails.mobileNumber ||
+            paymentDetails.cardNumber ||
+            "Agripath Wallet",
         });
 
       if (transactionError) {
-        console.error('Transaction insertion failed:', transactionError);
-        throw new Error(`Transaction recording failed: ${transactionError.message}`);
+        console.error("Transaction insertion failed:", transactionError);
+        throw new Error(
+          `Transaction recording failed: ${transactionError.message}`
+        );
       }
 
-      console.log('Project units and transaction updated successfully');
+      console.log("Project units and transaction updated successfully");
       return { success: true, transactionId };
     } catch (error) {
-      console.error('Failed to update project units or transaction:', error);
+      console.error("Failed to update project units or transaction:", error);
       throw error;
     }
   };
@@ -255,31 +287,33 @@ const InvestmentsPage = () => {
 
   // Card input handlers with proper validation and formatting
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
-    value = value.replace(/(\d{4})(?=\d)/g, '$1 '); // Add spaces every 4 digits
+    let value = e.target.value.replace(/\D/g, ""); // Remove non-digits
+    value = value.replace(/(\d{4})(?=\d)/g, "$1 "); // Add spaces every 4 digits
     value = value.substring(0, 19); // Limit to 16 digits + 3 spaces
-    setPaymentDetails({...paymentDetails, cardNumber: value});
+    setPaymentDetails({ ...paymentDetails, cardNumber: value });
   };
 
   const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    let value = e.target.value.replace(/\D/g, ""); // Remove non-digits
     if (value.length >= 2) {
-      value = value.substring(0, 2) + '/' + value.substring(2, 4); // Add slash after MM
+      value = value.substring(0, 2) + "/" + value.substring(2, 4); // Add slash after MM
     }
     value = value.substring(0, 5); // Limit to MM/YY format
-    setPaymentDetails({...paymentDetails, expiryDate: value});
+    setPaymentDetails({ ...paymentDetails, expiryDate: value });
   };
 
   const handleCVVChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/\D/g, ''); // Remove non-digits
+    let value = e.target.value.replace(/\D/g, ""); // Remove non-digits
     value = value.substring(0, 4); // Limit to 4 digits max
-    setPaymentDetails({...paymentDetails, cvv: value});
+    setPaymentDetails({ ...paymentDetails, cvv: value });
   };
 
-  const handleCardholderNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let value = e.target.value.replace(/[^a-zA-Z\s]/g, ''); // Only letters and spaces
+  const handleCardholderNameChange = (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    let value = e.target.value.replace(/[^a-zA-Z\s]/g, ""); // Only letters and spaces
     value = value.substring(0, 50); // Limit length
-    setPaymentDetails({...paymentDetails, cardName: value});
+    setPaymentDetails({ ...paymentDetails, cardName: value });
   };
 
   // Handle search with optimization
@@ -298,15 +332,15 @@ const InvestmentsPage = () => {
 
   // Handle enter key in search input
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearchSubmit();
     }
   };
 
   // Clear search
   const handleClearSearch = () => {
-    setSearchQuery('');
-    setFilters({ ...filters, search: '' });
+    setSearchQuery("");
+    setFilters({ ...filters, search: "" });
   };
 
   // Handle pagination
@@ -337,9 +371,14 @@ const InvestmentsPage = () => {
             <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <X className="h-8 w-8 text-red-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Projects</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Error Loading Projects
+            </h3>
             <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={refreshProjects} className="bg-green-600 hover:bg-green-700">
+            <Button
+              onClick={refreshProjects}
+              className="bg-green-600 hover:bg-green-700"
+            >
               Try Again
             </Button>
           </div>
@@ -350,7 +389,7 @@ const InvestmentsPage = () => {
 
   const handleInvestmentClick = (project: Project) => {
     // Check KYC status before allowing investment
-    if (profile?.kyc_status !== 'verified') {
+    if (profile?.kyc_status !== "verified") {
       setShowKycModal(true);
       return;
     }
@@ -368,42 +407,48 @@ const InvestmentsPage = () => {
       totalUnits: project.total_units,
       unitsAvailable: project.available_unit,
       image: project.cover_image_url,
-      progress: Math.round((project.purchased_unit / project.total_units) * 100),
-      description: project.description || 'No description available',
-      status: project.status
+      progress: Math.round(
+        (project.purchased_unit / project.total_units) * 100
+      ),
+      description: project.description || "No description available",
+      status: project.status,
     };
     setSelectedInvestment(investment);
     setQuantity(1);
     setShowAbout(false);
-    setCurrentStep('details');
+    setCurrentStep("details");
     setIsSheetOpen(true);
     resetFlow();
   };
 
   const resetFlow = () => {
     setAgreedToTerms(false);
-    setSelectedPaymentMethod('');
+    setSelectedPaymentMethod("");
     setPaymentDetails({
-      mobileNumber: '',
-      provider: 'MTN',
-      cardName: '',
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
-      savePayment: false
+      mobileNumber: "",
+      provider: "MTN",
+      cardName: "",
+      cardNumber: "",
+      expiryDate: "",
+      cvv: "",
+      savePayment: false,
     });
-    setPin(['', '', '', '']);
+    setPin(["", "", "", ""]);
     setIsProcessing(false);
+    setCurrentErrorMessage(""); // Clear any previous error messages
   };
 
   const handleCompleteKyc = () => {
     setShowKycModal(false);
-    window.location.href = '/kyc-verification';
+    window.location.href = "/kyc-verification";
   };
 
   const calculateTotal = () => {
     // Use success investment details if available (for success screen and receipt)
-    if (successInvestmentDetails.investment && successInvestmentDetails.quantity > 0) {
+    if (
+      successInvestmentDetails.investment &&
+      successInvestmentDetails.quantity > 0
+    ) {
       return successInvestmentDetails.totalAmount;
     }
     // Otherwise use current form values
@@ -412,20 +457,23 @@ const InvestmentsPage = () => {
 
   const calculateExpectedReturn = () => {
     // Use success investment details if available
-    const investment = successInvestmentDetails.investment || selectedInvestment;
-    if (!investment) return '0 - 0';
-    
+    const investment =
+      successInvestmentDetails.investment || selectedInvestment;
+    if (!investment) return "0 - 0";
+
     const total = calculateTotal();
-    
+
     // Handle both "15-25%" and "15%" formats
-    if (investment.roi.includes('-')) {
-      const [minROI, maxROI] = investment.roi.split('-').map((r: string) => parseFloat(r.replace('%', '')));
+    if (investment.roi.includes("-")) {
+      const [minROI, maxROI] = investment.roi
+        .split("-")
+        .map((r: string) => parseFloat(r.replace("%", "")));
       const minReturn = Math.round(total * (minROI / 100) * 100) / 100; // Round to 2 decimal places
       const maxReturn = Math.round(total * (maxROI / 100) * 100) / 100; // Round to 2 decimal places
       return `${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)}`;
     } else {
       // Single ROI value
-      const roi = parseFloat(investment.roi.replace('%', ''));
+      const roi = parseFloat(investment.roi.replace("%", ""));
       const expectedReturn = Math.round(total * (roi / 100) * 100) / 100; // Round to 2 decimal places
       return `${expectedReturn.toFixed(2)}`;
     }
@@ -434,24 +482,25 @@ const InvestmentsPage = () => {
   // Generate and download receipt
   const generateReceipt = () => {
     // Use success investment details if available, otherwise fall back to current form
-    const investment = successInvestmentDetails.investment || selectedInvestment;
+    const investment =
+      successInvestmentDetails.investment || selectedInvestment;
     const receiptQuantity = successInvestmentDetails.quantity || quantity;
-    
+
     if (!investment || !profile) return;
 
     const receiptData = {
       transactionId: `TXN-${Date.now()}`,
-      date: new Date().toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
+      date: new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
       }),
       investor: {
         name: `${profile.first_name} ${profile.last_name}`,
         email: profile.email,
-        phone: profile.phone_number
+        phone: profile.phone_number,
       },
       investment: {
         project: investment.name,
@@ -459,8 +508,8 @@ const InvestmentsPage = () => {
         units: receiptQuantity,
         expectedReturn: calculateExpectedReturn(),
         duration: investment.duration,
-        startDate: 'November 2025'
-      }
+        startDate: "November 2025",
+      },
     };
 
     // Create receipt HTML
@@ -584,7 +633,9 @@ const InvestmentsPage = () => {
               </div>
               <div class="detail-row">
                 <span class="label">Expected Return:</span>
-                <span class="value">GHS ${receiptData.investment.expectedReturn}</span>
+                <span class="value">GHS ${
+                  receiptData.investment.expectedReturn
+                }</span>
               </div>
               <div class="detail-row">
                 <span class="label">Start Date:</span>
@@ -610,9 +661,9 @@ const InvestmentsPage = () => {
     `;
 
     // Create and download the receipt
-    const blob = new Blob([receiptHTML], { type: 'text/html' });
+    const blob = new Blob([receiptHTML], { type: "text/html" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = `agripath-investment-receipt-${receiptData.transactionId}.html`;
     document.body.appendChild(link);
@@ -622,11 +673,11 @@ const InvestmentsPage = () => {
   };
 
   const handleInvestNow = () => {
-    setCurrentStep('review');
+    setCurrentStep("review");
   };
 
   const handleContinueToPayment = () => {
-    setCurrentStep('payment');
+    setCurrentStep("payment");
   };
 
   const handlePaymentMethodSelect = (method: string) => {
@@ -642,87 +693,119 @@ const InvestmentsPage = () => {
     description: string;
   }) => {
     try {
-      console.log('Wallet investment request:', JSON.stringify(investmentData, null, 2));
-      
-      const response = await fetch('https://infra.agripath.co/api/payments/wallet/invest', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(investmentData),
-      });
+      console.log(
+        "Wallet investment request:",
+        JSON.stringify(investmentData, null, 2)
+      );
+
+      const response = await fetch(
+        "https://infra.agripath.co/api/payments/wallet/invest",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(investmentData),
+        }
+      );
 
       // Handle response - check if there's a response body
       let responseData = null;
-      const contentType = response.headers.get('content-type');
-      
-      if (contentType && contentType.includes('application/json')) {
+      const contentType = response.headers.get("content-type");
+
+      if (contentType && contentType.includes("application/json")) {
         try {
           responseData = await response.json();
-          console.log('Wallet investment response:', responseData);
+          console.log("Wallet investment response:", responseData);
         } catch (error) {
-          console.log('No JSON response body received');
+          console.log("No JSON response body received");
         }
       } else {
-        console.log('No response body received (201 Created)');
+        console.log("No response body received (201 Created)");
       }
 
       // If we have response data, check for P0001 error
-      if (responseData && (responseData.code === 'P0001' || 
-          responseData.message?.includes('exceeds maximum allowed amount'))) {
-        console.log('P0001 error detected in wallet investment - treating as success since backend investment works');
+      if (
+        responseData &&
+        (responseData.code === "P0001" ||
+          responseData.message?.includes("exceeds maximum allowed amount"))
+      ) {
+        console.log(
+          "P0001 error detected in wallet investment - treating as success since backend investment works"
+        );
         return {
-          status: 'success',
-          code: '000',
-          message: 'Investment successful (P0001 ignored)'
+          status: "success",
+          code: "000",
+          message: "Investment successful (P0001 ignored)",
         };
       }
 
       // If response is successful (201 Created or 200 OK), treat as success
       if (response.ok) {
-        console.log('Wallet investment successful - 201 Created');
+        console.log("Wallet investment successful - 201 Created");
         return {
-          status: 'success',
-          code: '000',
-          message: 'Investment successful',
-          transaction_id: responseData?.transaction_id || 'created'
+          status: "success",
+          code: "000",
+          message: "Investment successful",
+          transaction_id: responseData?.transaction_id || "created",
         };
       }
 
       // If we get here, there was an error
-      throw new Error(responseData?.message || 'Wallet investment failed');
+      throw new Error(responseData?.message || "Wallet investment failed");
     } catch (error) {
-      console.error('Wallet investment error:', error);
+      console.error("Wallet investment error:", error);
       throw error;
     }
   };
 
   const handleInvestmentSubmit = async () => {
     if (!selectedInvestment || !user) {
-      console.error('Missing investment or user data');
+      console.error("Missing investment or user data");
       return;
     }
 
     // Validate payment details based on selected method
-    if (selectedPaymentMethod === 'mobile') {
+    if (selectedPaymentMethod === "mobile") {
       if (!paymentDetails.mobileNumber || !paymentDetails.provider) {
-        showAlert('Missing Information', 'Please fill in all mobile money details', 'warning');
+        showAlert(
+          "Missing Information",
+          "Please fill in all mobile money details",
+          "warning"
+        );
         return;
       }
-    } else if (selectedPaymentMethod === 'card') {
-      if (!paymentDetails.cardName || !paymentDetails.cardNumber || !paymentDetails.expiryDate || !paymentDetails.cvv) {
-        showAlert('Missing Information', 'Please fill in all card details', 'warning');
+    } else if (selectedPaymentMethod === "card") {
+      if (
+        !paymentDetails.cardName ||
+        !paymentDetails.cardNumber ||
+        !paymentDetails.expiryDate ||
+        !paymentDetails.cvv
+      ) {
+        showAlert(
+          "Missing Information",
+          "Please fill in all card details",
+          "warning"
+        );
         return;
       }
-    } else if (selectedPaymentMethod === 'agripath') {
+    } else if (selectedPaymentMethod === "agripath") {
       // Validate wallet balance
       const totalAmount = selectedInvestment.price * quantity;
       if (!wallet?.balance || wallet.balance < totalAmount) {
-        showAlert('Insufficient Balance', 'Insufficient wallet balance for this investment', 'error');
+        showAlert(
+          "Insufficient Balance",
+          "Insufficient wallet balance for this investment",
+          "error"
+        );
         return;
       }
     } else {
-      showAlert('Payment Method Required', 'Please select a payment method', 'warning');
+      showAlert(
+        "Payment Method Required",
+        "Please select a payment method",
+        "warning"
+      );
       return;
     }
 
@@ -732,215 +815,244 @@ const InvestmentsPage = () => {
 
   const handleInvestmentPinSuccess = async () => {
     if (!selectedInvestment || !user || !profile) return;
-    
+
     setShowPinModal(false);
-    setCurrentStep('process');
+    setCurrentStep("process");
     setIsProcessing(true);
-    
+
     try {
       const totalAmount = selectedInvestment.price * quantity;
       const projectId = selectedInvestment.id;
       // const userId = user?.id; // Use auth user ID - not needed since we use profile?.id
-      
+
       // Debug logging
-      console.log('Debug Info:', {
+      console.log("Debug Info:", {
         authUserId: user?.id,
         profileId: profile?.id,
         profileUserId: profile?.user_id,
         projectId: projectId,
         totalAmount: totalAmount,
-        quantity: quantity
+        quantity: quantity,
       });
-      
+
       let paymentResult;
-      
-      if (selectedPaymentMethod === 'mobile') {
+
+      if (selectedPaymentMethod === "mobile") {
         // Mobile Money Payment using our payment service
-        paymentResult = await paymentService.processInvestmentMobileMoneyPayment({
-          user_id: profile?.id || '', // Use profile ID (required by backend)
-          project_id: projectId,
-          amount: totalAmount,
-          unit: quantity,
-          subscriber_number: paymentDetails.mobileNumber,
-          network: paymentDetails.provider,
-          description: `Investment in ${selectedInvestment.name}`
-        });
-      } else if (selectedPaymentMethod === 'card') {
+        paymentResult =
+          await paymentService.processInvestmentMobileMoneyPayment({
+            profile_id: profile?.id || "", // Use profile ID (required by backend)
+            project_id: projectId,
+            amount: totalAmount,
+            unit: quantity,
+            subscriber_number: paymentDetails.mobileNumber,
+            network: paymentDetails.provider,
+            description: `Investment in ${selectedInvestment.name}`,
+            user_email: user?.email || "user@example.com",
+          });
+      } else if (selectedPaymentMethod === "card") {
         // Card Payment using the correct payload structure
         paymentResult = await paymentService.processInvestmentCardPayment({
-          profile_id: profile?.id || '',
+          profile_id: profile?.id || "",
           project_id: projectId,
           amount: totalAmount,
           unit: quantity,
           desc: `Investment in ${selectedInvestment.name}`,
-            pan: paymentDetails.cardNumber.replace(/\s/g, ''),
-            exp_month: paymentDetails.expiryDate.split('/')[0],
-            exp_year: paymentDetails.expiryDate.split('/')[1],
-            cvv: paymentDetails.cvv,
+          pan: paymentDetails.cardNumber.replace(/\s/g, ""),
+          exp_month: paymentDetails.expiryDate.split("/")[0],
+          exp_year: paymentDetails.expiryDate.split("/")[1],
+          cvv: paymentDetails.cvv,
           card_holder: paymentDetails.cardName,
-          user_email: user?.email || 'user@example.com',
-          redirect_url: 'https://backoffice.agripath.co/dashboard'
+          user_email: user?.email || "user@example.com",
+          redirect_url: "https://backoffice.agripath.co/dashboard",
         });
-      } else if (selectedPaymentMethod === 'agripath') {
+      } else if (selectedPaymentMethod === "agripath") {
         // Wallet Investment using the wallet investment endpoint
         paymentResult = await processWalletInvestment({
-          profile_id: profile?.id || '',
+          profile_id: profile?.id || "",
           project_id: projectId,
           amount: totalAmount,
           unit: quantity,
-          description: `Investment in ${selectedInvestment.name}`
+          description: `Investment in ${selectedInvestment.name}`,
         });
       } else {
-        throw new Error('Invalid payment method selected');
+        throw new Error("Invalid payment method selected");
       }
-      
-      console.log('Payment result:', paymentResult);
-      
+
+      console.log("Payment result:", paymentResult);
+
       // Handle payment response
-      // Backend returns status: "approved" for successful payments
+      // Backend returns status: "pending" for successful payments that need user action
       // Check both direct status and nested details.status
-      const isSuccess = paymentResult.status === 'success' || 
-                       paymentResult.status === 'approved' || 
-                       paymentResult.status === 'completed' || 
-                       paymentResult.status === 'Complete' ||
-                       paymentResult.code === '000' ||
-                       (paymentResult as any).details?.status === 'approved' ||
-                       (paymentResult as any).details?.code === '000';
-      
+      const isSuccess =
+        paymentResult.status === "success" ||
+        paymentResult.status === "pending" || // Updated to match new API
+        paymentResult.status === "approved" ||
+        paymentResult.status === "completed" ||
+        paymentResult.status === "Complete" ||
+        paymentResult.code === "000" ||
+        (paymentResult as any).details?.status === "approved" ||
+        (paymentResult as any).details?.code === "000";
+
       if (isSuccess) {
         // Update project units and create transaction record
-        const updateResult = await updateProjectUnits(projectId, quantity, totalAmount);
-        
+        const updateResult = await updateProjectUnits(
+          projectId,
+          quantity,
+          totalAmount
+        );
+
         if (updateResult.success) {
-          console.log('Investment completed successfully with transaction ID:', updateResult.transactionId);
-          
+          console.log(
+            "Investment completed successfully with transaction ID:",
+            updateResult.transactionId
+          );
+
           // Store investment details for success screen before resetting form
           setSuccessInvestmentDetails({
             investment: selectedInvestment,
             quantity: quantity,
-            totalAmount: totalAmount
+            totalAmount: totalAmount,
           });
-        
-        // Simulate processing delay
-        setTimeout(() => {
-          setIsProcessing(false);
-          setCurrentStep('success');
-          // Reset form after successful payment
-          resetForm();
-        }, 2000);
-        } else {
-          throw new Error('Failed to update project units or create transaction record');
-        }
-      } else if (paymentResult.status === 'vbv_required') {
-        // Handle 3D Secure redirect
-        console.log('3D Secure required, redirecting to:', (paymentResult as any).redirect_url);
-        if ((paymentResult as any).redirect_url) {
-          window.open((paymentResult as any).redirect_url, '_blank');
-        }
-        
-        // Update project units and create transaction record for 3D Secure
-        const updateResult = await updateProjectUnits(projectId, quantity, totalAmount);
-        
-        if (updateResult.success) {
-          console.log('3D Secure investment completed successfully with transaction ID:', updateResult.transactionId);
-          
-          // Store investment details for success screen before resetting form
-          setSuccessInvestmentDetails({
-            investment: selectedInvestment,
-            quantity: quantity,
-            totalAmount: totalAmount
-          });
-          
-        // For demo purposes, assume success after redirect
-        setTimeout(() => {
-          setIsProcessing(false);
-          setCurrentStep('success');
-          resetForm();
-        }, 2000);
-      } else {
-          throw new Error('Failed to update project units or create transaction record for 3D Secure payment');
-        }
-      } else {
-        throw new Error((paymentResult as any).reason || 'Payment failed');
-      }
-      
-    } catch (error) {
-      console.error('Payment error:', error);
-      
-      // Check if this is the P0001 error (investment amount exceeds maximum)
-      // If so, treat it as success since the backend investment actually works
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      const errorCode = (error as { code?: string })?.code;
-      
-      if (errorMessage.includes('P0001') || 
-          errorMessage.includes('exceeds maximum allowed amount') ||
-          errorCode === 'P0001') {
-        console.log('P0001 error detected - treating as success since backend investment works');
-        
-        // Update project units and create transaction record
-        const updateResult = await updateProjectUnits(selectedInvestment.id, quantity, selectedInvestment.price * quantity);
-        
-        if (updateResult.success) {
-          console.log('P0001 investment completed successfully with transaction ID:', updateResult.transactionId);
-          
-          // Store investment details for success screen before resetting form
-          setSuccessInvestmentDetails({
-            investment: selectedInvestment,
-            quantity: quantity,
-            totalAmount: selectedInvestment.price * quantity
-          });
-          
-          // Show success UI
+
+          // Simulate processing delay
           setTimeout(() => {
             setIsProcessing(false);
-            setCurrentStep('success');
+            setCurrentStep("success");
+            // Reset form after successful payment
             resetForm();
+            // Refresh projects to update available units
+            refreshProjects();
           }, 2000);
-          return;
         } else {
-          throw new Error('Failed to update project units or create transaction record for P0001 investment');
+          throw new Error(
+            "Failed to update project units or create transaction record"
+          );
+        }
+      } else if (paymentResult.status === "vbv_required") {
+        // Handle 3D Secure redirect
+        console.log(
+          "3D Secure required, redirecting to:",
+          (paymentResult as any).redirect_url
+        );
+        if ((paymentResult as any).redirect_url) {
+          window.open((paymentResult as any).redirect_url, "_blank");
+        }
+
+        // Update project units and create transaction record for 3D Secure
+        const updateResult = await updateProjectUnits(
+          projectId,
+          quantity,
+          totalAmount
+        );
+
+        if (updateResult.success) {
+          console.log(
+            "3D Secure investment completed successfully with transaction ID:",
+            updateResult.transactionId
+          );
+
+          // Store investment details for success screen before resetting form
+          setSuccessInvestmentDetails({
+            investment: selectedInvestment,
+            quantity: quantity,
+            totalAmount: totalAmount,
+          });
+
+          // For demo purposes, assume success after redirect
+          setTimeout(() => {
+            setIsProcessing(false);
+            setCurrentStep("success");
+            resetForm();
+            // Refresh projects to update available units
+            refreshProjects();
+          }, 2000);
+        } else {
+          throw new Error(
+            "Failed to update project units or create transaction record for 3D Secure payment"
+          );
+        }
+      } else {
+        throw new Error((paymentResult as any).reason || "Payment failed");
+      }
+    } catch (error) {
+      console.error("Payment error:", error);
+
+      // Extract error message from API response
+      let errorMessage = "Payment failed. Please try again.";
+      let errorTitle = "Payment Error";
+
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === "object" && error !== null) {
+        const apiError = error as { message?: string; statusCode?: number };
+        if (apiError.message) {
+          errorMessage = apiError.message;
+
+          // Set appropriate titles based on error type
+          if (apiError.message.includes("Insufficient available units")) {
+            errorTitle = "Units Not Available";
+          } else if (apiError.message.includes("Insufficient balance")) {
+            errorTitle = "Insufficient Balance";
+          } else if (apiError.message.includes("KYC verification required")) {
+            errorTitle = "KYC Verification Required";
+          } else if (apiError.message.includes("Invalid")) {
+            errorTitle = "Invalid Information";
+          }
         }
       }
-      
-      // For all other errors, show error UI
+
+      // Store error message for display in error step
+      setCurrentErrorMessage(errorMessage);
+
+      // Show user-friendly error message
+      showAlert(errorTitle, errorMessage, "error");
+
+      // For all errors, show error UI
       setTimeout(() => {
         setIsProcessing(false);
-        setCurrentStep('error');
+        setCurrentStep("error");
       }, 2000);
     }
   };
 
   const resetForm = () => {
     setQuantity(1);
-    setSelectedPaymentMethod('');
+    setSelectedPaymentMethod("");
     setPaymentDetails({
-      mobileNumber: '',
-      provider: 'MTN',
-      cardName: '',
-      cardNumber: '',
-      expiryDate: '',
-      cvv: '',
-      savePayment: false
+      mobileNumber: "",
+      provider: "MTN",
+      cardName: "",
+      cardNumber: "",
+      expiryDate: "",
+      cvv: "",
+      savePayment: false,
     });
-    setPin(['', '', '', '']);
+    setPin(["", "", "", ""]);
     setAgreedToTerms(false);
   };
 
-
   return (
     <DashboardLayout>
-      <div className={`space-y-6 transition-all duration-300 ${isSheetOpen ? 'main-content-blur' : ''}`}>
+      <div
+        className={`space-y-6 transition-all duration-300 ${
+          isSheetOpen ? "main-content-blur" : ""
+        }`}
+      >
         {/* Header */}
         <UserHeader />
 
-
-
         {/* Page Title */}
         <div className="flex items-center justify-between">
-          <div className="self-stretch justify-start text-color-Midnight-Blue-90/90 text-2xl font-semibold  leading-9">Explore Investments</div>
+          <div className="self-stretch justify-start text-color-Midnight-Blue-90/90 text-2xl font-semibold  leading-9">
+            Explore Investments
+          </div>
           {filters.search && (
             <div className="flex items-center gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-800"
+              >
                 Search: &quot;{filters.search}&quot;
               </Badge>
               <Button
@@ -955,7 +1067,6 @@ const InvestmentsPage = () => {
           )}
         </div>
 
-
         {/* Search and Filters */}
         <div className="space-y-4">
           <div className="flex gap-4">
@@ -966,7 +1077,11 @@ const InvestmentsPage = () => {
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
                 onKeyPress={handleSearchKeyPress}
-                className={`pl-10 pr-24 ${searchQuery.length > 0 && searchQuery.length < 4 ? 'border-orange-300 bg-orange-50' : ''}`}
+                className={`pl-10 pr-24 ${
+                  searchQuery.length > 0 && searchQuery.length < 4
+                    ? "border-orange-300 bg-orange-50"
+                    : ""
+                }`}
               />
               <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
                 {searchQuery.length > 0 && (
@@ -991,12 +1106,13 @@ const InvestmentsPage = () => {
               </div>
               {searchQuery.length > 0 && searchQuery.length < 4 && (
                 <p className="absolute -bottom-6 left-0 text-xs text-orange-600">
-                  Type {4 - searchQuery.length} more character{4 - searchQuery.length === 1 ? '' : 's'} to search
+                  Type {4 - searchQuery.length} more character
+                  {4 - searchQuery.length === 1 ? "" : "s"} to search
                 </p>
               )}
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setShowFilters(!showFilters)}
               className="gap-2"
             >
@@ -1011,7 +1127,12 @@ const InvestmentsPage = () => {
               <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Type</Label>
-                  <Select value={filters.category} onValueChange={(value) => handleFilterChange('category', value)}>
+                  <Select
+                    value={filters.category}
+                    onValueChange={(value) =>
+                      handleFilterChange("category", value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -1026,28 +1147,46 @@ const InvestmentsPage = () => {
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Duration</Label>
-                  <Select value={filters.duration} onValueChange={(value) => handleFilterChange('duration', value)}>
+                  <Select
+                    value={filters.duration}
+                    onValueChange={(value) =>
+                      handleFilterChange("duration", value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All">All</SelectItem>
-                      <SelectItem value="Short (1-3 months)">Short (1-3 months)</SelectItem>
-                      <SelectItem value="Medium (4-8 months)">Medium (4-8 months)</SelectItem>
-                      <SelectItem value="Long (9+ months)">Long (9+ months)</SelectItem>
+                      <SelectItem value="Short (1-3 months)">
+                        Short (1-3 months)
+                      </SelectItem>
+                      <SelectItem value="Medium (4-8 months)">
+                        Medium (4-8 months)
+                      </SelectItem>
+                      <SelectItem value="Long (9+ months)">
+                        Long (9+ months)
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Return (ROI)</Label>
-                  <Select value={filters.returnRate} onValueChange={(value) => handleFilterChange('returnRate', value)}>
+                  <Select
+                    value={filters.returnRate}
+                    onValueChange={(value) =>
+                      handleFilterChange("returnRate", value)
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="All">All</SelectItem>
                       <SelectItem value="Low (5-15%)">Low (5-15%)</SelectItem>
-                      <SelectItem value="Medium (16-25%)">Medium (16-25%)</SelectItem>
+                      <SelectItem value="Medium (16-25%)">
+                        Medium (16-25%)
+                      </SelectItem>
                       <SelectItem value="High (26%+)">High (26%+)</SelectItem>
                     </SelectContent>
                   </Select>
@@ -1057,7 +1196,9 @@ const InvestmentsPage = () => {
                   <Input
                     placeholder="GHS 1,000"
                     value={filters.minPrice}
-                    onChange={(e) => handleFilterChange('minPrice', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("minPrice", e.target.value)
+                    }
                   />
                 </div>
                 <div>
@@ -1065,7 +1206,9 @@ const InvestmentsPage = () => {
                   <Input
                     placeholder="GHS 10,000"
                     value={filters.maxPrice}
-                    onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
+                    onChange={(e) =>
+                      handleFilterChange("maxPrice", e.target.value)
+                    }
                   />
                 </div>
               </div>
@@ -1081,97 +1224,130 @@ const InvestmentsPage = () => {
                 <div className="h-16 w-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Search className="h-8 w-8 text-gray-400" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">No projects found</h3>
-                <p className="text-gray-600">Try adjusting your filters or check back later</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  No projects found
+                </h3>
+                <p className="text-gray-600">
+                  Try adjusting your filters or check back later
+                </p>
               </div>
             </div>
           ) : (
             projects.map((project, index) => (
-            <motion.div
-              key={project.id}
-              variants={cardVariants}
-              initial="hidden"
-              animate="visible"
-              whileHover="hover"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <Card className="overflow-hidden cursor-pointer group h-full hover:shadow-lg transition-shadow duration-200">
-                <div className="relative">
-                  <img 
-                    src={project.cover_image_url}
-                    alt={project.project_name}
-                    className="w-full h-48 object-cover"
-                  />
-                  <div className="absolute top-3 left-3">
-                    <div className="px-2 py-1.5 bg-blue-600 rounded-xl inline-flex justify-center items-center gap-1">
-                      <div className="px-1 flex justify-start items-start gap-2.5">
-                        <div className="text-center justify-start text-white text-[10px] font-semibold uppercase tracking-wide">
-                    {project.project_type}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                <CardContent className="p-4">
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3 }}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div className="justify-start text-green-950 text-lg font-extrabold tracking-tight">{project.project_name}</div>
-                      <div className="px-2 py-1.5 bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
+              <motion.div
+                key={project.id}
+                variants={cardVariants}
+                initial="hidden"
+                animate="visible"
+                whileHover="hover"
+                style={{ animationDelay: `${index * 0.1}s` }}
+              >
+                <Card className="overflow-hidden cursor-pointer group h-full hover:shadow-lg transition-shadow duration-200">
+                  <div className="relative">
+                    <img
+                      src={project.cover_image_url}
+                      alt={project.project_name}
+                      className="w-full h-48 object-cover"
+                    />
+                    <div className="absolute top-3 left-3">
+                      <div className="px-2 py-1.5 bg-blue-600 rounded-xl inline-flex justify-center items-center gap-1">
                         <div className="px-1 flex justify-start items-start gap-2.5">
                           <div className="text-center justify-start text-white text-[10px] font-semibold uppercase tracking-wide">
-                            {project.status || 'Available'}
+                            {project.project_type}
                           </div>
                         </div>
                       </div>
                     </div>
-                    <p className="text-gray-600 mb-1">{project.farm_location}</p>
-                    <p className="text-gray-800 text-lg  mb-3"> <span className='font-semibold tracking-tight'>GHS {project.unit_price.toLocaleString()} </span> <span className="justify-center text-green-800 text-sm font-bold  leading-none tracking-tight">/Per Unit</span></p>
-                    <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-                      <div className="text-center justify-center text-neutral-800 text-sm font-semibold ">Return (ROI)</div>
-                      <div className="self-stretch text-right justify-center text-neutral-800 text-[10px] font-semibold ">Duration</div>
-                    </div>
-                    <div className="flex justify-between items-center mb-3">
-                      <div className="self-stretch justify-center text-yellow-500 text-md font-bold leading-none tracking-tight">{project.expected_return_rate}% - {project.max_expected_return_rate}%</div>
-                      <span className="font-semibold text-yellow-500">{project.duration_months} months</span>
-                    </div>
-
-                    <div className="mb-4">
-                      <div className="relative">
-                        <Progress 
-                          value={(project.purchased_unit / project.total_units) * 100} 
-                          className="h-2"
-                        />
-                        <motion.div
-                          className="absolute top-0 left-0 h-2 bg-green-600 rounded-full"
-                          variants={progressVariants}
-                          initial="hidden"
-                          animate="visible"
-                          style={{ 
-                            width: `${(project.purchased_unit / project.total_units) * 100}%`,
-                            transformOrigin: 'left'
-                          }}
-                        />
-                      </div>
-                      <p className="text-sm text-green-600 font-medium mt-1">
-                        {project.available_unit} Units Available
-                      </p>
-                    </div>
-
-                    <Button 
-                      className="w-full bg-green-800 hover:bg-green-900 rounded-xl px-4 py-3 h-9 inline-flex justify-center items-center gap-2 overflow-hidden"
-                      onClick={() => handleInvestmentClick(project)}
+                  </div>
+                  <CardContent className="p-4">
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 }}
                     >
-                      <div className="justify-start text-white text-xs font-semibold">Invest Now</div>
-                      <ArrowRight className="h-3 w-3 text-white" />
-                    </Button>
-                  </motion.div>
-                </CardContent>
-              </Card>
-            </motion.div>
+                      <div className="flex justify-between items-start mb-2">
+                        <div className="justify-start text-green-950 text-lg font-extrabold tracking-tight">
+                          {project.project_name}
+                        </div>
+                        <div className="px-2 py-1.5 bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
+                          <div className="px-1 flex justify-start items-start gap-2.5">
+                            <div className="text-center justify-start text-white text-[10px] font-semibold uppercase tracking-wide">
+                              {project.status || "Available"}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-gray-600 mb-1">
+                        {project.farm_location}
+                      </p>
+                      <p className="text-gray-800 text-lg  mb-3">
+                        {" "}
+                        <span className="font-semibold tracking-tight">
+                          GHS {project.unit_price.toLocaleString()}{" "}
+                        </span>{" "}
+                        <span className="justify-center text-green-800 text-sm font-bold  leading-none tracking-tight">
+                          /Per Unit
+                        </span>
+                      </p>
+                      <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
+                        <div className="text-center justify-center text-neutral-800 text-sm font-semibold ">
+                          Return (ROI)
+                        </div>
+                        <div className="self-stretch text-right justify-center text-neutral-800 text-[10px] font-semibold ">
+                          Duration
+                        </div>
+                      </div>
+                      <div className="flex justify-between items-center mb-3">
+                        <div className="self-stretch justify-center text-yellow-500 text-md font-bold leading-none tracking-tight">
+                          {project.expected_return_rate}% -{" "}
+                          {project.max_expected_return_rate}%
+                        </div>
+                        <span className="font-semibold text-yellow-500">
+                          {project.duration_months} months
+                        </span>
+                      </div>
+
+                      <div className="mb-4">
+                        <div className="relative">
+                          <Progress
+                            value={
+                              (project.purchased_unit / project.total_units) *
+                              100
+                            }
+                            className="h-2"
+                          />
+                          <motion.div
+                            className="absolute top-0 left-0 h-2 bg-green-600 rounded-full"
+                            variants={progressVariants}
+                            initial="hidden"
+                            animate="visible"
+                            style={{
+                              width: `${
+                                (project.purchased_unit / project.total_units) *
+                                100
+                              }%`,
+                              transformOrigin: "left",
+                            }}
+                          />
+                        </div>
+                        <p className="text-sm text-green-600 font-medium mt-1">
+                          {project.available_unit} Units Available
+                        </p>
+                      </div>
+
+                      <Button
+                        className="w-full bg-green-800 hover:bg-green-900 rounded-xl px-4 py-3 h-9 inline-flex justify-center items-center gap-2 overflow-hidden"
+                        onClick={() => handleInvestmentClick(project)}
+                      >
+                        <div className="justify-start text-white text-xs font-semibold">
+                          Invest Now
+                        </div>
+                        <ArrowRight className="h-3 w-3 text-white" />
+                      </Button>
+                    </motion.div>
+                  </CardContent>
+                </Card>
+              </motion.div>
             ))
           )}
         </div>
@@ -1180,39 +1356,46 @@ const InvestmentsPage = () => {
         {projects.length > 0 && (
           <div className="flex items-center justify-center mt-8">
             <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
+              <Button
+                variant="outline"
+                size="sm"
                 disabled={pagination.currentPage === 1}
                 onClick={() => handlePageChange(pagination.currentPage - 1)}
               >
                 Previous
               </Button>
-              
+
               <div className="flex items-center gap-1">
-                {Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
-                  const page = i + 1;
-                  return (
-                    <Button
-                      key={page}
-                      variant={pagination.currentPage === page ? "default" : "outline"}
-                      size="sm"
-                      className={`h-8 w-8 p-0 ${
-                        pagination.currentPage === page 
-                          ? 'bg-green-600 hover:bg-green-700 text-white' 
-                          : 'text-gray-600'
-                      }`}
-                      onClick={() => handlePageChange(page)}
-                    >
-                      {page}
-                    </Button>
-                  );
-                })}
+                {Array.from(
+                  { length: Math.min(5, pagination.totalPages) },
+                  (_, i) => {
+                    const page = i + 1;
+                    return (
+                      <Button
+                        key={page}
+                        variant={
+                          pagination.currentPage === page
+                            ? "default"
+                            : "outline"
+                        }
+                        size="sm"
+                        className={`h-8 w-8 p-0 ${
+                          pagination.currentPage === page
+                            ? "bg-green-600 hover:bg-green-700 text-white"
+                            : "text-gray-600"
+                        }`}
+                        onClick={() => handlePageChange(page)}
+                      >
+                        {page}
+                      </Button>
+                    );
+                  }
+                )}
               </div>
-              
-              <Button 
-                variant="outline" 
-                size="sm" 
+
+              <Button
+                variant="outline"
+                size="sm"
                 disabled={pagination.currentPage === pagination.totalPages}
                 onClick={() => handlePageChange(pagination.currentPage + 1)}
               >
@@ -1224,12 +1407,15 @@ const InvestmentsPage = () => {
 
         {/* Investment Details Side Sheet */}
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-          <SheetContent side="right" className="w-full sm:max-w-lg p-0 overflow-y-auto">
+          <SheetContent
+            side="right"
+            className="w-full sm:max-w-lg p-0 overflow-y-auto"
+          >
             <SheetTitle className="sr-only">Investment Details</SheetTitle>
             {selectedInvestment && (
               <AnimatePresence mode="wait">
                 {/* Step 1: Investment Details */}
-                {currentStep === 'details' && (
+                {currentStep === "details" && (
                   <motion.div
                     key="details"
                     variants={stepVariants}
@@ -1239,78 +1425,104 @@ const InvestmentsPage = () => {
                     className="h-full"
                   >
                     <div className="h-full flex flex-col">
-                    <SheetHeader className="p-6 border-b">
-                      <div className="flex items-center justify-between">
-                        <div className="justify-start text-green-950 text-2xl font-extrabold  tracking-tight">{selectedInvestment.name}</div>
-                        <div className="px-2 py-1.5 bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
-                          <div className="px-1 flex justify-start items-start gap-2.5">
-                            <div className="text-center justify-start text-white text-[10px] font-semibold uppercase tracking-wide">
-                              {selectedInvestment.status || 'Available'}
+                      <SheetHeader className="p-6 border-b">
+                        <div className="flex items-center justify-between">
+                          <div className="justify-start text-green-950 text-2xl font-extrabold  tracking-tight">
+                            {selectedInvestment.name}
+                          </div>
+                          <div className="px-2 py-1.5 bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
+                            <div className="px-1 flex justify-start items-start gap-2.5">
+                              <div className="text-center justify-start text-white text-[10px] font-semibold uppercase tracking-wide">
+                                {selectedInvestment.status || "Available"}
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    </SheetHeader>
-                    
-                    <div className="flex-1 p-6 space-y-6">
-                      <img 
-                        src={selectedInvestment.image}
-                        alt={selectedInvestment.name}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
-                      
-                      <div className="flex items-center justify-between">
-                        <div className="flex-1 text-center">
-                          <p className="text-sm text-gray-600">Price per Unit</p>
-                          <p className="font-bold text-lg">GHS {selectedInvestment.price.toLocaleString()}</p>
-                        </div>
-                        <div className="w-px h-12 bg-gray-300"></div>
-                        <div className="flex-1 text-center">
-                          <p className="text-sm text-gray-600">Return (ROI)</p>
-                          <p className="font-bold text-lg text-orange-600">{selectedInvestment.roi}</p>
-                        </div>
-                        <div className="w-px h-12 bg-gray-300"></div>
-                        <div className="flex-1 text-center">
-                          <p className="text-sm text-gray-600">Duration</p>
-                          <p className="font-bold text-lg text-orange-600">{selectedInvestment.duration}</p>
-                        </div>
-                      </div>
+                      </SheetHeader>
 
-                      <div>
-                        <Progress 
-                          value={(selectedInvestment.unitsAvailable / selectedInvestment.totalUnits) * 100} 
-                          className="h-2"
+                      <div className="flex-1 p-6 space-y-6">
+                        <img
+                          src={selectedInvestment.image}
+                          alt={selectedInvestment.name}
+                          className="w-full h-48 object-cover rounded-lg"
                         />
-                        <p className="text-sm text-green-600 font-medium mt-1">
-                          {selectedInvestment.unitsAvailable} Units Available
-                        </p>
-                      </div>
 
-                      <div>
-                        <Button
-                          variant="ghost"
-                          onClick={() => setShowAbout(!showAbout)}
-                          className="w-full justify-between p-0 h-auto"
-                        >
-                          <div className="justify-start text-neutral-800 text-sm font-semibold ">About Project</div>
-                          {showAbout ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                        </Button>
-                        {showAbout && (
-                          <div className="self-stretch justify-start text-zinc-900 text-sm font-normal  leading-tight mt-3">
-                            {selectedInvestment.description}
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1 text-center">
+                            <p className="text-sm text-gray-600">
+                              Price per Unit
+                            </p>
+                            <p className="font-bold text-lg">
+                              GHS {selectedInvestment.price.toLocaleString()}
+                            </p>
                           </div>
-                        )}
-                      </div>
+                          <div className="w-px h-12 bg-gray-300"></div>
+                          <div className="flex-1 text-center">
+                            <p className="text-sm text-gray-600">
+                              Return (ROI)
+                            </p>
+                            <p className="font-bold text-lg text-orange-600">
+                              {selectedInvestment.roi}
+                            </p>
+                          </div>
+                          <div className="w-px h-12 bg-gray-300"></div>
+                          <div className="flex-1 text-center">
+                            <p className="text-sm text-gray-600">Duration</p>
+                            <p className="font-bold text-lg text-orange-600">
+                              {selectedInvestment.duration}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <Progress
+                            value={
+                              (selectedInvestment.unitsAvailable /
+                                selectedInvestment.totalUnits) *
+                              100
+                            }
+                            className="h-2"
+                          />
+                          <p className="text-sm text-green-600 font-medium mt-1">
+                            {selectedInvestment.unitsAvailable} Units Available
+                          </p>
+                        </div>
+
+                        <div>
+                          <Button
+                            variant="ghost"
+                            onClick={() => setShowAbout(!showAbout)}
+                            className="w-full justify-between p-0 h-auto"
+                          >
+                            <div className="justify-start text-neutral-800 text-sm font-semibold ">
+                              About Project
+                            </div>
+                            {showAbout ? (
+                              <ChevronUp className="h-4 w-4" />
+                            ) : (
+                              <ChevronDown className="h-4 w-4" />
+                            )}
+                          </Button>
+                          {showAbout && (
+                            <div className="self-stretch justify-start text-zinc-900 text-sm font-normal  leading-tight mt-3">
+                              {selectedInvestment.description}
+                            </div>
+                          )}
+                        </div>
 
                         <div className="space-y-4 pt-4 border-t">
                           <div className="flex items-center justify-between">
-                            <div className="self-stretch justify-start text-zinc-800 text-sm font-bold ">Unit Quantity</div>
+                            <div className="self-stretch justify-start text-zinc-800 text-sm font-bold ">
+                              Unit Quantity
+                            </div>
                             <div className="flex items-center gap-3">
                               <Button
                                 variant="outline"
                                 size="sm"
                                 className="h-8 w-8 p-0 rounded-full hover:bg-green-100"
-                                onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                                onClick={() =>
+                                  setQuantity(Math.max(1, quantity - 1))
+                                }
                                 disabled={quantity <= 1}
                               >
                                 <Minus className="h-4 w-4" />
@@ -1322,47 +1534,62 @@ const InvestmentsPage = () => {
                                 variant="outline"
                                 size="sm"
                                 className="h-8 w-8 p-0 rounded-full hover:bg-green-100"
-                                onClick={() => setQuantity(Math.min(selectedInvestment.unitsAvailable, quantity + 1))}
-                                disabled={quantity >= selectedInvestment.unitsAvailable}
+                                onClick={() =>
+                                  setQuantity(
+                                    Math.min(
+                                      selectedInvestment.unitsAvailable,
+                                      quantity + 1
+                                    )
+                                  )
+                                }
+                                disabled={
+                                  quantity >= selectedInvestment.unitsAvailable
+                                }
                               >
                                 <Plus className="h-4 w-4" />
                               </Button>
                             </div>
                           </div>
 
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Total Amount</span>
-                          <span className="font-bold">GHS {calculateTotal().toLocaleString()}</span>
-                        </div>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Total Amount</span>
+                            <span className="font-bold">
+                              GHS {calculateTotal().toLocaleString()}
+                            </span>
+                          </div>
 
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Expected Return</span>
-                          <span className="font-bold text-green-600">GHS {calculateExpectedReturn()}</span>
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">
+                              Expected Return
+                            </span>
+                            <span className="font-bold text-green-600">
+                              GHS {calculateExpectedReturn()}
+                            </span>
+                          </div>
                         </div>
                       </div>
-                    </div>
 
-                    <div className="p-6 border-t bg-gray-50 flex gap-3">
-                      <Button 
-                        variant="outline" 
-                        className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-700 text-green-700 hover:bg-green-50 transition-all duration-200"
-                        onClick={() => setIsSheetOpen(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button 
-                        className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                        onClick={handleInvestNow}
-                      >
-                        Invest Now
-                      </Button>
-                    </div>
+                      <div className="p-6 border-t bg-gray-50 flex gap-3">
+                        <Button
+                          variant="outline"
+                          className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-700 text-green-700 hover:bg-green-50 transition-all duration-200"
+                          onClick={() => setIsSheetOpen(false)}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                          onClick={handleInvestNow}
+                        >
+                          Invest Now
+                        </Button>
+                      </div>
                     </div>
                   </motion.div>
                 )}
 
                 {/* Step 2: Review Investment */}
-                {currentStep === 'review' && (
+                {currentStep === "review" && (
                   <motion.div
                     key="review"
                     variants={stepVariants}
@@ -1374,33 +1601,39 @@ const InvestmentsPage = () => {
                     {/* Progress Steps */}
                     <div className="p-6 border-b">
                       <div className="flex items-center justify-between mb-4">
-                        <Button variant="ghost" size="sm" onClick={() => setCurrentStep('details')}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCurrentStep("details")}
+                        >
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
-                      
+
                       <div className="flex items-center justify-center space-x-4 mb-4">
-                        <motion.div 
+                        <motion.div
                           className="flex items-center"
                           initial={{ scale: 0.8, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           transition={{ delay: 0.1 }}
                         >
-                          <motion.div 
+                          <motion.div
                             className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-medium"
                             whileHover={{ scale: 1.1 }}
                           >
                             1
                           </motion.div>
-                          <span className="ml-2 text-sm font-medium text-green-600">Review</span>
+                          <span className="ml-2 text-sm font-medium text-green-600">
+                            Review
+                          </span>
                         </motion.div>
-                        <motion.div 
+                        <motion.div
                           className="w-8 h-0.5 bg-gray-300"
                           initial={{ scaleX: 0 }}
                           animate={{ scaleX: 1 }}
                           transition={{ delay: 0.2, duration: 0.3 }}
                         ></motion.div>
-                        <motion.div 
+                        <motion.div
                           className="flex items-center"
                           initial={{ scale: 0.8, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
@@ -1409,10 +1642,12 @@ const InvestmentsPage = () => {
                           <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-medium">
                             2
                           </div>
-                          <span className="ml-2 text-sm text-gray-500">Payment</span>
+                          <span className="ml-2 text-sm text-gray-500">
+                            Payment
+                          </span>
                         </motion.div>
                         <div className="w-8 h-0.5 bg-gray-300"></div>
-                        <motion.div 
+                        <motion.div
                           className="flex items-center"
                           initial={{ scale: 0.8, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
@@ -1421,127 +1656,172 @@ const InvestmentsPage = () => {
                           <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-medium">
                             3
                           </div>
-                          <span className="ml-2 text-sm text-gray-500">Process</span>
+                          <span className="ml-2 text-sm text-gray-500">
+                            Process
+                          </span>
                         </motion.div>
                       </div>
 
                       <div className="text-center">
-                        <div className="self-stretch text-center justify-start text-black text-lg font-extrabold  tracking-tight">Review Your Investment</div>
-                        <p className="text-gray-600 text-sm mt-1">Secure your spot in our current farm projects in just a few steps.</p>
+                        <div className="self-stretch text-center justify-start text-black text-lg font-extrabold  tracking-tight">
+                          Review Your Investment
+                        </div>
+                        <p className="text-gray-600 text-sm mt-1">
+                          Secure your spot in our current farm projects in just
+                          a few steps.
+                        </p>
                       </div>
                     </div>
 
                     <div className="flex-1 p-6 space-y-6">
                       <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                         <div className="p-4 space-y-0">
-                        <div className="flex justify-between items-center py-3">
-                          <span className="text-gray-600 text-sm">Project</span>
-                          <div className="text-right justify-center text-green-950 text-sm font-semibold leading-tight">{selectedInvestment.name}</div>
-                        </div>
-                        <div className="border-t border-gray-200"></div>
-                        
-                        <div className="flex justify-between items-center py-3">
-                          <span className="text-gray-600 text-sm">ROI</span>
-                          <span className="font-semibold text-sm">{selectedInvestment.roi}</span>
-                        </div>
-                        <div className="border-t border-gray-200"></div>
-                        
-                        <div className="flex justify-between items-center py-3">
-                          <span className="text-gray-600 text-sm">Expected Return</span>
-                          <span className="font-semibold text-sm">GHS {calculateExpectedReturn()}</span>
-                        </div>
-                        <div className="border-t border-gray-200"></div>
-                        
-                        <div className="flex justify-between items-center py-3">
-                          <span className="text-gray-600 text-sm">Units Selected</span>
-                          <span className="font-semibold text-sm">{quantity} Unit(s)</span>
-                        </div>
-                        <div className="border-t border-gray-200"></div>
-                        
-                        <div className="flex justify-between items-center py-3">
-                          <span className="text-gray-600 text-sm">Total Amount</span>
-                          <span className="font-semibold text-sm">GHS {calculateTotal().toLocaleString()}</span>
-                        </div>
-                        <div className="border-t border-gray-200"></div>
-                        
-                        <div className="flex justify-between items-center py-3">
-                          <span className="text-gray-600 text-sm">Duration</span>
-                          <span className="font-semibold text-sm">{selectedInvestment.duration}</span>
-                        </div>
-                        <div className="border-t border-gray-200"></div>
-                        
-                        <div className="flex justify-between items-center py-3">
-                          <span className="text-gray-600 text-sm">Starting</span>
-                          <span className="font-semibold text-sm">November 2025</span>
-                        </div>
-                        </div>
+                          <div className="flex justify-between items-center py-3">
+                            <span className="text-gray-600 text-sm">
+                              Project
+                            </span>
+                            <div className="text-right justify-center text-green-950 text-sm font-semibold leading-tight">
+                              {selectedInvestment.name}
+                            </div>
+                          </div>
+                          <div className="border-t border-gray-200"></div>
+
+                          <div className="flex justify-between items-center py-3">
+                            <span className="text-gray-600 text-sm">ROI</span>
+                            <span className="font-semibold text-sm">
+                              {selectedInvestment.roi}
+                            </span>
+                          </div>
+                          <div className="border-t border-gray-200"></div>
+
+                          <div className="flex justify-between items-center py-3">
+                            <span className="text-gray-600 text-sm">
+                              Expected Return
+                            </span>
+                            <span className="font-semibold text-sm">
+                              GHS {calculateExpectedReturn()}
+                            </span>
+                          </div>
+                          <div className="border-t border-gray-200"></div>
+
+                          <div className="flex justify-between items-center py-3">
+                            <span className="text-gray-600 text-sm">
+                              Units Selected
+                            </span>
+                            <span className="font-semibold text-sm">
+                              {quantity} Unit(s)
+                            </span>
+                          </div>
+                          <div className="border-t border-gray-200"></div>
+
+                          <div className="flex justify-between items-center py-3">
+                            <span className="text-gray-600 text-sm">
+                              Total Amount
+                            </span>
+                            <span className="font-semibold text-sm">
+                              GHS {calculateTotal().toLocaleString()}
+                            </span>
+                          </div>
+                          <div className="border-t border-gray-200"></div>
+
+                          <div className="flex justify-between items-center py-3">
+                            <span className="text-gray-600 text-sm">
+                              Duration
+                            </span>
+                            <span className="font-semibold text-sm">
+                              {selectedInvestment.duration}
+                            </span>
+                          </div>
+                          <div className="border-t border-gray-200"></div>
+
+                          <div className="flex justify-between items-center py-3">
+                            <span className="text-gray-600 text-sm">
+                              Starting
+                            </span>
+                            <span className="font-semibold text-sm">
+                              November 2025
+                            </span>
+                          </div>
                         </div>
                       </div>
+                    </div>
 
-                      <Separator />
+                    <Separator />
 
-                      <div className="p-6">
-                        <h3 className="font-semibold mb-3">Terms and Agreement</h3>
-                        <div className="flex items-start space-x-3">
-                          <div className="flex items-center">
-                             <div className="relative">
+                    <div className="p-6">
+                      <h3 className="font-semibold mb-3">
+                        Terms and Agreement
+                      </h3>
+                      <div className="flex items-start space-x-3">
+                        <div className="flex items-center">
+                          <div className="relative">
                             <input
                               type="checkbox"
                               id="terms"
                               checked={agreedToTerms}
-                              onChange={(e) => setAgreedToTerms(e.target.checked)}
-                                 className="sr-only"
-                               />
-                               <label
-                                 htmlFor="terms"
-                                 className={`flex items-center justify-center w-5 h-5 border-2 rounded-full cursor-pointer transition-all duration-200 ${
-                                   agreedToTerms
-                                     ? 'bg-green-600 border-green-600'
-                                     : 'bg-white border-gray-300 hover:border-green-400'
-                                 }`}
-                               >
-                                 {agreedToTerms && (
-                                   <svg
-                                     className="w-3 h-3 text-white"
-                                     fill="none"
-                                     stroke="currentColor"
-                                     viewBox="0 0 24 24"
-                                   >
-                                     <path
-                                       strokeLinecap="round"
-                                       strokeLinejoin="round"
-                                       strokeWidth={3}
-                                       d="M5 13l4 4L19 7"
-                                     />
-                                   </svg>
-                                 )}
-                               </label>
-                             </div>
-                          </div>
-                          <div className="flex-1">
-                            <label htmlFor="terms" className="text-sm text-gray-700">
-                              I agree to the investment terms and understand the risks involved.
+                              onChange={(e) =>
+                                setAgreedToTerms(e.target.checked)
+                              }
+                              className="sr-only"
+                            />
+                            <label
+                              htmlFor="terms"
+                              className={`flex items-center justify-center w-5 h-5 border-2 rounded-full cursor-pointer transition-all duration-200 ${
+                                agreedToTerms
+                                  ? "bg-green-600 border-green-600"
+                                  : "bg-white border-gray-300 hover:border-green-400"
+                              }`}
+                            >
+                              {agreedToTerms && (
+                                <svg
+                                  className="w-3 h-3 text-white"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth={3}
+                                    d="M5 13l4 4L19 7"
+                                  />
+                                </svg>
+                              )}
                             </label>
-                            <Button variant="link" className="p-0 h-auto text-green-600 text-sm">
-                              Read More...
-                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex-1">
+                          <label
+                            htmlFor="terms"
+                            className="text-sm text-gray-700"
+                          >
+                            I agree to the investment terms and understand the
+                            risks involved.
+                          </label>
+                          <Button
+                            variant="link"
+                            className="p-0 h-auto text-green-600 text-sm"
+                          >
+                            Read More...
+                          </Button>
                         </div>
                       </div>
                     </div>
 
                     <div className="p-6 border-t bg-gray-50">
                       <p className="text-xs text-gray-500 text-center mb-4">
-                        Review your investment details carefully before proceeding.
+                        Review your investment details carefully before
+                        proceeding.
                       </p>
                       <div className="flex gap-3">
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-700 text-green-700 hover:bg-green-50 transition-all duration-200"
-                          onClick={() => setCurrentStep('details')}
+                          onClick={() => setCurrentStep("details")}
                         >
                           Cancel
                         </Button>
-                        <Button 
+                        <Button
                           className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                           onClick={handleContinueToPayment}
                           disabled={!agreedToTerms}
@@ -1554,7 +1834,7 @@ const InvestmentsPage = () => {
                 )}
 
                 {/* Step 3: Payment Method Selection */}
-                {currentStep === 'payment' && (
+                {currentStep === "payment" && (
                   <motion.div
                     key="payment"
                     variants={stepVariants}
@@ -1566,126 +1846,204 @@ const InvestmentsPage = () => {
                     {/* Progress Steps */}
                     <div className="p-6 border-b">
                       <div className="flex items-center justify-between mb-4">
-                        <Button variant="ghost" size="sm" onClick={() => setCurrentStep('review')}>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setCurrentStep("review")}
+                        >
                           <X className="h-4 w-4" />
                         </Button>
                       </div>
-                      
+
                       <div className="flex items-center justify-center space-x-4 mb-4">
                         <div className="flex items-center">
                           <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm">
                             <Check className="h-4 w-4" />
                           </div>
-                          <span className="ml-2 text-sm text-gray-500">Review</span>
+                          <span className="ml-2 text-sm text-gray-500">
+                            Review
+                          </span>
                         </div>
                         <div className="w-8 h-0.5 bg-green-600"></div>
                         <div className="flex items-center">
                           <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-medium">
                             2
                           </div>
-                          <span className="ml-2 text-sm font-medium text-green-600">Payment</span>
+                          <span className="ml-2 text-sm font-medium text-green-600">
+                            Payment
+                          </span>
                         </div>
                         <div className="w-8 h-0.5 bg-gray-300"></div>
                         <div className="flex items-center">
                           <div className="w-8 h-8 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center text-sm font-medium">
                             3
                           </div>
-                          <span className="ml-2 text-sm text-gray-500">Process</span>
+                          <span className="ml-2 text-sm text-gray-500">
+                            Process
+                          </span>
                         </div>
                       </div>
 
                       <div className="text-center">
-                        <h2 className="text-xl font-semibold">Choose Your Payment Method</h2>
-                        <p className="text-gray-600 text-sm mt-1">Select how you&apos;d like to pay for this investment.</p>
-                        <p className="text-gray-600 text-sm">All payments are processed securely.</p>
+                        <h2 className="text-xl font-semibold">
+                          Choose Your Payment Method
+                        </h2>
+                        <p className="text-gray-600 text-sm mt-1">
+                          Select how you&apos;d like to pay for this investment.
+                        </p>
+                        <p className="text-gray-600 text-sm">
+                          All payments are processed securely.
+                        </p>
                       </div>
                     </div>
 
                     <div className="flex-1 p-6 space-y-4">
-                      <RadioGroup value={selectedPaymentMethod} onValueChange={handlePaymentMethodSelect}>
+                      <RadioGroup
+                        value={selectedPaymentMethod}
+                        onValueChange={handlePaymentMethodSelect}
+                      >
                         {/* AgriPath Account */}
-                        <div className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
-                          selectedPaymentMethod === 'agripath'
-                            ? 'border-green-500 bg-green-50'
-                            : wallet?.balance && selectedInvestment && (wallet.balance < (selectedInvestment.price * quantity)) 
-                              ? 'border-red-200 bg-red-50' 
-                              : 'border-gray-200 hover:border-gray-300'
-                        }`}>
-                          <RadioGroupItem 
-                            value="agripath" 
-                            id="agripath" 
-                            disabled={!!(wallet?.balance && selectedInvestment && (wallet.balance < (selectedInvestment.price * quantity)))}
+                        <div
+                          className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
+                            selectedPaymentMethod === "agripath"
+                              ? "border-green-500 bg-green-50"
+                              : wallet?.balance &&
+                                selectedInvestment &&
+                                wallet.balance <
+                                  selectedInvestment.price * quantity
+                              ? "border-red-200 bg-red-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <RadioGroupItem
+                            value="agripath"
+                            id="agripath"
+                            disabled={
+                              !!(
+                                wallet?.balance &&
+                                selectedInvestment &&
+                                wallet.balance <
+                                  selectedInvestment.price * quantity
+                              )
+                            }
                           />
                           <div className="flex-1">
-                            <Label htmlFor="agripath" className="font-medium">Agripath Account</Label>
+                            <Label htmlFor="agripath" className="font-medium">
+                              Agripath Account
+                            </Label>
                             <p className="text-sm text-gray-500">
                               Pay with your Agripath wallet balance
-                              {wallet?.balance && selectedInvestment && (wallet.balance < (selectedInvestment.price * quantity)) && (
-                                <span className="block text-xs text-red-500 mt-1">
-                                  Insufficient balance for this investment
-                                </span>
-                              )}
+                              {wallet?.balance &&
+                                selectedInvestment &&
+                                wallet.balance <
+                                  selectedInvestment.price * quantity && (
+                                  <span className="block text-xs text-red-500 mt-1">
+                                    Insufficient balance for this investment
+                                  </span>
+                                )}
                             </p>
                           </div>
                           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                            <Image  src="/y-logo.svg" alt="Agripath" width={40} height={40} />
+                            <Image
+                              src="/y-logo.svg"
+                              alt="Agripath"
+                              width={40}
+                              height={40}
+                            />
                           </div>
                         </div>
 
                         {/* Mobile Money */}
-                        <div className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
-                          selectedPaymentMethod === 'mobile'
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}>
+                        <div
+                          className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
+                            selectedPaymentMethod === "mobile"
+                              ? "border-green-500 bg-green-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
                           <RadioGroupItem value="mobile" id="mobile" />
                           <div className="flex-1">
-                            <Label htmlFor="mobile" className="font-medium">Mobile Money</Label>
-                            <p className="text-sm text-gray-500">Pay with MoMo</p>
+                            <Label htmlFor="mobile" className="font-medium">
+                              Mobile Money
+                            </Label>
+                            <p className="text-sm text-gray-500">
+                              Pay with MoMo
+                            </p>
                           </div>
                           <div className="flex gap-2">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iI0ZGQ0MwMCIvPgo8dGV4dCB4PSIxMiIgeT0iMTYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzAwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TVROPC90ZXh0Pgo8L3N2Zz4K" alt="MTN" className="w-6 h-6" />
-                            <div className="w-6 h-6 bg-red-600 rounded text-white text-xs flex items-center justify-center font-bold">V</div>
-                            <div className="w-6 h-6 bg-orange-500 rounded text-white text-xs flex items-center justify-center font-bold">A</div>
+                            <img
+                              src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iI0ZGQ0MwMCIvPgo8dGV4dCB4PSIxMiIgeT0iMTYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzAwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TVROPC90ZXh0Pgo8L3N2Zz4K"
+                              alt="MTN"
+                              className="w-6 h-6"
+                            />
+                            <div className="w-6 h-6 bg-red-600 rounded text-white text-xs flex items-center justify-center font-bold">
+                              V
+                            </div>
+                            <div className="w-6 h-6 bg-orange-500 rounded text-white text-xs flex items-center justify-center font-bold">
+                              A
+                            </div>
                           </div>
                         </div>
 
                         {/* Bank Card */}
-                        <div className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
-                          selectedPaymentMethod === 'card'
-                            ? 'border-green-500 bg-green-50'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}>
+                        <div
+                          className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
+                            selectedPaymentMethod === "card"
+                              ? "border-green-500 bg-green-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
                           <RadioGroupItem value="card" id="card" />
                           <div className="flex-1">
-                            <Label htmlFor="card" className="font-medium">Bank Card</Label>
-                            <p className="text-sm text-gray-500">Pay with Mastercard & Visa</p>
+                            <Label htmlFor="card" className="font-medium">
+                              Bank Card
+                            </Label>
+                            <p className="text-sm text-gray-500">
+                              Pay with Mastercard & Visa
+                            </p>
                           </div>
                           <div className="flex gap-2">
                             <div className="w-8 h-5 bg-gradient-to-r from-red-500 to-yellow-500 rounded"></div>
-                            <div className="w-8 h-5 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">VISA</div>
+                            <div className="w-8 h-5 bg-blue-600 rounded text-white text-xs flex items-center justify-center font-bold">
+                              VISA
+                            </div>
                           </div>
                         </div>
-
                       </RadioGroup>
-                      {selectedPaymentMethod === 'mobile' && (
+                      {selectedPaymentMethod === "mobile" && (
                         <div className="p-4 bg-green-50 rounded-lg border border-green-200 space-y-4">
                           <div>
-                            <Label className="text-sm font-medium">Select services provider</Label>
-                            <Select value={paymentDetails.provider} onValueChange={(value) => setPaymentDetails({...paymentDetails, provider: value})}>
+                            <Label className="text-sm font-medium">
+                              Select services provider
+                            </Label>
+                            <Select
+                              value={paymentDetails.provider}
+                              onValueChange={(value) =>
+                                setPaymentDetails({
+                                  ...paymentDetails,
+                                  provider: value,
+                                })
+                              }
+                            >
                               <SelectTrigger className="mt-1">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="MTN">MTN</SelectItem>
-                                <SelectItem value="Vodafone">Vodafone</SelectItem>
-                                <SelectItem value="AirtelTigo">AirtelTigo</SelectItem>
+                                <SelectItem value="Vodafone">
+                                  Vodafone
+                                </SelectItem>
+                                <SelectItem value="AirtelTigo">
+                                  AirtelTigo
+                                </SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div>
-                            <Label className="text-sm font-medium">Phone number</Label>
+                            <Label className="text-sm font-medium">
+                              Phone number
+                            </Label>
                             <div className="flex mt-1">
                               <div className="flex items-center px-3  border border-r-0 rounded-l-md bg-green-100">
                                 <span className="text-sm">+233</span>
@@ -1693,26 +2051,40 @@ const InvestmentsPage = () => {
                               <Input
                                 placeholder="Eg. 55 567 8905"
                                 value={paymentDetails.mobileNumber}
-                                onChange={(e) => setPaymentDetails({...paymentDetails, mobileNumber: e.target.value})}
+                                onChange={(e) =>
+                                  setPaymentDetails({
+                                    ...paymentDetails,
+                                    mobileNumber: e.target.value,
+                                  })
+                                }
                                 className="rounded-l-none px-3 py-2 "
                               />
                             </div>
                           </div>
 
                           <div className="flex items-center justify-between p-3 bg-green-100 rounded">
-                            <span className="text-sm font-medium">Should we save this MoMo number?</span>
+                            <span className="text-sm font-medium">
+                              Should we save this MoMo number?
+                            </span>
                             <Switch
                               checked={paymentDetails.savePayment}
-                              onCheckedChange={(checked) => setPaymentDetails({...paymentDetails, savePayment: checked})}
+                              onCheckedChange={(checked) =>
+                                setPaymentDetails({
+                                  ...paymentDetails,
+                                  savePayment: checked,
+                                })
+                              }
                             />
                           </div>
                         </div>
                       )}
 
-                      {selectedPaymentMethod === 'card' && (
+                      {selectedPaymentMethod === "card" && (
                         <div className="p-4 bg-gray-50 rounded-lg border space-y-4">
                           <div>
-                            <Label className="text-sm font-medium">Cardholder Name</Label>
+                            <Label className="text-sm font-medium">
+                              Cardholder Name
+                            </Label>
                             <Input
                               placeholder="Amanda"
                               value={paymentDetails.cardName}
@@ -1721,9 +2093,11 @@ const InvestmentsPage = () => {
                               maxLength={50}
                             />
                           </div>
-                          
+
                           <div>
-                            <Label className="text-sm font-medium">Card number</Label>
+                            <Label className="text-sm font-medium">
+                              Card number
+                            </Label>
                             <div className="relative mt-1">
                               <Input
                                 placeholder="0000 0000 0000 0000"
@@ -1740,7 +2114,9 @@ const InvestmentsPage = () => {
 
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <Label className="text-sm font-medium">Expiry Date</Label>
+                              <Label className="text-sm font-medium">
+                                Expiry Date
+                              </Label>
                               <Input
                                 placeholder="MM/YY"
                                 value={paymentDetails.expiryDate}
@@ -1751,7 +2127,9 @@ const InvestmentsPage = () => {
                               />
                             </div>
                             <div>
-                              <Label className="text-sm font-medium">CVC/CVV</Label>
+                              <Label className="text-sm font-medium">
+                                CVC/CVV
+                              </Label>
                               <Input
                                 placeholder="000"
                                 value={paymentDetails.cvv}
@@ -1764,27 +2142,32 @@ const InvestmentsPage = () => {
                           </div>
 
                           <div className="flex items-center justify-between p-3 bg-gray-100 rounded">
-                            <span className="text-sm font-medium">Save this payment method</span>
+                            <span className="text-sm font-medium">
+                              Save this payment method
+                            </span>
                             <Switch
                               checked={paymentDetails.savePayment}
-                              onCheckedChange={(checked) => setPaymentDetails({...paymentDetails, savePayment: checked})}
+                              onCheckedChange={(checked) =>
+                                setPaymentDetails({
+                                  ...paymentDetails,
+                                  savePayment: checked,
+                                })
+                              }
                             />
                           </div>
                         </div>
                       )}
-
-                      
                     </div>
 
                     <div className="p-6 border-t bg-gray-50 flex gap-3">
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-700 text-green-700 hover:bg-green-50 transition-all duration-200"
-                        onClick={() => setCurrentStep('review')}
+                        onClick={() => setCurrentStep("review")}
                       >
                         Cancel
                       </Button>
-                      <Button 
+                      <Button
                         className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         onClick={handleInvestmentSubmit}
                         disabled={!selectedPaymentMethod || isProcessing}
@@ -1795,7 +2178,7 @@ const InvestmentsPage = () => {
                             Processing...
                           </>
                         ) : (
-                          'Invest Now'
+                          "Invest Now"
                         )}
                       </Button>
                     </div>
@@ -1803,7 +2186,7 @@ const InvestmentsPage = () => {
                 )}
 
                 {/* Step 4: Processing */}
-                {currentStep === 'process' && (
+                {currentStep === "process" && (
                   <motion.div
                     key="process"
                     variants={stepVariants}
@@ -1817,21 +2200,27 @@ const InvestmentsPage = () => {
                         <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm">
                           <Check className="h-4 w-4" />
                         </div>
-                        <span className="ml-2 text-sm text-gray-500">Review</span>
+                        <span className="ml-2 text-sm text-gray-500">
+                          Review
+                        </span>
                       </div>
                       <div className="w-8 h-0.5 bg-green-600"></div>
                       <div className="flex items-center">
                         <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm">
                           <Check className="h-4 w-4" />
                         </div>
-                        <span className="ml-2 text-sm text-gray-500">Payment</span>
+                        <span className="ml-2 text-sm text-gray-500">
+                          Payment
+                        </span>
                       </div>
                       <div className="w-8 h-0.5 bg-green-600"></div>
                       <div className="flex items-center">
                         <div className="w-8 h-8 rounded-full bg-green-600 text-white flex items-center justify-center text-sm font-medium">
                           3
                         </div>
-                        <span className="ml-2 text-sm font-medium text-green-600">Process</span>
+                        <span className="ml-2 text-sm font-medium text-green-600">
+                          Process
+                        </span>
                       </div>
                     </div>
 
@@ -1839,14 +2228,22 @@ const InvestmentsPage = () => {
                       <div className="w-16 h-16 mx-auto">
                         <Loader2 className="w-16 h-16 animate-spin text-green-600" />
                       </div>
-                      
+
                       <div>
-                        <h2 className="text-2xl font-semibold mb-2">Processing...</h2>
+                        <h2 className="text-2xl font-semibold mb-2">
+                          Processing...
+                        </h2>
                         <p className="text-gray-600 mb-4">
-                            Hang tight! We&apos;re confirming your payment with your provider. This usually takes a few seconds.
+                          Hang tight! We&apos;re confirming your payment with
+                          your provider. This usually takes a few seconds.
                         </p>
                         <p className="text-sm text-gray-500">
-                          You will receive a USSD prompt in <span className="font-medium">{countdown > 0 ? `${countdown.toString().padStart(2, '0')}:00s` : '00:00s'}</span>
+                          You will receive a USSD prompt in{" "}
+                          <span className="font-medium">
+                            {countdown > 0
+                              ? `${countdown.toString().padStart(2, "0")}:00s`
+                              : "00:00s"}
+                          </span>
                         </p>
                       </div>
                     </div>
@@ -1854,7 +2251,7 @@ const InvestmentsPage = () => {
                 )}
 
                 {/* Step 5: Success */}
-                {currentStep === 'success' && (
+                {currentStep === "success" && (
                   <motion.div
                     key="success"
                     variants={stepVariants}
@@ -1870,42 +2267,50 @@ const InvestmentsPage = () => {
                           <motion.div
                             key={i}
                             className="absolute"
-                            initial={{ 
-                              y: -100, 
+                            initial={{
+                              y: -100,
                               x: Math.random() * window.innerWidth,
                               rotate: 0,
-                              opacity: 1
+                              opacity: 1,
                             }}
-                            animate={{ 
+                            animate={{
                               y: window.innerHeight + 100,
                               rotate: 360,
-                              opacity: 0
+                              opacity: 0,
                             }}
                             transition={{
                               duration: Math.random() * 3 + 2,
                               delay: Math.random() * 2,
-                              ease: "easeOut"
+                              ease: "easeOut",
                             }}
                             style={{
                               left: `${Math.random() * 100}%`,
-                              top: `${Math.random() * 100}%`
+                              top: `${Math.random() * 100}%`,
                             }}
                           >
-                            <motion.div 
+                            <motion.div
                               className={`w-3 h-3 ${
-                                ['bg-red-400', 'bg-blue-400', 'bg-yellow-400', 'bg-green-400', 'bg-purple-400', 'bg-pink-400'][Math.floor(Math.random() * 6)]
+                                [
+                                  "bg-red-400",
+                                  "bg-blue-400",
+                                  "bg-yellow-400",
+                                  "bg-green-400",
+                                  "bg-purple-400",
+                                  "bg-pink-400",
+                                ][Math.floor(Math.random() * 6)]
                               }`}
-                              animate={{ 
+                              animate={{
                                 rotate: [0, 45, 90, 135, 180],
-                                scale: [1, 1.2, 1, 0.8, 1]
+                                scale: [1, 1.2, 1, 0.8, 1],
                               }}
                               transition={{
                                 duration: 2,
                                 repeat: Infinity,
-                                ease: "easeInOut"
+                                ease: "easeInOut",
                               }}
                               style={{
-                                borderRadius: Math.random() > 0.5 ? '50%' : '0%'
+                                borderRadius:
+                                  Math.random() > 0.5 ? "50%" : "0%",
                               }}
                             />
                           </motion.div>
@@ -1913,57 +2318,87 @@ const InvestmentsPage = () => {
                       </div>
 
                       <div className="text-center space-y-6 relative z-10">
-                        <motion.div 
+                        <motion.div
                           className="w-20 h-20 mx-auto bg-green-100 rounded-full flex items-center justify-center"
                           initial={{ scale: 0, rotate: -180 }}
                           animate={{ scale: 1, rotate: 0 }}
-                          transition={{ 
-                            type: "spring", 
-                            stiffness: 200, 
+                          transition={{
+                            type: "spring",
+                            stiffness: 200,
                             damping: 15,
-                            delay: 0.2 
+                            delay: 0.2,
                           }}
                         >
                           <motion.div
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
-                            transition={{ delay: 0.5, type: "spring", stiffness: 300 }}
+                            transition={{
+                              delay: 0.5,
+                              type: "spring",
+                              stiffness: 300,
+                            }}
                           >
                             <Check className="w-10 h-10 text-green-600" />
                           </motion.div>
                         </motion.div>
-                        
+
                         <div>
-                          <h2 className="text-2xl font-semibold mb-2">Investment Successful</h2>
+                          <h2 className="text-2xl font-semibold mb-2">
+                            Investment Successful
+                          </h2>
                           <p className="text-gray-600">
-                            Your investment in <span className="font-medium">{successInvestmentDetails.investment?.name || selectedInvestment?.name}</span> is confirmed.
+                            Your investment in{" "}
+                            <span className="font-medium">
+                              {successInvestmentDetails.investment?.name ||
+                                selectedInvestment?.name}
+                            </span>{" "}
+                            is confirmed.
                           </p>
                         </div>
 
                         <div className="space-y-4 text-left bg-gray-50 p-4 rounded-lg">
                           <div className="text-center mb-4">
-                            <p className="text-sm text-gray-600 mb-1">Total Payment</p>
-                            <p className="text-3xl font-bold">GHS {calculateTotal().toLocaleString()}</p>
+                            <p className="text-sm text-gray-600 mb-1">
+                              Total Payment
+                            </p>
+                            <p className="text-3xl font-bold">
+                              GHS {calculateTotal().toLocaleString()}
+                            </p>
                           </div>
-                          
+
                           <Separator />
-                          
+
                           <div className="space-y-2">
                             <div className="flex justify-between">
                               <span className="text-gray-600">Project</span>
-                              <span className="font-medium">{successInvestmentDetails.investment?.name || selectedInvestment?.name}</span>
+                              <span className="font-medium">
+                                {successInvestmentDetails.investment?.name ||
+                                  selectedInvestment?.name}
+                              </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Expected Return</span>
-                              <span className="font-medium">GHS {calculateExpectedReturn()}</span>
+                              <span className="text-gray-600">
+                                Expected Return
+                              </span>
+                              <span className="font-medium">
+                                GHS {calculateExpectedReturn()}
+                              </span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-600">Units Selected</span>
-                              <span className="font-medium">{successInvestmentDetails.quantity || quantity} Unit(s)</span>
+                              <span className="text-gray-600">
+                                Units Selected
+                              </span>
+                              <span className="font-medium">
+                                {successInvestmentDetails.quantity || quantity}{" "}
+                                Unit(s)
+                              </span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Duration</span>
-                              <span className="font-medium">{successInvestmentDetails.investment?.duration || selectedInvestment?.duration}</span>
+                              <span className="font-medium">
+                                {successInvestmentDetails.investment
+                                  ?.duration || selectedInvestment?.duration}
+                              </span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Starting</span>
@@ -1972,8 +2407,8 @@ const InvestmentsPage = () => {
                           </div>
                         </div>
 
-                        <Button 
-                          variant="link" 
+                        <Button
+                          variant="link"
                           className="text-green-600 underline"
                           onClick={generateReceipt}
                         >
@@ -1983,31 +2418,35 @@ const InvestmentsPage = () => {
                     </div>
 
                     <div className="p-6 border-t bg-gray-50 space-y-3">
-                      <div 
+                      <div
                         className="self-stretch p-4 bg-green-800 rounded-2xl w-full inline-flex justify-center items-center gap-2 cursor-pointer hover:bg-green-900 transition-colors"
                         onClick={() => {
                           setIsSheetOpen(false);
-                          router.push('/portfolio');
+                          router.push("/portfolio");
                         }}
                       >
-                        <div className="flex-1 text-center justify-center text-white text-base  capitalize">View My Portfolio</div>
+                        <div className="flex-1 text-center justify-center text-white text-base  capitalize">
+                          View My Portfolio
+                        </div>
                       </div>
-                      <div 
+                      <div
                         className="self-stretch p-4 rounded-2xl w-full outline outline-1 outline-offset-[-1px] outline-green-800 inline-flex justify-center items-center gap-2 cursor-pointer hover:bg-green-50 transition-colors"
                         onClick={() => {
                           setIsSheetOpen(false);
-                          setCurrentStep('details');
+                          setCurrentStep("details");
                           resetFlow();
                         }}
                       >
-                        <div className="flex-1 text-center justify-center text-green-800 text-base  capitalize">Explore Other Investments</div>
+                        <div className="flex-1 text-center justify-center text-green-800 text-base  capitalize">
+                          Explore Other Investments
+                        </div>
                       </div>
                     </div>
                   </motion.div>
                 )}
 
                 {/* Step 6: Error */}
-                {currentStep === 'error' && (
+                {currentStep === "error" && (
                   <motion.div
                     key="error"
                     variants={stepVariants}
@@ -2017,46 +2456,50 @@ const InvestmentsPage = () => {
                     className="h-full flex flex-col items-center justify-center p-6"
                   >
                     <div className="text-center space-y-6">
-                      <motion.div 
+                      <motion.div
                         className="w-20 h-20 mx-auto bg-red-100 rounded-full flex items-center justify-center"
                         initial={{ scale: 0, rotate: -180 }}
                         animate={{ scale: 1, rotate: 0 }}
-                        transition={{ 
-                          type: "spring", 
-                          stiffness: 200, 
+                        transition={{
+                          type: "spring",
+                          stiffness: 200,
                           damping: 15,
-                          delay: 0.2 
+                          delay: 0.2,
                         }}
                       >
                         <motion.div
                           initial={{ scale: 0 }}
                           animate={{ scale: 1 }}
-                          transition={{ delay: 0.5, type: "spring", stiffness: 300 }}
+                          transition={{
+                            delay: 0.5,
+                            type: "spring",
+                            stiffness: 300,
+                          }}
                         >
                           <AlertTriangle className="w-10 h-10 text-red-600" />
                         </motion.div>
                       </motion.div>
-                      
+
                       <motion.div
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.6 }}
                       >
-                        <h2 className="text-2xl font-semibold mb-2">Oops!</h2>
+                        <h2 className="text-2xl font-semibold mb-2 text-red-600">
+                          Payment Failed
+                        </h2>
                         <p className="text-gray-600">
-                          We couldn&apos;t complete your payment.
-                        </p>
-                        <p className="text-gray-600">
-                          Try again or use a different account.
+                          {currentErrorMessage ||
+                            "We couldn't complete your payment. Please try again or contact support if the problem persists."}
                         </p>
                       </motion.div>
                     </div>
 
                     <div className="mt-8 w-full">
-                      <Button 
+                      <Button
                         className="flex h-[50px] px-8 justify-center items-center gap-1.5 w-full rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200"
                         onClick={() => {
-                          setCurrentStep('payment');
+                          setCurrentStep("payment");
                         }}
                       >
                         Try Again
@@ -2089,7 +2532,7 @@ const InvestmentsPage = () => {
         {/* Custom Alert */}
         <CustomAlert
           isOpen={alertState.isOpen}
-          onClose={() => setAlertState(prev => ({ ...prev, isOpen: false }))}
+          onClose={() => setAlertState((prev) => ({ ...prev, isOpen: false }))}
           title={alertState.title}
           message={alertState.message}
           type={alertState.type}
