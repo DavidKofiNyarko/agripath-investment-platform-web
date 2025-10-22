@@ -864,7 +864,7 @@ const InvestmentsPage = () => {
           cvv: paymentDetails.cvv,
           card_holder: paymentDetails.cardName,
           user_email: user?.email || "user@example.com",
-          redirect_url: "https://backoffice.agripath.co/dashboard",
+          redirect_url: `${window.location.origin}/investments`,
         });
       } else if (selectedPaymentMethod === "agripath") {
         // Wallet Investment using the wallet investment endpoint
