@@ -111,6 +111,7 @@ const DashboardPage = () => {
   const [savePaymentMethod, setSavePaymentMethod] = useState(true);
   const [currentStep, setCurrentStep] = useState("amount");
   const [withdrawStep, setWithdrawStep] = useState("amount");
+  const [isWithdrawProcessing, setIsWithdrawProcessing] = useState(false);
   const [amountError, setAmountError] = useState("");
   const [withdrawAmountError, setWithdrawAmountError] = useState("");
   const [paymentDetails, setPaymentDetails] = useState({
@@ -129,6 +130,7 @@ const DashboardPage = () => {
     networkProvider: "",
     phoneNumber: "",
   });
+  const [withdrawResult, setWithdrawResult] = useState<any>(null);
 
   // Amount validation functions
   const formatAmount = (value: string) => {
@@ -305,6 +307,9 @@ const DashboardPage = () => {
 
   const handleWithdrawPinSuccess = async () => {
     setIsWithdrawPinModalOpen(false);
+    setIsWithdrawProcessing(true);
+    setWithdrawStep("loading");
+
     try {
       const withdrawAmountValue = parseFloat(withdrawAmount.replace(/,/g, ""));
       const result = await processWalletWithdrawal({
@@ -321,13 +326,22 @@ const DashboardPage = () => {
             }),
         description: "Dashboard withdrawal",
       });
-      if (result.success) {
-        setWithdrawStep("success");
-      } else {
-        setWithdrawStep("error");
-      }
+
+      // Simulate processing delay
+      setTimeout(() => {
+        setIsWithdrawProcessing(false);
+        if (result.success) {
+          setWithdrawResult(result);
+          setWithdrawStep("success");
+        } else {
+          setWithdrawStep("error");
+        }
+      }, 2000);
     } catch (error) {
-      setWithdrawStep("error");
+      setTimeout(() => {
+        setIsWithdrawProcessing(false);
+        setWithdrawStep("error");
+      }, 2000);
     }
   };
 
@@ -1526,354 +1540,538 @@ const DashboardPage = () => {
 
             {/* Content */}
             <div className="flex-1 p-4 sm:p-6 space-y-6 overflow-y-auto">
-              {/* Amount Input */}
-              <div className="space-y-2">
-                <div className="w-full flex justify-start text-gray-900 text-lg font-extrabold leading-tight">
-                  Enter Amount
-                </div>
-                <div className="w-full flex justify-start text-gray-500 text-sm font-medium leading-tight">
-                  How much do you want to withdraw?
-                </div>
-                <div className="w-full pb-3 border-b border-black/20 flex justify-between items-center">
-                  <Input
-                    type="text"
-                    placeholder="0.00"
-                    value={withdrawAmount}
-                    onChange={(e) => handleWithdrawAmountChange(e.target.value)}
-                    className={`text-right text-gray-900 text-4xl sm:text-5xl md:text-6xl font-normal leading-10 border-0 p-0 bg-transparent focus:ring-0 focus:border-0 h-auto w-full ${
-                      withdrawAmountError ? "text-red-500" : ""
-                    }`}
-                  />
-                  <div className="text-center justify-start text-black text-2xl sm:text-3xl font-normal tracking-tight">
-                    GHS
+              {/* Success Screen */}
+              {withdrawStep === "success" && (
+                <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 10,
+                    }}
+                    className="relative"
+                  >
+                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                      <CheckCircle className="h-10 w-10 text-green-600" />
+                    </div>
+                    {/* Confetti animation */}
+                    <div className="absolute inset-0 pointer-events-none">
+                      {[...Array(20)].map((_, i) => (
+                        <motion.div
+                          key={i}
+                          className="absolute w-2 h-2 rounded-full"
+                          style={{
+                            backgroundColor: [
+                              "#ff6b6b",
+                              "#4ecdc4",
+                              "#45b7d1",
+                              "#96ceb4",
+                              "#feca57",
+                            ][i % 5],
+                            left: "50%",
+                            top: "50%",
+                          }}
+                          initial={{
+                            x: 0,
+                            y: 0,
+                            scale: 0,
+                          }}
+                          animate={{
+                            x: (Math.random() - 0.5) * 200,
+                            y: (Math.random() - 0.5) * 200,
+                            scale: [0, 1, 0],
+                          }}
+                          transition={{
+                            duration: 2,
+                            delay: i * 0.1,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </motion.div>
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Withdrawal Successful!
+                    </h3>
+                    <p className="text-gray-600">
+                      Your withdrawal request has been submitted successfully.
+                      {withdrawResult?.pending &&
+                        " Please check your phone for OTP verification."}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Transaction ID:{" "}
+                      {withdrawResult?.transactionId || "Processing..."}
+                    </p>
                   </div>
                 </div>
-                {withdrawAmountError && (
+              )}
+
+              {/* Error Screen */}
+              {withdrawStep === "error" && (
+                <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
                   <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    transition={{ duration: 0.3 }}
-                    className="text-sm text-red-500"
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 10,
+                    }}
                   >
-                    {withdrawAmountError}
+                    <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center">
+                      <X className="h-10 w-10 text-red-600" />
+                    </div>
                   </motion.div>
-                )}
-              </div>
-
-              {/* Payment Method Selection */}
-              <div className="space-y-4">
-                <div className="w-full flex justify-start text-gray-900 text-lg font-extrabold leading-tight">
-                  Select Withdrawal Method
+                  <div className="space-y-2">
+                    <h3 className="text-2xl font-bold text-gray-900">
+                      Withdrawal Failed
+                    </h3>
+                    <p className="text-gray-600">
+                      There was an error processing your withdrawal request.
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      Please try again or contact support if the issue persists.
+                    </p>
+                  </div>
                 </div>
-                <div className="w-full px-4">
-                  <RadioGroup
-                    value={withdrawMethod}
-                    onValueChange={setWithdrawMethod}
+              )}
+
+              {/* Loading Screen */}
+              {withdrawStep === "loading" && (
+                <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 200,
+                      damping: 10,
+                    }}
+                    className="relative"
                   >
-                    <div className="w-full space-y-4">
-                      {/* Bank Transfer Option */}
-                      <div
-                        className={`w-full rounded-xl border transition-all duration-200 ${
-                          withdrawMethod === "bank"
-                            ? "border-green-500 bg-green-50/30"
-                            : "border-gray-200"
-                        }`}
+                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
+                      <motion.div
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear",
+                        }}
                       >
-                        {/* Header Row */}
-                        <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6 w-full">
-                          <RadioGroupItem
-                            value="bank"
-                            id="withdraw-bank"
-                            className="w-6 h-6 sm:w-7 sm:h-7"
-                          />
-                          <Label
-                            htmlFor="withdraw-bank"
-                            className="flex-1 cursor-pointer"
-                          >
-                            <span className="text-base sm:text-lg font-medium">
-                              Bank Transfer
-                            </span>
-                          </Label>
-                          <Buildings className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
-                        </div>
-                        {/* Bank Transfer Details */}
-                        {withdrawMethod === "bank" && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            transition={{ duration: 0.2 }}
-                            className="border-t border-green-200 overflow-hidden "
-                          >
-                            <div className="p-6 space-y-8">
-                              <div>
-                                <Label className="text-sm font-medium text-gray-700">
-                                  Select Bank
-                                </Label>
-                                <Select
-                                  value={withdrawDetails.bankCode}
-                                  onValueChange={(value) =>
-                                    setWithdrawDetails({
-                                      ...withdrawDetails,
-                                      bankCode: value,
-                                    })
-                                  }
-                                >
-                                  <SelectTrigger className="mt-1 border-0 outline-none focus:ring-0 focus:border-0">
-                                    <SelectValue placeholder="Select bank" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="001">
-                                      Ghana Commercial Bank
-                                    </SelectItem>
-                                    <SelectItem value="002">
-                                      Standard Chartered Bank
-                                    </SelectItem>
-                                    <SelectItem value="003">
-                                      Barclays Bank
-                                    </SelectItem>
-                                    <SelectItem value="004">
-                                      Ecobank Ghana
-                                    </SelectItem>
-                                    <SelectItem value="005">
-                                      Fidelity Bank
-                                    </SelectItem>
-                                    <SelectItem value="006">
-                                      Zenith Bank
-                                    </SelectItem>
-                                    <SelectItem value="007">
-                                      Access Bank
-                                    </SelectItem>
-                                    <SelectItem value="008">
-                                      Cal Bank
-                                    </SelectItem>
-                                    <SelectItem value="009">
-                                      First National Bank
-                                    </SelectItem>
-                                    <SelectItem value="010">
-                                      Guaranty Trust Bank
-                                    </SelectItem>
-                                    <SelectItem value="011">
-                                      Republic Bank
-                                    </SelectItem>
-                                    <SelectItem value="012">
-                                      Stanbic Bank
-                                    </SelectItem>
-                                    <SelectItem value="013">
-                                      United Bank for Africa
-                                    </SelectItem>
-                                    <SelectItem value="014">
-                                      Agricultural Development Bank
-                                    </SelectItem>
-                                    <SelectItem value="015">
-                                      National Investment Bank
-                                    </SelectItem>
-                                    <SelectItem value="016">
-                                      Prudential Bank
-                                    </SelectItem>
-                                    <SelectItem value="017">
-                                      Bank of Africa
-                                    </SelectItem>
-                                    <SelectItem value="018">
-                                      Consolidated Bank Ghana
-                                    </SelectItem>
-                                    <SelectItem value="019">
-                                      OmniBank
-                                    </SelectItem>
-                                    <SelectItem value="020">
-                                      Ghana International Bank
-                                    </SelectItem>
-                                    <SelectItem value="021">
-                                      Societe Generale Ghana
-                                    </SelectItem>
-                                    <SelectItem value="022">
-                                      First Atlantic Bank
-                                    </SelectItem>
-                                    <SelectItem value="023">
-                                      Bank of Ghana
-                                    </SelectItem>
-                                    <SelectItem value="024">
-                                      Opportunity International Savings and
-                                      Loans
-                                    </SelectItem>
-                                    <SelectItem value="025">
-                                      Sinapi Aba Savings and Loans
-                                    </SelectItem>
-                                    <SelectItem value="026">
-                                      Advans Ghana Savings and Loans
-                                    </SelectItem>
-                                    <SelectItem value="027">
-                                      Express Savings and Loans
-                                    </SelectItem>
-                                    <SelectItem value="028">
-                                      First National Savings and Loans
-                                    </SelectItem>
-                                    <SelectItem value="029">
-                                      Ideal Finance
-                                    </SelectItem>
-                                    <SelectItem value="030">
-                                      UniCredit Ghana
-                                    </SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium text-gray-700">
-                                  Account Number
-                                </Label>
-                                <Input
-                                  placeholder="Enter account number"
-                                  value={withdrawDetails.accountNumber}
-                                  onChange={(e) =>
-                                    setWithdrawDetails({
-                                      ...withdrawDetails,
-                                      accountNumber: e.target.value,
-                                    })
-                                  }
-                                  className="border-0 outline-none focus:ring-0 focus:border-0"
-                                />
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium text-gray-700">
-                                  Account Name
-                                </Label>
-                                <Input
-                                  placeholder="Enter account holder name"
-                                  value={withdrawDetails.accountName}
-                                  onChange={(e) =>
-                                    setWithdrawDetails({
-                                      ...withdrawDetails,
-                                      accountName: e.target.value,
-                                    })
-                                  }
-                                  className="border-0 outline-none focus:ring-0 focus:border-0"
-                                />
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
-                      </div>
+                        <Spinner className="h-10 w-10 text-blue-600" />
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      Processing Withdrawal
+                    </h3>
+                    <p className="text-gray-600">
+                      Please wait while we process your{" "}
+                      <span className="font-semibold text-green-600">
+                        GHS {withdrawAmount}
+                      </span>{" "}
+                      withdrawal...
+                    </p>
+                  </div>
+                </div>
+              )}
 
-                      {/* Mobile Money Option */}
-                      <div
-                        className={`w-full rounded-xl border transition-all duration-200 ${
-                          withdrawMethod === "mobile"
-                            ? "border-green-500 bg-green-50/30"
-                            : "border-gray-200"
+              {/* Form Content - Only show when not in success/error state */}
+              {withdrawStep === "amount" && (
+                <>
+                  {/* Amount Input */}
+                  <div className="space-y-2">
+                    <div className="w-full flex justify-start text-gray-900 text-lg font-extrabold leading-tight">
+                      Enter Amount
+                    </div>
+                    <div className="w-full flex justify-start text-gray-500 text-sm font-medium leading-tight">
+                      How much do you want to withdraw?
+                    </div>
+                    <div className="w-full pb-3 border-b border-black/20 flex justify-between items-center">
+                      <Input
+                        type="text"
+                        placeholder="0.00"
+                        value={withdrawAmount}
+                        onChange={(e) =>
+                          handleWithdrawAmountChange(e.target.value)
+                        }
+                        className={`text-right text-gray-900 text-4xl sm:text-5xl md:text-6xl font-normal leading-10 border-0 p-0 bg-transparent focus:ring-0 focus:border-0 h-auto w-full ${
+                          withdrawAmountError ? "text-red-500" : ""
                         }`}
-                      >
-                        {/* Header Row */}
-                        <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6">
-                          <RadioGroupItem
-                            value="mobile"
-                            id="withdraw-mobile"
-                            className="w-6 h-6 sm:w-7 sm:h-7"
-                          />
-                          <Label
-                            htmlFor="withdraw-mobile"
-                            className="flex-1 cursor-pointer"
-                          >
-                            <span className="text-base sm:text-lg font-medium">
-                              Mobile Money
-                            </span>
-                          </Label>
-                          <Phone className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
-                        </div>
-
-                        {/* Mobile Money Details */}
-                        {withdrawMethod === "mobile" && (
-                          <motion.div
-                            initial={{ height: 0, opacity: 0 }}
-                            animate={{ height: "auto", opacity: 1 }}
-                            transition={{ duration: 0.2 }}
-                            className="border-t border-green-200 overflow-hidden"
-                          >
-                            <div className="p-8 space-y-8">
-                              <div>
-                                <Label className="text-sm font-medium text-gray-700">
-                                  Select Network Provider
-                                </Label>
-                                <Select
-                                  value={withdrawDetails.networkProvider}
-                                  onValueChange={(value) =>
-                                    setWithdrawDetails({
-                                      ...withdrawDetails,
-                                      networkProvider: value,
-                                    })
-                                  }
-                                >
-                                  <SelectTrigger className="mt-1 border-0 outline-none focus:ring-0 focus:border-0">
-                                    <SelectValue placeholder="Eg. MTN" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="MTN">MTN</SelectItem>
-                                    <SelectItem value="VDF">
-                                      Vodafone
-                                    </SelectItem>
-                                    <SelectItem value="ATL">Airtel</SelectItem>
-                                    <SelectItem value="TGO">Tigo</SelectItem>
-                                    <SelectItem value="ZPY">Zeepay</SelectItem>
-                                    <SelectItem value="GMY">G-money</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                              <div>
-                                <Label className="text-sm font-medium text-gray-700">
-                                  Phone number
-                                </Label>
-                                <div className="flex rounded-lg border border-gray-300 outline-none overflow-hidden focus-within:ring-0 focus-within:border-gray-400 transition-all duration-200">
-                                  <div className="flex items-center px-3 sm:px-4 py-3 sm:py-3 bg-gray-50 border-r border-gray-300 min-w-[80px] sm:min-w-[90px]">
-                                    <span className="text-base sm:text-lg mr-2">
-                                      🇬🇭
-                                    </span>
-                                    <span className="text-sm sm:text-base font-medium text-gray-700">
-                                      +233
-                                    </span>
-                                  </div>
-                                  <Input
-                                    placeholder="Eg. 55 567 8905"
-                                    value={withdrawDetails.phoneNumber}
-                                    onChange={(e) =>
-                                      setWithdrawDetails({
-                                        ...withdrawDetails,
-                                        phoneNumber: e.target.value,
-                                      })
-                                    }
-                                    className="flex-1 border-0 outline-none rounded-none focus:ring-0 focus:border-0 py-3 sm:py-6 px-3 sm:px-4 text-gray-900 placeholder-gray-500 text-sm sm:text-base"
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          </motion.div>
-                        )}
+                      />
+                      <div className="text-center justify-start text-black text-2xl sm:text-3xl font-normal tracking-tight">
+                        GHS
                       </div>
                     </div>
-                  </RadioGroup>
-                </div>
-              </div>
+                    {withdrawAmountError && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        transition={{ duration: 0.3 }}
+                        className="text-sm text-red-500"
+                      >
+                        {withdrawAmountError}
+                      </motion.div>
+                    )}
+                  </div>
+
+                  {/* Payment Method Selection */}
+                  <div className="space-y-4">
+                    <div className="w-full flex justify-start text-gray-900 text-lg font-extrabold leading-tight">
+                      Select Withdrawal Method
+                    </div>
+                    <div className="w-full px-4">
+                      <RadioGroup
+                        value={withdrawMethod}
+                        onValueChange={setWithdrawMethod}
+                      >
+                        <div className="w-full space-y-4">
+                          {/* Bank Transfer Option */}
+                          <div
+                            className={`w-full rounded-xl border transition-all duration-200 ${
+                              withdrawMethod === "bank"
+                                ? "border-green-500 bg-green-50/30"
+                                : "border-gray-200"
+                            }`}
+                          >
+                            {/* Header Row */}
+                            <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6 w-full">
+                              <RadioGroupItem
+                                value="bank"
+                                id="withdraw-bank"
+                                className="w-6 h-6 sm:w-7 sm:h-7"
+                              />
+                              <Label
+                                htmlFor="withdraw-bank"
+                                className="flex-1 cursor-pointer"
+                              >
+                                <span className="text-base sm:text-lg font-medium">
+                                  Bank Transfer
+                                </span>
+                              </Label>
+                              <Buildings className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
+                            </div>
+                            {/* Bank Transfer Details */}
+                            {withdrawMethod === "bank" && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                transition={{ duration: 0.2 }}
+                                className="border-t border-green-200 overflow-hidden "
+                              >
+                                <div className="p-6 space-y-8">
+                                  <div>
+                                    <Label className="text-sm font-medium text-gray-700">
+                                      Select Bank
+                                    </Label>
+                                    <Select
+                                      value={withdrawDetails.bankCode}
+                                      onValueChange={(value) =>
+                                        setWithdrawDetails({
+                                          ...withdrawDetails,
+                                          bankCode: value,
+                                        })
+                                      }
+                                    >
+                                      <SelectTrigger className="mt-1 border-0 outline-none focus:ring-0 focus:border-0">
+                                        <SelectValue placeholder="Select bank" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="001">
+                                          Ghana Commercial Bank
+                                        </SelectItem>
+                                        <SelectItem value="002">
+                                          Standard Chartered Bank
+                                        </SelectItem>
+                                        <SelectItem value="003">
+                                          Barclays Bank
+                                        </SelectItem>
+                                        <SelectItem value="004">
+                                          Ecobank Ghana
+                                        </SelectItem>
+                                        <SelectItem value="005">
+                                          Fidelity Bank
+                                        </SelectItem>
+                                        <SelectItem value="006">
+                                          Zenith Bank
+                                        </SelectItem>
+                                        <SelectItem value="007">
+                                          Access Bank
+                                        </SelectItem>
+                                        <SelectItem value="008">
+                                          Cal Bank
+                                        </SelectItem>
+                                        <SelectItem value="009">
+                                          First National Bank
+                                        </SelectItem>
+                                        <SelectItem value="010">
+                                          Guaranty Trust Bank
+                                        </SelectItem>
+                                        <SelectItem value="011">
+                                          Republic Bank
+                                        </SelectItem>
+                                        <SelectItem value="012">
+                                          Stanbic Bank
+                                        </SelectItem>
+                                        <SelectItem value="013">
+                                          United Bank for Africa
+                                        </SelectItem>
+                                        <SelectItem value="014">
+                                          Agricultural Development Bank
+                                        </SelectItem>
+                                        <SelectItem value="015">
+                                          National Investment Bank
+                                        </SelectItem>
+                                        <SelectItem value="016">
+                                          Prudential Bank
+                                        </SelectItem>
+                                        <SelectItem value="017">
+                                          Bank of Africa
+                                        </SelectItem>
+                                        <SelectItem value="018">
+                                          Consolidated Bank Ghana
+                                        </SelectItem>
+                                        <SelectItem value="019">
+                                          OmniBank
+                                        </SelectItem>
+                                        <SelectItem value="020">
+                                          Ghana International Bank
+                                        </SelectItem>
+                                        <SelectItem value="021">
+                                          Societe Generale Ghana
+                                        </SelectItem>
+                                        <SelectItem value="022">
+                                          First Atlantic Bank
+                                        </SelectItem>
+                                        <SelectItem value="023">
+                                          Bank of Ghana
+                                        </SelectItem>
+                                        <SelectItem value="024">
+                                          Opportunity International Savings and
+                                          Loans
+                                        </SelectItem>
+                                        <SelectItem value="025">
+                                          Sinapi Aba Savings and Loans
+                                        </SelectItem>
+                                        <SelectItem value="026">
+                                          Advans Ghana Savings and Loans
+                                        </SelectItem>
+                                        <SelectItem value="027">
+                                          Express Savings and Loans
+                                        </SelectItem>
+                                        <SelectItem value="028">
+                                          First National Savings and Loans
+                                        </SelectItem>
+                                        <SelectItem value="029">
+                                          Ideal Finance
+                                        </SelectItem>
+                                        <SelectItem value="030">
+                                          UniCredit Ghana
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium text-gray-700">
+                                      Account Number
+                                    </Label>
+                                    <Input
+                                      placeholder="Enter account number"
+                                      value={withdrawDetails.accountNumber}
+                                      onChange={(e) =>
+                                        setWithdrawDetails({
+                                          ...withdrawDetails,
+                                          accountNumber: e.target.value,
+                                        })
+                                      }
+                                      className="border-0 outline-none focus:ring-0 focus:border-0"
+                                    />
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium text-gray-700">
+                                      Account Name
+                                    </Label>
+                                    <Input
+                                      placeholder="Enter account holder name"
+                                      value={withdrawDetails.accountName}
+                                      onChange={(e) =>
+                                        setWithdrawDetails({
+                                          ...withdrawDetails,
+                                          accountName: e.target.value,
+                                        })
+                                      }
+                                      className="border-0 outline-none focus:ring-0 focus:border-0"
+                                    />
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </div>
+
+                          {/* Mobile Money Option */}
+                          <div
+                            className={`w-full rounded-xl border transition-all duration-200 ${
+                              withdrawMethod === "mobile"
+                                ? "border-green-500 bg-green-50/30"
+                                : "border-gray-200"
+                            }`}
+                          >
+                            {/* Header Row */}
+                            <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6">
+                              <RadioGroupItem
+                                value="mobile"
+                                id="withdraw-mobile"
+                                className="w-6 h-6 sm:w-7 sm:h-7"
+                              />
+                              <Label
+                                htmlFor="withdraw-mobile"
+                                className="flex-1 cursor-pointer"
+                              >
+                                <span className="text-base sm:text-lg font-medium">
+                                  Mobile Money
+                                </span>
+                              </Label>
+                              <Phone className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
+                            </div>
+
+                            {/* Mobile Money Details */}
+                            {withdrawMethod === "mobile" && (
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                transition={{ duration: 0.2 }}
+                                className="border-t border-green-200 overflow-hidden"
+                              >
+                                <div className="p-8 space-y-8">
+                                  <div>
+                                    <Label className="text-sm font-medium text-gray-700">
+                                      Select Network Provider
+                                    </Label>
+                                    <Select
+                                      value={withdrawDetails.networkProvider}
+                                      onValueChange={(value) =>
+                                        setWithdrawDetails({
+                                          ...withdrawDetails,
+                                          networkProvider: value,
+                                        })
+                                      }
+                                    >
+                                      <SelectTrigger className="mt-1 border-0 outline-none focus:ring-0 focus:border-0">
+                                        <SelectValue placeholder="Eg. MTN" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="MTN">MTN</SelectItem>
+                                        <SelectItem value="VDF">
+                                          Vodafone
+                                        </SelectItem>
+                                        <SelectItem value="ATL">
+                                          Airtel
+                                        </SelectItem>
+                                        <SelectItem value="TGO">
+                                          Tigo
+                                        </SelectItem>
+                                        <SelectItem value="ZPY">
+                                          Zeepay
+                                        </SelectItem>
+                                        <SelectItem value="GMY">
+                                          G-money
+                                        </SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </div>
+                                  <div>
+                                    <Label className="text-sm font-medium text-gray-700">
+                                      Phone number
+                                    </Label>
+                                    <div className="flex rounded-lg border border-gray-300 outline-none overflow-hidden focus-within:ring-0 focus-within:border-gray-400 transition-all duration-200">
+                                      <div className="flex items-center px-3 sm:px-4 py-3 sm:py-3 bg-gray-50 border-r border-gray-300 min-w-[80px] sm:min-w-[90px]">
+                                        <span className="text-base sm:text-lg mr-2">
+                                          🇬🇭
+                                        </span>
+                                        <span className="text-sm sm:text-base font-medium text-gray-700">
+                                          +233
+                                        </span>
+                                      </div>
+                                      <Input
+                                        placeholder="Eg. 55 567 8905"
+                                        value={withdrawDetails.phoneNumber}
+                                        onChange={(e) =>
+                                          setWithdrawDetails({
+                                            ...withdrawDetails,
+                                            phoneNumber: e.target.value,
+                                          })
+                                        }
+                                        className="flex-1 border-0 outline-none rounded-none focus:ring-0 focus:border-0 py-3 sm:py-6 px-3 sm:px-4 text-gray-900 placeholder-gray-500 text-sm sm:text-base"
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </motion.div>
+                            )}
+                          </div>
+                        </div>
+                      </RadioGroup>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
 
             {/* Footer */}
             <div className="p-4 sm:p-6 border-t border-gray-200">
-              <div className="flex flex-col sm:flex-row gap-3 sm:space-x-3 sm:space-y-0">
-                <Button
-                  variant="outline"
-                  className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-600 text-green-600 hover:bg-green-50 transition-all duration-200"
-                  onClick={() => setIsWithdrawOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                  onClick={handleWithdraw}
-                  disabled={
-                    !withdrawMethod ||
-                    !!withdrawAmountError ||
-                    parseFloat(withdrawAmount) <= 0
-                  }
-                >
-                  Withdraw
-                </Button>
-              </div>
+              {(withdrawStep === "success" || withdrawStep === "error") && (
+                <div className="flex justify-center">
+                  <Button
+                    className="flex h-[50px] px-8 justify-center items-center gap-1.5 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200"
+                    onClick={() => {
+                      setIsWithdrawOpen(false);
+                      setWithdrawStep("amount");
+                      setWithdrawAmount("");
+                      setWithdrawMethod("");
+                      setWithdrawAmountError("");
+                      setWithdrawResult(null);
+                      setIsWithdrawProcessing(false);
+                    }}
+                  >
+                    {withdrawStep === "success" ? "Done" : "Try Again"}
+                  </Button>
+                </div>
+              )}
+
+              {withdrawStep === "loading" && (
+                <div className="flex justify-center">
+                  <div className="flex items-center space-x-2 text-gray-600">
+                    <Spinner className="h-4 w-4 animate-spin" />
+                    <span className="text-sm">Processing...</span>
+                  </div>
+                </div>
+              )}
+
+              {withdrawStep === "amount" && (
+                <div className="flex flex-col sm:flex-row gap-3 sm:space-x-3 sm:space-y-0">
+                  <Button
+                    variant="outline"
+                    className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl border-green-600 text-green-600 hover:bg-green-50 transition-all duration-200"
+                    onClick={() => setIsWithdrawOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={handleWithdraw}
+                    disabled={
+                      !withdrawMethod ||
+                      !!withdrawAmountError ||
+                      parseFloat(withdrawAmount) <= 0
+                    }
+                  >
+                    Withdraw
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </SheetContent>

@@ -492,6 +492,14 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           // Refresh wallet balance after successful withdrawal
           await refreshWallet();
           return { success: true };
+        } else if (response.status === "Pending") {
+          // Withdrawal submitted successfully, awaiting OTP verification
+          return {
+            success: true,
+            pending: true,
+            message:
+              "Withdrawal submitted successfully. Please check your phone for OTP verification.",
+          };
         } else {
           // Handle specific error cases
           if (
