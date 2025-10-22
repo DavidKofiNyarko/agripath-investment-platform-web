@@ -1831,6 +1831,9 @@ const InvestmentsPage = () => {
                           <Button
                             variant="link"
                             className="p-0 h-auto text-green-600 text-sm"
+                            onClick={() =>
+                              window.open("/legal?tab=terms", "_blank")
+                            }
                           >
                             Read More...
                           </Button>
