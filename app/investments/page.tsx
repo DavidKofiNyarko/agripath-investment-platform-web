@@ -206,34 +206,15 @@ const InvestmentsPage = () => {
     });
   };
 
-  // Update project units in database
-  const updateProjectUnits = async (
+  // Create investment transaction record
+  // Database triggers will automatically handle project unit updates
+  const createInvestmentTransaction = async (
     projectId: string,
     quantity: number,
     totalAmount: number
   ) => {
     try {
-      // Get current project data first
-      const { data: projectData, error: fetchError } = await supabase
-        .from("projects")
-        .select("available_unit, purchased_unit")
-        .eq("id", projectId)
-        .single();
-
-      if (fetchError) throw fetchError;
-
-      // Update available_unit and purchased_unit in projects table
-      const { error: projectError } = await supabase
-        .from("projects")
-        .update({
-          available_unit: projectData.available_unit - quantity,
-          purchased_unit: projectData.purchased_unit + quantity,
-        })
-        .eq("id", projectId);
-
-      if (projectError) throw projectError;
-
-      // Create transaction record (since backend doesn't populate transactions)
+      // Create transaction record - database triggers will handle unit updates
       const transactionId = `TXN${Date.now()}${Math.floor(
         Math.random() * 1000
       )}`;
@@ -272,10 +253,10 @@ const InvestmentsPage = () => {
         );
       }
 
-      console.log("Project units and transaction updated successfully");
+      console.log("Investment transaction created successfully - database triggers will update project units");
       return { success: true, transactionId };
     } catch (error) {
-      console.error("Failed to update project units or transaction:", error);
+      console.error("Failed to create investment transaction:", error);
       throw error;
     }
   };
@@ -895,7 +876,7 @@ const InvestmentsPage = () => {
 
       if (isSuccess) {
         // Update project units and create transaction record
-        const updateResult = await updateProjectUnits(
+        const updateResult = await createInvestmentTransaction(
           projectId,
           quantity,
           totalAmount
@@ -939,7 +920,7 @@ const InvestmentsPage = () => {
         }
 
         // Update project units and create transaction record for 3D Secure
-        const updateResult = await updateProjectUnits(
+        const updateResult = await createInvestmentTransaction(
           projectId,
           quantity,
           totalAmount
