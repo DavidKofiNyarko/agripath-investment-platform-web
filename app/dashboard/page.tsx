@@ -312,20 +312,20 @@ const DashboardPage = () => {
 
     try {
       const withdrawAmountValue = parseFloat(withdrawAmount.replace(/,/g, ""));
-      const result = await processWalletWithdrawal({
-        amount: withdrawAmountValue,
-        channel: withdrawMethod === "mobile" ? "momo" : "bank",
-        ...(withdrawMethod === "mobile"
-          ? {
-              recipient_number: "0241234567",
-              account_issuer: "MTN",
-            }
-          : {
-              account_number: "1234567890123",
-              account_bank: "ADB",
-            }),
-        description: "Dashboard withdrawal",
-      });
+        const result = await processWalletWithdrawal({
+          amount: withdrawAmountValue,
+          channel: withdrawMethod === "mobile" ? "momo" : "bank",
+          ...(withdrawMethod === "mobile"
+            ? {
+                recipient_number: withdrawDetails.phoneNumber,
+                account_issuer: withdrawDetails.networkProvider,
+              }
+            : {
+                account_number: withdrawDetails.accountNumber,
+                account_bank: withdrawDetails.bankCode,
+              }),
+          description: "Dashboard withdrawal",
+        });
 
       // Simulate processing delay
       setTimeout(() => {
@@ -1780,96 +1780,74 @@ const DashboardPage = () => {
                                         <SelectValue placeholder="Select bank" />
                                       </SelectTrigger>
                                       <SelectContent>
-                                        <SelectItem value="001">
-                                          Ghana Commercial Bank
+                                        <SelectItem value="040100">
+                                          GCB Bank Limited
                                         </SelectItem>
-                                        <SelectItem value="002">
-                                          Standard Chartered Bank
+                                        <SelectItem value="020100">
+                                          Standard Chartered Bank Ghana Limited
                                         </SelectItem>
-                                        <SelectItem value="003">
-                                          Barclays Bank
+                                        <SelectItem value="030100">
+                                          Absa Bank Ghana Ltd
                                         </SelectItem>
-                                        <SelectItem value="004">
-                                          Ecobank Ghana
+                                        <SelectItem value="130100">
+                                          Ecobank Ghana Limited
                                         </SelectItem>
-                                        <SelectItem value="005">
-                                          Fidelity Bank
+                                        <SelectItem value="240100">
+                                          Fidelity Bank Ghana Limited
                                         </SelectItem>
-                                        <SelectItem value="006">
-                                          Zenith Bank
+                                        <SelectItem value="120100">
+                                          Zenith Bank Ghana
                                         </SelectItem>
-                                        <SelectItem value="007">
+                                        <SelectItem value="280100">
                                           Access Bank
                                         </SelectItem>
-                                        <SelectItem value="008">
-                                          Cal Bank
+                                        <SelectItem value="140100">
+                                          CAL Bank Limited
                                         </SelectItem>
-                                        <SelectItem value="009">
-                                          First National Bank
+                                        <SelectItem value="330100">
+                                          First National Bank Ghana Limited
                                         </SelectItem>
-                                        <SelectItem value="010">
-                                          Guaranty Trust Bank
+                                        <SelectItem value="190100">
+                                          Stanbic Bank Ghana Limited
                                         </SelectItem>
-                                        <SelectItem value="011">
-                                          Republic Bank
+                                        <SelectItem value="060100">
+                                          United Bank for Africa Ghana Limited
                                         </SelectItem>
-                                        <SelectItem value="012">
-                                          Stanbic Bank
+                                        <SelectItem value="110100">
+                                          Republic Bank (GH) Limited
                                         </SelectItem>
-                                        <SelectItem value="013">
-                                          United Bank for Africa
+                                        <SelectItem value="090100">
+                                          Société Générale Ghana Limited
                                         </SelectItem>
-                                        <SelectItem value="014">
-                                          Agricultural Development Bank
+                                        <SelectItem value="180100">
+                                          Prudential Bank Limited
                                         </SelectItem>
-                                        <SelectItem value="015">
-                                          National Investment Bank
+                                        <SelectItem value="170100">
+                                          First Atlantic Bank Limited
                                         </SelectItem>
-                                        <SelectItem value="016">
-                                          Prudential Bank
+                                        <SelectItem value="080100">
+                                          ADB Bank Limited
                                         </SelectItem>
-                                        <SelectItem value="017">
-                                          Bank of Africa
+                                        <SelectItem value="050100">
+                                          National Investment Bank Limited
                                         </SelectItem>
-                                        <SelectItem value="018">
-                                          Consolidated Bank Ghana
+                                        <SelectItem value="100100">
+                                          Universal Merchant Bank Ghana Limited
                                         </SelectItem>
-                                        <SelectItem value="019">
-                                          OmniBank
+                                        <SelectItem value="210100">
+                                          Bank of Africa Ghana
                                         </SelectItem>
-                                        <SelectItem value="020">
-                                          Ghana International Bank
+                                        <SelectItem value="200100">
+                                          FBNBank Ghana Limited
                                         </SelectItem>
-                                        <SelectItem value="021">
-                                          Societe Generale Ghana
+                                        <SelectItem value="360100">
+                                          OmniBSCI Bank
                                         </SelectItem>
-                                        <SelectItem value="022">
-                                          First Atlantic Bank
+                                        <SelectItem value="340100">
+                                          Consolidated Bank Ghana Limited
                                         </SelectItem>
-                                        <SelectItem value="023">
-                                          Bank of Ghana
-                                        </SelectItem>
-                                        <SelectItem value="024">
-                                          Opportunity International Savings and
-                                          Loans
-                                        </SelectItem>
-                                        <SelectItem value="025">
-                                          Sinapi Aba Savings and Loans
-                                        </SelectItem>
-                                        <SelectItem value="026">
-                                          Advans Ghana Savings and Loans
-                                        </SelectItem>
-                                        <SelectItem value="027">
-                                          Express Savings and Loans
-                                        </SelectItem>
-                                        <SelectItem value="028">
-                                          First National Savings and Loans
-                                        </SelectItem>
-                                        <SelectItem value="029">
-                                          Ideal Finance
-                                        </SelectItem>
-                                        <SelectItem value="030">
-                                          UniCredit Ghana
+                                        <SelectItem value="230100">
+                                          Guaranty Trust Bank (Ghana) Limited
                                         </SelectItem>
                                       </SelectContent>
                                     </Select>
@@ -1964,20 +1942,11 @@ const DashboardPage = () => {
                                       </SelectTrigger>
                                       <SelectContent>
                                         <SelectItem value="MTN">MTN</SelectItem>
-                                        <SelectItem value="VDF">
+                                        <SelectItem value="VOD">
                                           Vodafone
                                         </SelectItem>
                                         <SelectItem value="ATL">
-                                          Airtel
-                                        </SelectItem>
-                                        <SelectItem value="TGO">
-                                          Tigo
-                                        </SelectItem>
-                                        <SelectItem value="ZPY">
-                                          Zeepay
-                                        </SelectItem>
-                                        <SelectItem value="GMY">
-                                          G-money
+                                          AirtelTigo
                                         </SelectItem>
                                       </SelectContent>
                                     </Select>
