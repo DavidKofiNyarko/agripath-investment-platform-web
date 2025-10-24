@@ -351,9 +351,7 @@ const WalletWithdrawal: React.FC = () => {
                 <Label htmlFor="network">Network Provider *</Label>
                 <Select
                   value={formData.network}
-                  onValueChange={(value) =>
-                    handleInputChange("network", value)
-                  }
+                  onValueChange={(value) => handleInputChange("network", value)}
                 >
                   <SelectTrigger
                     className={
