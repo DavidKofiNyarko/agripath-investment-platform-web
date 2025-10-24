@@ -1528,14 +1528,6 @@ const DashboardPage = () => {
               <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
                 Withdraw Funds
               </h2>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0 hover:bg-gray-100"
-                onClick={() => setIsWithdrawOpen(false)}
-              >
-                <X className="h-4 w-4" />
-              </Button>
             </div>
 
             {/* Content */}
