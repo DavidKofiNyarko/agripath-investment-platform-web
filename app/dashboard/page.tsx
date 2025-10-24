@@ -312,20 +312,20 @@ const DashboardPage = () => {
 
     try {
       const withdrawAmountValue = parseFloat(withdrawAmount.replace(/,/g, ""));
-        const result = await processWalletWithdrawal({
-          amount: withdrawAmountValue,
-          channel: withdrawMethod === "mobile" ? "momo" : "bank",
-          ...(withdrawMethod === "mobile"
-            ? {
-                recipient_number: withdrawDetails.phoneNumber,
-                account_issuer: withdrawDetails.networkProvider,
-              }
-            : {
-                account_number: withdrawDetails.accountNumber,
-                account_bank: withdrawDetails.bankCode,
-              }),
-          description: "Dashboard withdrawal",
-        });
+      const result = await processWalletWithdrawal({
+        amount: withdrawAmountValue,
+        channel: withdrawMethod === "mobile" ? "momo" : "bank",
+        ...(withdrawMethod === "mobile"
+          ? {
+              recipient_number: withdrawDetails.phoneNumber,
+              account_issuer: withdrawDetails.networkProvider,
+            }
+          : {
+              account_number: withdrawDetails.accountNumber,
+              account_bank: withdrawDetails.bankCode,
+            }),
+        description: "Dashboard withdrawal",
+      });
 
       // Simulate processing delay
       setTimeout(() => {
