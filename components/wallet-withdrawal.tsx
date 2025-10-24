@@ -43,7 +43,7 @@ const WalletWithdrawal: React.FC = () => {
     account_number: '',
     account_bank: '',
     recipient_number: '',
-    account_issuer: 'VDF'
+    account_issuer: 'VOD'
   });
 
   const handleInputChange = (field: keyof WithdrawalFormData, value: string) => {
@@ -132,7 +132,7 @@ const WalletWithdrawal: React.FC = () => {
           account_number: '',
           account_bank: '',
           recipient_number: '',
-          account_issuer: 'VDF'
+          account_issuer: 'VOD'
         });
       } else if (result.error?.includes('KYC verification required')) {
         // Show KYC modal instead of error message
@@ -316,7 +316,7 @@ const WalletWithdrawal: React.FC = () => {
                         <span>MTN</span>
                       </div>
                     </SelectItem>
-                    <SelectItem value="VDF">
+                    <SelectItem value="VOD">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-red-500 rounded-full"></div>
                         <span>Vodafone</span>
@@ -325,25 +325,7 @@ const WalletWithdrawal: React.FC = () => {
                     <SelectItem value="ATL">
                       <div className="flex items-center space-x-2">
                         <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span>Airtel</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="TGO">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                        <span>Tigo</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="ZPY">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span>Zeepay</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="GMY">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                        <span>G-money</span>
+                        <span>AirtelTigo</span>
                       </div>
                     </SelectItem>
                   </SelectContent>
