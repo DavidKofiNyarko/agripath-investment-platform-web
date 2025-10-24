@@ -1116,20 +1116,11 @@ const DashboardPage = () => {
                                           <SelectItem value="MTN">
                                             MTN
                                           </SelectItem>
-                                          <SelectItem value="VDF">
+                                          <SelectItem value="VOD">
                                             Vodafone
                                           </SelectItem>
                                           <SelectItem value="ATL">
-                                            Airtel
-                                          </SelectItem>
-                                          <SelectItem value="TGO">
-                                            Tigo
-                                          </SelectItem>
-                                          <SelectItem value="ZPY">
-                                            Zeepay
-                                          </SelectItem>
-                                          <SelectItem value="GMY">
-                                            G-money
+                                            AirtelTigo
                                           </SelectItem>
                                         </SelectContent>
                                       </Select>
