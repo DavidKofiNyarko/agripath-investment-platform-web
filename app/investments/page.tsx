@@ -253,7 +253,9 @@ const InvestmentsPage = () => {
         );
       }
 
-      console.log("Investment transaction created successfully - database triggers will update project units");
+      console.log(
+        "Investment transaction created successfully - database triggers will update project units"
+      );
       return { success: true, transactionId };
     } catch (error) {
       console.error("Failed to create investment transaction:", error);
