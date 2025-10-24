@@ -823,7 +823,6 @@ const InvestmentsPage = () => {
     try {
       const totalAmount = selectedInvestment.price * quantity;
       const projectId = selectedInvestment.id;
-      // const userId = user?.id; // Use auth user ID - not needed since we use profile?.id
 
       // Debug logging
       console.log("Debug Info:", {
