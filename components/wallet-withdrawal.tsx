@@ -28,7 +28,7 @@ interface WithdrawalFormData {
   account_bank: string;
   // Momo fields
   recipient_number: string;
-  account_issuer: string;
+  network: string;
 }
 
 const WalletWithdrawal: React.FC = () => {
@@ -51,7 +51,7 @@ const WalletWithdrawal: React.FC = () => {
     account_number: "",
     account_bank: "",
     recipient_number: "",
-    account_issuer: "VOD",
+    network: "VOD",
   });
 
   const handleInputChange = (
@@ -101,7 +101,7 @@ const WalletWithdrawal: React.FC = () => {
         return;
       }
     } else if (formData.channel === "momo") {
-      if (!formData.recipient_number || !formData.account_issuer) {
+      if (!formData.recipient_number || !formData.network) {
         setError(
           "Recipient number and network provider are required for mobile money"
         );
@@ -131,7 +131,7 @@ const WalletWithdrawal: React.FC = () => {
             }
           : {
               recipient_number: formData.recipient_number,
-              account_issuer: formData.account_issuer,
+              network: formData.network,
             }),
       };
 
@@ -148,7 +148,7 @@ const WalletWithdrawal: React.FC = () => {
           account_number: "",
           account_bank: "",
           recipient_number: "",
-          account_issuer: "VOD",
+          network: "VOD",
         });
       } else if (result.error?.includes("KYC verification required")) {
         // Show KYC modal instead of error message
@@ -348,16 +348,16 @@ const WalletWithdrawal: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="account_issuer">Network Provider *</Label>
+                <Label htmlFor="network">Network Provider *</Label>
                 <Select
-                  value={formData.account_issuer}
+                  value={formData.network}
                   onValueChange={(value) =>
-                    handleInputChange("account_issuer", value)
+                    handleInputChange("network", value)
                   }
                 >
                   <SelectTrigger
                     className={
-                      !formData.account_issuer
+                      !formData.network
                         ? "border-red-300 focus:border-red-500"
                         : ""
                     }
@@ -385,7 +385,7 @@ const WalletWithdrawal: React.FC = () => {
                     </SelectItem>
                   </SelectContent>
                 </Select>
-                {!formData.account_issuer && (
+                {!formData.network && (
                   <p className="text-sm text-red-600">
                     Please select a network provider
                   </p>

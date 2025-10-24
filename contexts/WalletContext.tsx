@@ -58,7 +58,7 @@ interface WalletContextType {
     account_bank?: string;
     // Momo fields
     recipient_number?: string;
-    account_issuer?: string;
+    network?: string;
     description?: string;
   }) => Promise<{ success: boolean; error?: string; details?: string }>;
 
@@ -427,7 +427,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       account_number?: string;
       account_bank?: string;
       recipient_number?: string;
-      account_issuer?: string;
+      network?: string;
       description?: string;
     }) => {
       if (!user) {
@@ -480,7 +480,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
               }
             : {
                 recipient_number: withdrawalData.recipient_number,
-                account_issuer: withdrawalData.account_issuer,
+                network: withdrawalData.network,
               }),
         };
 
@@ -624,7 +624,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           payoutRequest.recipient_number = paymentService.formatMobileNumber(
             payoutData.recipient_number
           );
-          payoutRequest.account_issuer = paymentService.getNetworkProvider(
+          payoutRequest.network = paymentService.getNetworkProvider(
             payoutData.recipient_number
           );
         } else if (payoutData.channel === "bank" && payoutData.account_number) {

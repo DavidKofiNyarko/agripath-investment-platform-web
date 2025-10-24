@@ -85,7 +85,7 @@ export interface PayoutRequest {
   desc: string;
   channel: string;
   recipient_number?: string;
-  account_issuer?: string;
+  network?: string;
   account_number?: string;
   account_bank?: string;
   external_id: string;

@@ -318,7 +318,7 @@ const DashboardPage = () => {
         ...(withdrawMethod === "mobile"
           ? {
               recipient_number: withdrawDetails.phoneNumber,
-              account_issuer: withdrawDetails.networkProvider,
+              network: withdrawDetails.networkProvider,
             }
           : {
               account_number: withdrawDetails.accountNumber,
