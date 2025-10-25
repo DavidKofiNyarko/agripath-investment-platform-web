@@ -1,11 +1,12 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 // import { motion } from 'framer-motion'; // motion unused
-import { Sidebar, MobileSidebar, SidebarProvider, useSidebar } from './sidebar';
-import ProfileGuard from './profile-guard';
-import { cn } from '@/lib/utils';
-// Legacy profile completion modal removed in favor of in-page overlay
+import { Sidebar, MobileSidebar, SidebarProvider, useSidebar } from "./sidebar";
+import ProfileGuard from "./profile-guard";
+import { cn } from "@/lib/utils";
+import LogoSVG from "./logo-svg";
+import Image from "next/image";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -20,29 +21,40 @@ const DashboardContent = ({ children, className }: DashboardLayoutProps) => {
     <div className="min-h-screen bg-gray-50/50">
       {/* Desktop Sidebar */}
       <Sidebar />
-      
+
       {/* Main Content */}
-      <div className={cn(
-        "transition-all duration-300 ease-in-out",
-        "lg:ml-64", // Default margin for expanded sidebar
-        isCollapsed && "lg:ml-20" // Smaller margin for collapsed sidebar
-      )}>
+      <div
+        className={cn(
+          "transition-all duration-300 ease-in-out",
+          "lg:ml-64", // Default margin for expanded sidebar
+          isCollapsed && "lg:ml-20" // Smaller margin for collapsed sidebar
+        )}
+      >
         {/* Mobile Header */}
         <div className="sticky top-0 z-40 lg:hidden bg-white border-b border-gray-200">
           <div className="flex items-center gap-x-4 px-4 py-3">
             <MobileSidebar />
             <div className="flex items-center gap-2">
-              <div className="text-lg font-bold text-gray-900 tracking-wide">AGRIPATH</div>
+              <div className="w-10 h-10">
+                <Image
+                  src="/y-logo.svg"
+                  alt="Farm House"
+                  width={10}
+                  height={10}
+                  className="w-10 h-10 "
+                />
+              </div>
+              <span className="text-xl font-bold text-green-800 uppercase font-mono">
+                AgriPath
+              </span>
             </div>
           </div>
         </div>
-        
+
         {/* Page Content */}
-        <main className={cn('py-6 min-h-screen', className)}>
+        <main className={cn("py-6 min-h-screen", className)}>
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <ProfileGuard>
-              {children}
-            </ProfileGuard>
+            <ProfileGuard>{children}</ProfileGuard>
           </div>
         </main>
       </div>
@@ -52,12 +64,13 @@ const DashboardContent = ({ children, className }: DashboardLayoutProps) => {
   );
 };
 
-export const DashboardLayout = ({ children, className }: DashboardLayoutProps) => {
+export const DashboardLayout = ({
+  children,
+  className,
+}: DashboardLayoutProps) => {
   return (
     <SidebarProvider>
-      <DashboardContent className={className}>
-        {children}
-      </DashboardContent>
+      <DashboardContent className={className}>{children}</DashboardContent>
     </SidebarProvider>
   );
 };

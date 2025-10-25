@@ -1243,13 +1243,14 @@ const InvestmentsPage = () => {
                       </div>
                     </div>
                   </div>
-                  <CardContent className="p-4">
+                  <CardContent className="p-6">
                     <motion.div
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.3 }}
+                      className="space-y-4"
                     >
-                      <div className="flex justify-between items-start mb-2">
+                      <div className="flex justify-between items-start">
                         <div className="justify-start text-green-950 text-lg font-extrabold tracking-tight">
                           {project.project_name}
                         </div>
@@ -1261,10 +1262,8 @@ const InvestmentsPage = () => {
                           </div>
                         </div>
                       </div>
-                      <p className="text-gray-600 mb-1">
-                        {project.farm_location}
-                      </p>
-                      <p className="text-gray-800 text-lg  mb-3">
+                      <p className="text-gray-600">{project.farm_location}</p>
+                      <p className="text-gray-800 text-lg">
                         {" "}
                         <span className="font-semibold tracking-tight">
                           GHS {project.unit_price.toLocaleString()}{" "}
@@ -1273,22 +1272,27 @@ const InvestmentsPage = () => {
                           /Per Unit
                         </span>
                       </p>
-                      <div className="flex justify-between items-center text-sm text-gray-500 mb-2">
-                        <div className="text-center justify-center text-neutral-800 text-sm font-semibold ">
-                          Return (ROI)
+                      {/* Mobile-first responsive layout for ROI and Duration */}
+                      <div className="py-2">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-6">
+                          <div className="flex-1 text-center sm:text-left">
+                            <div className="text-neutral-800 text-sm font-semibold mb-2">
+                              Return (ROI)
+                            </div>
+                            <div className="text-yellow-500 text-md font-bold leading-none tracking-tight">
+                              {project.expected_return_rate}% -{" "}
+                              {project.max_expected_return_rate}%
+                            </div>
+                          </div>
+                          <div className="flex-1 text-center sm:text-right">
+                            <div className="text-neutral-800 text-sm font-semibold mb-2">
+                              Duration
+                            </div>
+                            <div className="text-yellow-500 text-md font-bold leading-none tracking-tight">
+                              {project.duration_months} months
+                            </div>
+                          </div>
                         </div>
-                        <div className="self-stretch text-right justify-center text-neutral-800 text-[10px] font-semibold ">
-                          Duration
-                        </div>
-                      </div>
-                      <div className="flex justify-between items-center mb-3">
-                        <div className="self-stretch justify-center text-yellow-500 text-md font-bold leading-none tracking-tight">
-                          {project.expected_return_rate}% -{" "}
-                          {project.max_expected_return_rate}%
-                        </div>
-                        <span className="font-semibold text-yellow-500">
-                          {project.duration_months} months
-                        </span>
                       </div>
 
                       <div className="mb-4">
@@ -1450,35 +1454,37 @@ const InvestmentsPage = () => {
                         </div>
                       </SheetHeader>
 
-                      <div className="flex-1 p-6 space-y-6">
+                      <div className="flex-1 p-6 space-y-8">
                         <img
                           src={selectedInvestment.image}
                           alt={selectedInvestment.name}
                           className="w-full h-48 object-cover rounded-lg"
                         />
 
-                        {/* Very small screens (≤320px): Vertical Stack, iPhone 14+ (375px+): Horizontal */}
-                        <div className="flex flex-col min-[321px]:flex-row min-[321px]:items-center min-[321px]:justify-between gap-4 min-[321px]:gap-0">
-                          <div className="flex-1 text-center">
-                            <p className="text-sm text-gray-600">
+                        {/* Mobile-first responsive layout: Vertical on small screens, horizontal on larger screens */}
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 sm:gap-8">
+                          <div className="flex-1 text-center sm:text-left">
+                            <p className="text-sm text-gray-600 mb-2">
                               Price per Unit
                             </p>
                             <p className="font-bold text-lg">
                               GHS {selectedInvestment.price.toLocaleString()}
                             </p>
                           </div>
-                          <div className="hidden min-[321px]:block w-px h-12 bg-gray-300"></div>
-                          <div className="flex-1 text-center">
-                            <p className="text-sm text-gray-600">
+                          <div className="hidden sm:block w-px h-12 bg-gray-300"></div>
+                          <div className="flex-1 text-center sm:text-left">
+                            <p className="text-sm text-gray-600 mb-2">
                               Return (ROI)
                             </p>
                             <p className="font-bold text-lg text-orange-600">
                               {selectedInvestment.roi}
                             </p>
                           </div>
-                          <div className="hidden min-[321px]:block w-px h-12 bg-gray-300"></div>
-                          <div className="flex-1 text-center">
-                            <p className="text-sm text-gray-600">Duration</p>
+                          <div className="hidden sm:block w-px h-12 bg-gray-300"></div>
+                          <div className="flex-1 text-center sm:text-right">
+                            <p className="text-sm text-gray-600 mb-2">
+                              Duration
+                            </p>
                             <p className="font-bold text-lg text-orange-600">
                               {selectedInvestment.duration}
                             </p>
@@ -2376,7 +2382,7 @@ const InvestmentsPage = () => {
 
                         <div className="space-y-4 text-left bg-gray-50 p-4 rounded-lg">
                           <div className="text-center mb-4">
-                            <p className="text-sm text-gray-600 mb-1">
+                            <p className="text-sm text-gray-600 mb-2">
                               Total Payment
                             </p>
                             <p className="text-3xl font-bold">

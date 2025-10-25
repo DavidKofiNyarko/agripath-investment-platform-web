@@ -1,12 +1,25 @@
-'use client';
+"use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Shield, Eye, EyeOff, AlertTriangle, Loader2, CheckCircle } from 'lucide-react';
-import { useProfile } from '@/contexts/ProfileContext';
+import React, { useState, useRef, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Shield,
+  Eye,
+  EyeOff,
+  AlertTriangle,
+  Loader2,
+  CheckCircle,
+} from "lucide-react";
+import { useProfile } from "@/contexts/ProfileContext";
 
 interface PinChangeModalProps {
   isOpen: boolean;
@@ -14,35 +27,37 @@ interface PinChangeModalProps {
   onSuccess: () => void;
 }
 
-const PinChangeModal: React.FC<PinChangeModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  onSuccess
+const PinChangeModal: React.FC<PinChangeModalProps> = ({
+  isOpen,
+  onClose,
+  onSuccess,
 }) => {
   const { profile, updateProfile } = useProfile();
-  const [currentStep, setCurrentStep] = useState<'current' | 'new' | 'confirm' | 'success'>('current');
-  const [currentPin, setCurrentPin] = useState(['', '', '', '']);
-  const [newPin, setNewPin] = useState(['', '', '', '']);
-  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
+  const [currentStep, setCurrentStep] = useState<
+    "current" | "new" | "confirm" | "success"
+  >("current");
+  const [currentPin, setCurrentPin] = useState(["", "", "", ""]);
+  const [newPin, setNewPin] = useState(["", "", "", ""]);
+  const [confirmPin, setConfirmPin] = useState(["", "", "", ""]);
   const [showCurrentPin, setShowCurrentPin] = useState(false);
   const [showNewPin, setShowNewPin] = useState(false);
   const [showConfirmPin, setShowConfirmPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [isShaking, setIsShaking] = useState(false);
   const [attempts, setAttempts] = useState(0);
-  
+
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
   const maxAttempts = 3;
 
   useEffect(() => {
     if (isOpen) {
       // If user doesn't have a PIN set, start with 'new' step
-      setCurrentStep(profile?.pin ? 'current' : 'new');
-      setCurrentPin(['', '', '', '']);
-      setNewPin(['', '', '', '']);
-      setConfirmPin(['', '', '', '']);
-      setError('');
+      setCurrentStep(profile?.pin ? "current" : "new");
+      setCurrentPin(["", "", "", ""]);
+      setNewPin(["", "", "", ""]);
+      setConfirmPin(["", "", "", ""]);
+      setError("");
       setAttempts(0);
       setIsShaking(false);
       // Focus first input
@@ -52,22 +67,34 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
     }
   }, [isOpen, profile?.pin]);
 
-  const handlePinChange = (index: number, value: string, pinType: 'current' | 'new' | 'confirm') => {
+  const handlePinChange = (
+    index: number,
+    value: string,
+    pinType: "current" | "new" | "confirm"
+  ) => {
+    // Only allow numeric input
+    if (!/^\d*$/.test(value)) return;
     if (value.length > 1) return;
-    
-    const newPinArray = [...(pinType === 'current' ? currentPin : pinType === 'new' ? newPin : confirmPin)];
+
+    const newPinArray = [
+      ...(pinType === "current"
+        ? currentPin
+        : pinType === "new"
+        ? newPin
+        : confirmPin),
+    ];
     newPinArray[index] = value;
-    
-    if (pinType === 'current') {
+
+    if (pinType === "current") {
       setCurrentPin(newPinArray);
-    } else if (pinType === 'new') {
+    } else if (pinType === "new") {
       setNewPin(newPinArray);
     } else {
       setConfirmPin(newPinArray);
     }
-    
-    setError(''); // Clear error when user types
-    
+
+    setError(""); // Clear error when user types
+
     // Auto-focus next input
     if (value && index < 3) {
       pinRefs.current[index + 1]?.focus();
@@ -75,8 +102,13 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent) => {
-    if (e.key === 'Backspace') {
-      const currentPinArray = currentStep === 'current' ? currentPin : currentStep === 'new' ? newPin : confirmPin;
+    if (e.key === "Backspace") {
+      const currentPinArray =
+        currentStep === "current"
+          ? currentPin
+          : currentStep === "new"
+          ? newPin
+          : confirmPin;
       if (!currentPinArray[index] && index > 0) {
         pinRefs.current[index - 1]?.focus();
       }
@@ -89,24 +121,24 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
   };
 
   const validateCurrentPin = async () => {
-    const pinValue = currentPin.join('');
-    
+    const pinValue = currentPin.join("");
+
     if (pinValue.length !== 4) {
-      setError('Please enter a 4-digit PIN');
+      setError("Please enter a 4-digit PIN");
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     // Validate current PIN
     if (profile?.pin === pinValue) {
-      setError('');
+      setError("");
       setIsLoading(false);
-      setCurrentStep('new');
+      setCurrentStep("new");
       setTimeout(() => {
         pinRefs.current[0]?.focus();
       }, 100);
@@ -114,171 +146,211 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
       const newAttempts = attempts + 1;
       setAttempts(newAttempts);
       setIsLoading(false);
-      
+
       if (newAttempts >= maxAttempts) {
-        setError('Too many incorrect attempts. Please try again later.');
+        setError("Too many incorrect attempts. Please try again later.");
         setTimeout(() => {
           onClose();
         }, 2000);
       } else {
-        setError(`Incorrect PIN. ${maxAttempts - newAttempts} attempts remaining.`);
+        setError(
+          `Incorrect PIN. ${maxAttempts - newAttempts} attempts remaining.`
+        );
         triggerShake();
-        setCurrentPin(['', '', '', '']);
+        setCurrentPin(["", "", "", ""]);
         pinRefs.current[0]?.focus();
       }
     }
   };
 
   const validateNewPin = () => {
-    const pinValue = newPin.join('');
-    
+    const pinValue = newPin.join("");
+
     if (pinValue.length !== 4) {
-      setError('Please enter a 4-digit PIN');
+      setError("Please enter a 4-digit PIN");
       return;
     }
 
-    if (profile?.pin && pinValue === currentPin.join('')) {
-      setError('New PIN must be different from current PIN');
+    if (profile?.pin && pinValue === currentPin.join("")) {
+      setError("New PIN must be different from current PIN");
       triggerShake();
       return;
     }
 
-    setError('');
-    setCurrentStep('confirm');
+    setError("");
+    setCurrentStep("confirm");
     setTimeout(() => {
       pinRefs.current[0]?.focus();
     }, 100);
   };
 
   const confirmNewPin = async () => {
-    const newPinValue = newPin.join('');
-    const confirmPinValue = confirmPin.join('');
-    
+    const newPinValue = newPin.join("");
+    const confirmPinValue = confirmPin.join("");
+
     if (confirmPinValue.length !== 4) {
-      setError('Please confirm your new PIN');
+      setError("Please confirm your new PIN");
       return;
     }
 
     if (newPinValue !== confirmPinValue) {
-      setError('PINs do not match. Please try again.');
+      setError("PINs do not match. Please try again.");
       triggerShake();
-      setConfirmPin(['', '', '', '']);
+      setConfirmPin(["", "", "", ""]);
       pinRefs.current[0]?.focus();
       return;
     }
 
     setIsLoading(true);
-    setError('');
+    setError("");
 
     try {
       // Update PIN in profile
       await updateProfile({ pin: newPinValue });
-      
+
       setIsLoading(false);
-      setCurrentStep('success');
-      
+      setCurrentStep("success");
+
       // Auto close after success
       setTimeout(() => {
         onSuccess();
         onClose();
       }, 2000);
     } catch (error) {
-      console.error('Error updating PIN:', error);
+      console.error("Error updating PIN:", error);
       setIsLoading(false);
-      setError('Failed to update PIN. Please try again.');
+      setError("Failed to update PIN. Please try again.");
     }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (currentStep === 'current') {
+
+    if (currentStep === "current") {
       await validateCurrentPin();
-    } else if (currentStep === 'new') {
+    } else if (currentStep === "new") {
       validateNewPin();
-    } else if (currentStep === 'confirm') {
+    } else if (currentStep === "confirm") {
       await confirmNewPin();
     }
   };
 
   const getCurrentPinArray = () => {
     switch (currentStep) {
-      case 'current': return currentPin;
-      case 'new': return newPin;
-      case 'confirm': return confirmPin;
-      default: return [];
+      case "current":
+        return currentPin;
+      case "new":
+        return newPin;
+      case "confirm":
+        return confirmPin;
+      default:
+        return [];
     }
   };
 
   const getCurrentShowPin = () => {
     switch (currentStep) {
-      case 'current': return showCurrentPin;
-      case 'new': return showNewPin;
-      case 'confirm': return showConfirmPin;
-      default: return false;
+      case "current":
+        return showCurrentPin;
+      case "new":
+        return showNewPin;
+      case "confirm":
+        return showConfirmPin;
+      default:
+        return false;
     }
   };
 
   const setCurrentShowPin = (show: boolean) => {
     switch (currentStep) {
-      case 'current': setShowCurrentPin(show); break;
-      case 'new': setShowNewPin(show); break;
-      case 'confirm': setShowConfirmPin(show); break;
+      case "current":
+        setShowCurrentPin(show);
+        break;
+      case "new":
+        setShowNewPin(show);
+        break;
+      case "confirm":
+        setShowConfirmPin(show);
+        break;
     }
   };
 
   const getStepTitle = () => {
     switch (currentStep) {
-      case 'current': return 'Enter Current PIN';
-      case 'new': return profile?.pin ? 'Enter New PIN' : 'Set Your PIN';
-      case 'confirm': return 'Confirm New PIN';
-      case 'success': return profile?.pin ? 'PIN Updated Successfully' : 'PIN Set Successfully';
-      default: return profile?.pin ? 'Change PIN' : 'Set PIN';
+      case "current":
+        return "Enter Current PIN";
+      case "new":
+        return profile?.pin ? "Enter New PIN" : "Set Your PIN";
+      case "confirm":
+        return "Confirm New PIN";
+      case "success":
+        return profile?.pin
+          ? "PIN Updated Successfully"
+          : "PIN Set Successfully";
+      default:
+        return profile?.pin ? "Change PIN" : "Set PIN";
     }
   };
 
   const getStepDescription = () => {
     switch (currentStep) {
-      case 'current': return 'Please enter your current 4-digit PIN to continue';
-      case 'new': return profile?.pin ? 'Enter your new 4-digit PIN' : 'Create a secure 4-digit PIN for your transactions';
-      case 'confirm': return 'Please confirm your new PIN';
-      case 'success': return profile?.pin ? 'Your PIN has been successfully updated' : 'Your PIN has been successfully set';
-      default: return '';
+      case "current":
+        return "Please enter your current 4-digit PIN to continue";
+      case "new":
+        return profile?.pin
+          ? "Enter your new 4-digit PIN"
+          : "Create a secure 4-digit PIN for your transactions";
+      case "confirm":
+        return "Please confirm your new PIN";
+      case "success":
+        return profile?.pin
+          ? "Your PIN has been successfully updated"
+          : "Your PIN has been successfully set";
+      default:
+        return "";
     }
   };
 
   const getActionButtonText = () => {
     switch (currentStep) {
-      case 'current': return 'Continue';
-      case 'new': return 'Continue';
-      case 'confirm': return isLoading ? 'Updating...' : 'Update PIN';
-      case 'success': return 'Done';
-      default: return 'Continue';
+      case "current":
+        return "Continue";
+      case "new":
+        return "Continue";
+      case "confirm":
+        return isLoading ? "Updating..." : "Update PIN";
+      case "success":
+        return "Done";
+      default:
+        return "Continue";
     }
   };
 
   const isFormValid = () => {
     const currentPinArray = getCurrentPinArray();
-    return currentPinArray.every(digit => digit !== '') && currentPinArray.length === 4;
+    return (
+      currentPinArray.every((digit) => digit !== "") &&
+      currentPinArray.length === 4
+    );
   };
 
   const handleBack = () => {
-    if (currentStep === 'new') {
-      setCurrentStep('current');
-      setNewPin(['', '', '', '']);
+    if (currentStep === "new") {
+      setCurrentStep("current");
+      setNewPin(["", "", "", ""]);
       setTimeout(() => {
         pinRefs.current[0]?.focus();
       }, 100);
-    } else if (currentStep === 'confirm') {
-      setCurrentStep('new');
-      setConfirmPin(['', '', '', '']);
+    } else if (currentStep === "confirm") {
+      setCurrentStep("new");
+      setConfirmPin(["", "", "", ""]);
       setTimeout(() => {
         pinRefs.current[0]?.focus();
       }, 100);
     }
   };
 
-  if (currentStep === 'success') {
+  if (currentStep === "success") {
     return (
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-md" showCloseButton={false}>
@@ -291,7 +363,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
               {getStepDescription()}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="py-6 text-center">
             <motion.div
               initial={{ scale: 0 }}
@@ -301,7 +373,9 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
             >
               <CheckCircle className="h-16 w-16 text-green-600 mx-auto" />
             </motion.div>
-            <p className="text-gray-600">Your PIN has been successfully updated and is now active.</p>
+            <p className="text-gray-600">
+              Your PIN has been successfully updated and is now active.
+            </p>
           </div>
         </DialogContent>
       </Dialog>
@@ -320,7 +394,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
             {getStepDescription()}
           </DialogDescription>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           {/* PIN Input */}
           <motion.div
@@ -336,10 +410,16 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
                 {getCurrentPinArray().map((digit, index) => (
                   <Input
                     key={index}
-                    ref={(el) => { pinRefs.current[index] = el; }}
-                    type={getCurrentShowPin() ? 'text' : 'password'}
+                    ref={(el) => {
+                      pinRefs.current[index] = el;
+                    }}
+                    type={getCurrentShowPin() ? "text" : "password"}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={digit}
-                    onChange={(e) => handlePinChange(index, e.target.value, currentStep)}
+                    onChange={(e) =>
+                      handlePinChange(index, e.target.value, currentStep)
+                    }
                     onKeyDown={(e) => handleKeyDown(index, e)}
                     className="w-12 h-12 text-center text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500"
                     maxLength={1}
@@ -391,7 +471,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
 
           {/* Action Buttons */}
           <div className="flex gap-3">
-            {(currentStep === 'new' || currentStep === 'confirm') && (
+            {(currentStep === "new" || currentStep === "confirm") && (
               <Button
                 type="button"
                 variant="outline"
@@ -407,7 +487,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
               variant="outline"
               onClick={onClose}
               disabled={isLoading}
-              className={currentStep === 'current' ? "flex-1" : "flex-1"}
+              className={currentStep === "current" ? "flex-1" : "flex-1"}
             >
               Cancel
             </Button>
@@ -419,7 +499,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {currentStep === 'confirm' ? 'Updating...' : 'Verifying...'}
+                  {currentStep === "confirm" ? "Updating..." : "Verifying..."}
                 </>
               ) : (
                 getActionButtonText()

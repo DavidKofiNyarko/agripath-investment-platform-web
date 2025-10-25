@@ -43,6 +43,7 @@ const WalletTopup: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState("");
   const [error, setError] = useState("");
+  const [pending, setPending] = useState("");
   const [showKycModal, setShowKycModal] = useState(false);
 
   const [formData, setFormData] = useState<TopupFormData>({
@@ -70,6 +71,7 @@ const WalletTopup: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError("");
     setSuccess("");
+    setPending("");
   };
 
   // Check if form is valid for submission
@@ -161,6 +163,7 @@ const WalletTopup: React.FC = () => {
     setLoading(true);
     setError("");
     setSuccess("");
+    setPending("");
 
     try {
       const topupData = {
@@ -186,7 +189,9 @@ const WalletTopup: React.FC = () => {
       const result = await processWalletTopup(topupData);
 
       if (result.success) {
-        setSuccess("Topup request submitted successfully!");
+        setSuccess(
+          "Topup request submitted successfully! Please complete the payment verification to add funds to your wallet."
+        );
 
         // Reset form
         setFormData({
@@ -203,10 +208,10 @@ const WalletTopup: React.FC = () => {
           network: "",
         });
       } else if (result.redirect_url) {
-        // Handle 3D Secure redirect
+        // Handle payment verification redirect
         window.open(result.redirect_url, "_blank");
-        setSuccess(
-          "Please complete the 3D Secure verification in the popup window."
+        setPending(
+          "Payment verification required. Please complete the payment in the popup window. Your wallet will be updated once payment is confirmed."
         );
       } else if (result.error?.includes("KYC verification required")) {
         // Show KYC modal instead of error message
@@ -472,10 +477,16 @@ const WalletTopup: React.FC = () => {
             />
           </div>
 
-          {/* Error/Success Messages */}
+          {/* Error/Success/Pending Messages */}
           {error && (
             <div className="p-3 bg-red-50 border border-red-200 rounded-md">
               <p className="text-sm text-red-600">{error}</p>
+            </div>
+          )}
+
+          {pending && (
+            <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+              <p className="text-sm text-yellow-700">{pending}</p>
             </div>
           )}
 

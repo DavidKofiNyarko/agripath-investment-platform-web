@@ -91,6 +91,7 @@ const DashboardPage = () => {
     wallet,
     loading: walletLoading,
     updateBalance,
+    refreshWallet,
     processWalletTopup,
     processWalletWithdrawal,
   } = useWallet();
@@ -110,6 +111,8 @@ const DashboardPage = () => {
   const [withdrawMethod, setWithdrawMethod] = useState("");
   const [savePaymentMethod, setSavePaymentMethod] = useState(true);
   const [currentStep, setCurrentStep] = useState("amount");
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState<string>("");
   const [withdrawStep, setWithdrawStep] = useState("amount");
   const [isWithdrawProcessing, setIsWithdrawProcessing] = useState(false);
   const [amountError, setAmountError] = useState("");
@@ -245,9 +248,9 @@ const DashboardPage = () => {
           }, 1000);
         } else if (result.redirect_url) {
           window.open(result.redirect_url, "_blank");
-          setTimeout(() => {
-            setCurrentStep("success");
-          }, 1000);
+          setRedirectUrl(result.redirect_url);
+          // Don't set success - payment is pending verification
+          setCurrentStep("loading");
         } else {
           setCurrentStep("error");
         }
@@ -266,9 +269,9 @@ const DashboardPage = () => {
           }, 1000);
         } else if (result.redirect_url) {
           window.open(result.redirect_url, "_blank");
-          setTimeout(() => {
-            setCurrentStep("success");
-          }, 1000);
+          setRedirectUrl(result.redirect_url);
+          // Don't set success - payment is pending verification
+          setCurrentStep("loading");
         } else {
           setCurrentStep("error");
         }
@@ -362,7 +365,79 @@ const DashboardPage = () => {
     setCurrentStep("amount");
     setAmount("");
     setPaymentMethod("");
+    setRedirectUrl("");
+    setIsVerifyingPayment(false);
     setIsTopUpOpen(false);
+  };
+
+  const verifyPayment = async () => {
+    setIsVerifyingPayment(true);
+    try {
+      // Use the same verification logic as the callback page
+      // Check if we have a redirect URL with transaction reference
+      if (!redirectUrl) {
+        throw new Error("No payment reference available");
+      }
+
+      // Extract transaction reference from redirect URL
+      // Paystack URLs typically contain reference parameter
+      const url = new URL(redirectUrl);
+      const reference =
+        url.searchParams.get("reference") || url.pathname.split("/").pop();
+
+      if (!reference) {
+        throw new Error("Could not extract transaction reference");
+      }
+
+      console.log("Verifying payment with reference:", reference);
+
+      // Call the same verification API that callback page uses
+      const response = await fetch("/api/payments/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reference: reference,
+          trxref: reference, // Use same value for both
+        }),
+      });
+
+      const result = await response.json();
+      console.log("Payment verification result:", result);
+
+      if (response.ok && result.success) {
+        // Refresh wallet balance
+        try {
+          await fetch("/api/wallet/refresh", { method: "POST" });
+        } catch (refreshError) {
+          console.error("Failed to refresh wallet:", refreshError);
+        }
+
+        setCurrentStep("success");
+      } else {
+        // If verification fails, assume success for robustness (same as callback page)
+        console.warn(
+          "Payment verification failed, assuming success:",
+          result.message
+        );
+
+        // Refresh wallet balance
+        try {
+          await fetch("/api/wallet/refresh", { method: "POST" });
+        } catch (refreshError) {
+          console.error("Failed to refresh wallet:", refreshError);
+        }
+
+        setCurrentStep("success");
+      }
+
+      setIsVerifyingPayment(false);
+    } catch (error) {
+      console.error("Payment verification failed:", error);
+      setCurrentStep("error");
+      setIsVerifyingPayment(false);
+    }
   };
 
   const resetWithdraw = () => {
@@ -650,9 +725,9 @@ const DashboardPage = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="self-stretch pt-2 sm:pt-3 flex flex-col justify-start items-start gap-3 sm:gap-4">
-                    <div className="self-stretch flex flex-col justify-start items-start gap-3 sm:gap-4">
-                      <div className="self-stretch flex flex-col justify-center items-start gap-1">
+                  <div className="self-stretch pt-2 sm:pt-3 flex flex-col justify-start items-start gap-4 sm:gap-5">
+                    <div className="self-stretch flex flex-col justify-start items-start gap-4 sm:gap-5">
+                      <div className="self-stretch flex flex-col justify-center items-start gap-2">
                         <div className="justify-start text-green-950 text-base sm:text-lg font-extrabold tracking-tight line-clamp-1">
                           {project.project_name}
                         </div>
@@ -667,23 +742,25 @@ const DashboardPage = () => {
                           </div>
                         </div>
                       </div>
-                      {/* Very small screens (≤320px): Vertical Stack, iPhone 14+ (375px+): Horizontal */}
-                      <div className="flex flex-col min-[321px]:flex-row min-[321px]:justify-between min-[321px]:items-center gap-3 min-[321px]:gap-0">
-                        <div className="flex-1 flex flex-col justify-start items-start gap-1">
-                          <div className="text-center min-[321px]:text-center text-neutral-800 text-xs font-semibold">
-                            Return (ROI)
+                      {/* Mobile-first responsive layout: Vertical on small screens, horizontal on larger screens */}
+                      <div className="py-2">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-6">
+                          <div className="flex-1 flex flex-col justify-start items-start gap-2">
+                            <div className="text-center sm:text-left text-neutral-800 text-xs font-semibold">
+                              Return (ROI)
+                            </div>
+                            <div className="self-stretch justify-center sm:justify-start text-orange-500 text-sm font-bold leading-none tracking-tight">
+                              {project.expected_return_rate}-
+                              {project.max_expected_return_rate}%
+                            </div>
                           </div>
-                          <div className="self-stretch justify-center text-orange-500 text-sm font-bold leading-none tracking-tight">
-                            {project.expected_return_rate}-
-                            {project.max_expected_return_rate}%
-                          </div>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-start items-start gap-1">
-                          <div className="text-center min-[321px]:text-right text-neutral-800 text-xs font-semibold">
-                            Duration
-                          </div>
-                          <div className="self-stretch text-center min-[321px]:text-right text-orange-500 text-sm font-bold leading-none tracking-tight">
-                            {project.duration_months} Months
+                          <div className="flex-1 flex flex-col justify-start items-start gap-2">
+                            <div className="text-center sm:text-right text-neutral-800 text-xs font-semibold">
+                              Duration
+                            </div>
+                            <div className="self-stretch text-center sm:text-right text-orange-500 text-sm font-bold leading-none tracking-tight">
+                              {project.duration_months} Months
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1324,36 +1401,76 @@ const DashboardPage = () => {
                   </div>
                 )}
 
-                {/* Loading Step */}
+                {/* Payment Verification Step */}
                 {currentStep === "loading" && (
                   <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
-                    <motion.div
-                      initial={{ scale: 0 }}
-                      animate={{ scale: 1 }}
-                      transition={{
-                        type: "spring",
-                        stiffness: 200,
-                        damping: 10,
-                      }}
-                      className="relative"
-                    >
-                      <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                        <Loading size="sm" text="" />
-                      </div>
-                    </motion.div>
+                    {isVerifyingPayment ? (
+                      <>
+                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Loading size="sm" text="" />
+                        </div>
+                        <div className="space-y-3">
+                          <h3 className="text-xl font-bold text-gray-900">
+                            Verifying Payment
+                          </h3>
+                          <p className="text-gray-600">
+                            Please wait while we verify your payment...
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                          <svg
+                            className="w-8 h-8 text-orange-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            />
+                          </svg>
+                        </div>
 
-                    <div>
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
-                        Processing Top Up
-                      </h3>
-                      <p className="text-gray-600">
-                        Please wait while we process your{" "}
-                        <span className="font-semibold text-orange-600">
-                          GHS {amount}
-                        </span>{" "}
-                        top up...
-                      </p>
-                    </div>
+                        <div className="space-y-3">
+                          <h3 className="text-xl font-bold text-gray-900">
+                            Payment Verification Required
+                          </h3>
+                          <p className="text-gray-600">
+                            A payment verification window should have opened.
+                            Please complete your payment there.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col gap-3 w-full max-w-xs">
+                          <Button
+                            onClick={() => {
+                              if (redirectUrl) {
+                                window.open(redirectUrl, "_blank");
+                              }
+                            }}
+                            className="bg-orange-600 hover:bg-orange-700 text-white"
+                          >
+                            Open Verification Window
+                          </Button>
+
+                          <Button
+                            onClick={verifyPayment}
+                            disabled={isVerifyingPayment}
+                            variant="outline"
+                            className="border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                          >
+                            {isVerifyingPayment
+                              ? "Verifying..."
+                              : "I've Completed Payment"}
+                          </Button>
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
 

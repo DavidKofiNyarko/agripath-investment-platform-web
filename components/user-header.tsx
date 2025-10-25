@@ -1,12 +1,13 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Button } from '@/components/ui/button';
-import { Bell, X } from 'lucide-react';
-import { useUser } from '@/contexts/UserContext';
-import { useProfile } from '@/contexts/ProfileContext';
-import { useNotifications } from '@/contexts/NotificationContext';
+import React, { useState, useEffect, useRef } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Bell, X } from "lucide-react";
+import { useUser } from "@/contexts/UserContext";
+import { useProfile } from "@/contexts/ProfileContext";
+import { useNotifications } from "@/contexts/NotificationContext";
+import LogoSVG from "./logo-svg";
 
 interface UserHeaderProps {
   title?: string;
@@ -14,28 +15,40 @@ interface UserHeaderProps {
   className?: string;
 }
 
-const UserHeader: React.FC<UserHeaderProps> = ({ 
-  title, 
-  showDate = true, 
-  className = "" 
+const UserHeader: React.FC<UserHeaderProps> = ({
+  title,
+  showDate = true,
+  className = "",
 }) => {
   const { user } = useUser();
   const { profile } = useProfile();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, sendTestNotification, navigateToUpdates } = useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    sendTestNotification,
+    navigateToUpdates,
+  } = useNotifications();
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+  const notificationRef = useRef<HTMLDivElement>(null);
 
   const getUserName = () => {
-    return profile?.first_name || 
-           user?.user_metadata?.full_name || 
-           user?.user_metadata?.name || 
-           "User";
+    return (
+      profile?.first_name ||
+      user?.user_metadata?.full_name ||
+      user?.user_metadata?.name ||
+      "User"
+    );
   };
 
   const getUserAvatar = () => {
-    return user?.user_metadata?.picture || 
-           user?.user_metadata?.avatar_url || 
-           profile?.avatar_url ||
-           null; // Return null to use fallback avatar
+    return (
+      user?.user_metadata?.picture ||
+      user?.user_metadata?.avatar_url ||
+      profile?.avatar_url ||
+      null
+    ); // Return null to use fallback avatar
   };
 
   const getUserInitials = () => {
@@ -51,19 +64,33 @@ const UserHeader: React.FC<UserHeaderProps> = ({
   };
 
   const getCurrentDate = () => {
-    return new Date().toLocaleDateString('en-US', { 
-      weekday: 'long', 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+    return new Date().toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const getShortDate = () => {
+    return new Date().toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
     });
   };
 
   const getCurrentTime = () => {
-    return new Date().toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      timeZoneName: 'short'
+    return new Date().toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZoneName: "short",
+    });
+  };
+
+  const getShortTime = () => {
+    return new Date().toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -82,14 +109,33 @@ const UserHeader: React.FC<UserHeaderProps> = ({
     setIsNotificationOpen(false);
   };
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target as Node)
+      ) {
+        setIsNotificationOpen(false);
+      }
+    };
+
+    if (isNotificationOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isNotificationOpen]);
+
   return (
-    <div className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 ${className}`}>
+    <div
+      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 ${className}`}
+    >
       <div className="flex items-center gap-3">
         <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
-          <AvatarImage 
-            src={getUserAvatar()} 
-            alt={getUserName()} 
-          />
+          <AvatarImage src={getUserAvatar()} alt={getUserName()} />
           <AvatarFallback className="text-sm sm:text-base">
             {getUserInitials()}
           </AvatarFallback>
@@ -98,17 +144,13 @@ const UserHeader: React.FC<UserHeaderProps> = ({
           <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
             {title || `Hi, ${getUserName()} 👋`}
           </h1>
-          {showDate && (
-            <p className="text-sm text-gray-600">
-              {getGreeting()}
-            </p>
-          )}
+          {showDate && <p className="text-sm text-gray-600">{getGreeting()}</p>}
         </div>
       </div>
-      
+
       <div className="flex items-center gap-2 sm:gap-4">
         {/* Notification Bell */}
-        <div className="relative">
+        <div className="relative" ref={notificationRef}>
           <Button
             variant="ghost"
             size="sm"
@@ -118,14 +160,14 @@ const UserHeader: React.FC<UserHeaderProps> = ({
             <Bell className="h-5 w-5 text-gray-600" />
             {unreadCount > 0 && (
               <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-red-500 text-xs font-medium text-white flex items-center justify-center">
-                {unreadCount > 99 ? '99+' : unreadCount}
+                {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </Button>
-          
+
           {/* Notification Dropdown */}
           {isNotificationOpen && (
-            <div className="absolute right-0 top-12 w-80 sm:w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+            <div className="absolute left-0 sm:right-0 sm:left-auto top-12 w-[calc(100vw-1rem)] sm:w-80 lg:w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-[70vh] overflow-hidden">
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">Notifications</h3>
@@ -151,8 +193,8 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                   </div>
                 </div>
               </div>
-              
-              <div className="max-h-80 overflow-y-auto">
+
+              <div className="max-h-60 overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
                     <Bell className="h-8 w-8 mx-auto mb-2 text-gray-300" />
@@ -163,14 +205,18 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                     <div
                       key={notification.id}
                       className={`p-4 border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors ${
-                        notification.status === 'unread' ? 'bg-blue-50/30' : ''
+                        notification.status === "unread" ? "bg-blue-50/30" : ""
                       }`}
                       onClick={() => handleNotificationClick(notification.id)}
                     >
                       <div className="flex items-start gap-3">
-                        <div className={`h-2 w-2 rounded-full mt-2 flex-shrink-0 ${
-                          notification.status === 'unread' ? 'bg-blue-500' : 'bg-gray-300'
-                        }`} />
+                        <div
+                          className={`h-2 w-2 rounded-full mt-2 flex-shrink-0 ${
+                            notification.status === "unread"
+                              ? "bg-blue-500"
+                              : "bg-gray-300"
+                          }`}
+                        />
                         <div className="min-w-0 flex-1">
                           <h4 className="text-sm font-medium text-gray-900 truncate">
                             {notification.title}
@@ -181,7 +227,9 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                           <div className="flex items-center justify-between mt-2">
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-gray-500">
-                                {new Date(notification.created_at).toLocaleDateString()}
+                                {new Date(
+                                  notification.created_at
+                                ).toLocaleDateString()}
                               </span>
                               <span className="text-xs text-gray-400">•</span>
                               <span className="text-xs text-gray-500 capitalize">
@@ -198,23 +246,17 @@ const UserHeader: React.FC<UserHeaderProps> = ({
                   ))
                 )}
               </div>
-              
-            
             </div>
           )}
         </div>
-        
+
         {showDate && (
           <div className="text-left sm:text-right text-xs sm:text-sm text-gray-600">
-            <div className="sm:hidden">
-              {getCurrentDate()}
-            </div>
+            <div className="sm:hidden">{getShortDate()}</div>
             <div className="hidden sm:block">
               {getCurrentDate()} • {getCurrentTime()}
             </div>
-            <div className="sm:hidden text-gray-500">
-              {getCurrentTime()}
-            </div>
+            <div className="sm:hidden text-gray-500">{getShortTime()}</div>
           </div>
         )}
       </div>

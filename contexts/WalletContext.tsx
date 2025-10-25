@@ -400,7 +400,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("Payment service response:", response);
 
         if (response.status === "approved") {
-          // Refresh wallet balance after successful topup
+          // Only consider it truly successful if we can verify the wallet was updated
+          // For now, be more conservative and treat most responses as requiring verification
+          if (response.redirect_url) {
+            // Even if status is "approved", if there's a redirect_url, user needs to complete verification
+            return { success: false, redirect_url: response.redirect_url };
+          }
+          // Only refresh wallet balance if no redirect is needed
           await refreshWallet();
           return { success: true };
         } else if (response.status === "pending" && response.redirect_url) {

@@ -56,6 +56,8 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
   }, [isOpen]);
 
   const handlePinChange = (index: number, value: string) => {
+    // Only allow numeric input
+    if (!/^\d*$/.test(value)) return;
     if (value.length > 1) return;
 
     const newPin = [...pin];
@@ -166,6 +168,8 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
                       pinRefs.current[index] = el;
                     }}
                     type={showPin ? "text" : "password"}
+                    inputMode="numeric"
+                    pattern="[0-9]*"
                     value={digit}
                     onChange={(e) => handlePinChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
