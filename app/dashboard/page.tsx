@@ -667,9 +667,10 @@ const DashboardPage = () => {
                           </div>
                         </div>
                       </div>
-                      <div className="self-stretch inline-flex justify-between items-center">
-                        <div className="flex-1 inline-flex flex-col justify-start items-start gap-1">
-                          <div className="text-center justify-center text-neutral-800 text-xs font-semibold">
+                      {/* Very small screens (≤320px): Vertical Stack, iPhone 14+ (375px+): Horizontal */}
+                      <div className="flex flex-col min-[321px]:flex-row min-[321px]:justify-between min-[321px]:items-center gap-3 min-[321px]:gap-0">
+                        <div className="flex-1 flex flex-col justify-start items-start gap-1">
+                          <div className="text-center min-[321px]:text-center text-neutral-800 text-xs font-semibold">
                             Return (ROI)
                           </div>
                           <div className="self-stretch justify-center text-orange-500 text-sm font-bold leading-none tracking-tight">
@@ -677,11 +678,11 @@ const DashboardPage = () => {
                             {project.max_expected_return_rate}%
                           </div>
                         </div>
-                        <div className="flex-1 inline-flex flex-col justify-start items-start gap-1">
-                          <div className="self-stretch text-right justify-center text-neutral-800 text-xs font-semibold">
+                        <div className="flex-1 flex flex-col justify-start items-start gap-1">
+                          <div className="text-center min-[321px]:text-right text-neutral-800 text-xs font-semibold">
                             Duration
                           </div>
-                          <div className="self-stretch text-right justify-center text-orange-500 text-sm font-bold leading-none tracking-tight">
+                          <div className="self-stretch text-center min-[321px]:text-right text-orange-500 text-sm font-bold leading-none tracking-tight">
                             {project.duration_months} Months
                           </div>
                         </div>

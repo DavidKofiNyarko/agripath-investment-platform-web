@@ -422,6 +422,12 @@ const InvestmentsPage = () => {
     window.location.href = "/kyc-verification";
   };
 
+  const handleEditKyc = () => {
+    console.log("handleEditKyc called - redirecting to edit mode");
+    setShowKycModal(false);
+    window.location.href = "/kyc-verification?edit=true";
+  };
+
   const calculateTotal = () => {
     // Use success investment details if available (for success screen and receipt)
     if (
@@ -1451,7 +1457,8 @@ const InvestmentsPage = () => {
                           className="w-full h-48 object-cover rounded-lg"
                         />
 
-                        <div className="flex items-center justify-between">
+                        {/* Very small screens (≤320px): Vertical Stack, iPhone 14+ (375px+): Horizontal */}
+                        <div className="flex flex-col min-[321px]:flex-row min-[321px]:items-center min-[321px]:justify-between gap-4 min-[321px]:gap-0">
                           <div className="flex-1 text-center">
                             <p className="text-sm text-gray-600">
                               Price per Unit
@@ -1460,7 +1467,7 @@ const InvestmentsPage = () => {
                               GHS {selectedInvestment.price.toLocaleString()}
                             </p>
                           </div>
-                          <div className="w-px h-12 bg-gray-300"></div>
+                          <div className="hidden min-[321px]:block w-px h-12 bg-gray-300"></div>
                           <div className="flex-1 text-center">
                             <p className="text-sm text-gray-600">
                               Return (ROI)
@@ -1469,7 +1476,7 @@ const InvestmentsPage = () => {
                               {selectedInvestment.roi}
                             </p>
                           </div>
-                          <div className="w-px h-12 bg-gray-300"></div>
+                          <div className="hidden min-[321px]:block w-px h-12 bg-gray-300"></div>
                           <div className="flex-1 text-center">
                             <p className="text-sm text-gray-600">Duration</p>
                             <p className="font-bold text-lg text-orange-600">
@@ -2528,6 +2535,7 @@ const InvestmentsPage = () => {
           isOpen={showKycModal}
           onClose={() => setShowKycModal(false)}
           onCompleteKyc={handleCompleteKyc}
+          onEditKyc={handleEditKyc}
         />
 
         {/* PIN Validation Modal */}
