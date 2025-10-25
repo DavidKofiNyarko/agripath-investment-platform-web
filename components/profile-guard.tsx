@@ -1,40 +1,65 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
-import { useProfile } from '@/contexts/ProfileContext';
-import { useUser } from '@/contexts/UserContext';
-import ProfileCompletionModal from '@/components/profile-completion-modal';
+import React, { useState, useEffect } from "react";
+import { useProfile } from "@/contexts/ProfileContext";
+import { useUser } from "@/contexts/UserContext";
+import ProfileCompletionModal from "@/components/profile-completion-modal";
 
 interface ProfileGuardProps {
   children: React.ReactNode;
 }
 
 const ProfileGuard: React.FC<ProfileGuardProps> = ({ children }) => {
-  const { user } = useUser();
-  const { profile, loading, isProfileCompletionRequired } = useProfile();
+  const { user, loading: userLoading } = useUser();
+  const {
+    profile,
+    loading: profileLoading,
+    isProfileCompletionRequired,
+  } = useProfile();
   const [showProfileModal, setShowProfileModal] = useState(false);
+  const [hasCheckedProfile, setHasCheckedProfile] = useState(false);
+
+  // Combined loading state
+  const isLoading = userLoading || profileLoading;
 
   useEffect(() => {
     // Only check profile completion if user is authenticated and profile is loaded
-    if (user && !loading && profile !== null) {
+    if (user && !isLoading && profile !== null) {
+      setHasCheckedProfile(true);
       if (isProfileCompletionRequired) {
         setShowProfileModal(true);
       } else {
         setShowProfileModal(false);
       }
+    } else if (!user) {
+      // Reset state when user logs out
+      setHasCheckedProfile(false);
+      setShowProfileModal(false);
     }
-  }, [user, loading, profile, isProfileCompletionRequired]);
+  }, [user, isLoading, profile, isProfileCompletionRequired]);
 
   const handleProfileComplete = () => {
     setShowProfileModal(false);
   };
 
-  // Don't render children if profile completion is required
-  if (user && !loading && isProfileCompletionRequired) {
+  // Show loading state while checking profile
+  if (isLoading || (user && !hasCheckedProfile)) {
     return (
-      <ProfileCompletionModal 
-        isOpen={true} 
-        onComplete={handleProfileComplete} 
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Don't render children if profile completion is required
+  if (user && hasCheckedProfile && isProfileCompletionRequired) {
+    return (
+      <ProfileCompletionModal
+        isOpen={true}
+        onComplete={handleProfileComplete}
       />
     );
   }
