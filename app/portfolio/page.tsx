@@ -426,7 +426,7 @@ const PortfolioPage = () => {
                           <div className="flex items-center gap-2">
                             <Progress
                               value={project.progress}
-                              className="flex-1 h-2"
+                              className="flex-1 h-2 [&>div]:bg-green-600"
                             />
                             <span className="text-sm text-gray-600 w-12">
                               {project.progress}%
@@ -512,7 +512,10 @@ const PortfolioPage = () => {
                             <span>Progress</span>
                             <span>{project.progress}%</span>
                           </div>
-                          <Progress value={project.progress} className="h-2" />
+                          <Progress
+                            value={project.progress}
+                            className="h-2 [&>div]:bg-green-600"
+                          />
                         </div>
 
                         <div className="flex justify-end pt-2">
@@ -755,7 +758,7 @@ const PortfolioPage = () => {
                             currentStage
                           );
                         })()}
-                        className="h-2"
+                        className="h-2 [&>div]:bg-green-600"
                       />
                       <motion.div
                         className="absolute top-0 left-0 h-2 bg-green-600 rounded-full"
