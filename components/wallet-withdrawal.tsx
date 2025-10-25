@@ -64,6 +64,32 @@ const WalletWithdrawal: React.FC = () => {
     setErrorType("general");
   };
 
+  // Check if form is valid for submission
+  const isFormValid = () => {
+    if (!formData.amount || parseFloat(formData.amount) <= 0) return false;
+    if (isAmountExceedingBalance()) return false;
+
+    if (formData.channel === "bank") {
+      return !!(
+        formData.account_number &&
+        formData.account_number.trim() !== "" &&
+        formData.account_bank &&
+        formData.account_bank.trim() !== ""
+      );
+    } else if (formData.channel === "momo") {
+      const phoneRegex = /^0[2-9][0-9]{8}$/;
+      return !!(
+        formData.recipient_number &&
+        formData.recipient_number.trim() !== "" &&
+        formData.network &&
+        formData.network.trim() !== "" &&
+        phoneRegex.test(formData.recipient_number.replace(/\s/g, ""))
+      );
+    }
+
+    return false;
+  };
+
   // Check if withdrawal amount exceeds wallet balance
   const isAmountExceedingBalance = () => {
     if (!wallet?.balance || !formData.amount) return false;
@@ -96,14 +122,32 @@ const WalletWithdrawal: React.FC = () => {
 
     // Validate required fields based on channel
     if (formData.channel === "bank") {
-      if (!formData.account_number || !formData.account_bank) {
-        setError("Account number and bank are required for bank transfers");
+      if (!formData.account_number || formData.account_number.trim() === "") {
+        setError("Account number is required for bank transfers");
+        return;
+      }
+      if (!formData.account_bank || formData.account_bank.trim() === "") {
+        setError("Bank selection is required for bank transfers");
         return;
       }
     } else if (formData.channel === "momo") {
-      if (!formData.recipient_number || !formData.network) {
+      // More strict validation for mobile money
+      if (
+        !formData.recipient_number ||
+        formData.recipient_number.trim() === ""
+      ) {
+        setError("Recipient mobile number is required for mobile money");
+        return;
+      }
+      if (!formData.network || formData.network.trim() === "") {
+        setError("Network provider is required for mobile money");
+        return;
+      }
+      // Validate phone number format (Ghana format)
+      const phoneRegex = /^0[2-9][0-9]{8}$/;
+      if (!phoneRegex.test(formData.recipient_number.replace(/\s/g, ""))) {
         setError(
-          "Recipient number and network provider are required for mobile money"
+          "Please enter a valid Ghana mobile number (e.g., 024 567 8905)"
         );
         return;
       }
@@ -471,9 +515,7 @@ const WalletWithdrawal: React.FC = () => {
           {/* Submit Button */}
           <Button
             type="submit"
-            disabled={
-              loading || isAmountExceedingBalance() || !!getValidationError()
-            }
+            disabled={loading || !isFormValid()}
             className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 text-base shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {loading ? (

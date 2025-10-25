@@ -104,7 +104,7 @@ const DashboardPage = () => {
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isTopUpPinModalOpen, setIsTopUpPinModalOpen] = useState(false);
   const [isWithdrawPinModalOpen, setIsWithdrawPinModalOpen] = useState(false);
-  const [amount, setAmount] = useState("3,000.00");
+  const [amount, setAmount] = useState("");
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [paymentMethod, setPaymentMethod] = useState("");
   const [withdrawMethod, setWithdrawMethod] = useState("");
@@ -360,6 +360,7 @@ const DashboardPage = () => {
 
   const resetTopUp = () => {
     setCurrentStep("amount");
+    setAmount("");
     setPaymentMethod("");
     setIsTopUpOpen(false);
   };

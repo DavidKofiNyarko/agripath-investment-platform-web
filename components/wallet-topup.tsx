@@ -54,15 +54,54 @@ const WalletTopup: React.FC = () => {
     exp_year: "",
     cvv: "",
     card_holder: "",
-    user_email: user?.email || "",
+    user_email: "",
     subscriber_number: "",
     network: "",
   });
+
+  // Update user_email when user changes
+  React.useEffect(() => {
+    if (user?.email) {
+      setFormData((prev) => ({ ...prev, user_email: user.email || "" }));
+    }
+  }, [user?.email]);
 
   const handleInputChange = (field: keyof TopupFormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setError("");
     setSuccess("");
+  };
+
+  // Check if form is valid for submission
+  const isFormValid = () => {
+    // Check amount first
+    const amount = parseFloat(formData.amount);
+    if (!formData.amount || isNaN(amount) || amount <= 0) {
+      return false;
+    }
+
+    if (formData.channel === "card") {
+      return !!(
+        formData.pan?.trim() &&
+        formData.exp_month?.trim() &&
+        formData.exp_year?.trim() &&
+        formData.cvv?.trim() &&
+        formData.card_holder?.trim() &&
+        formData.user_email?.trim()
+      );
+    } else if (formData.channel === "momo") {
+      // Check if phone number and network are provided
+      if (!formData.subscriber_number?.trim() || !formData.network?.trim()) {
+        return false;
+      }
+
+      // Validate phone number format (Ghana format)
+      const phoneRegex = /^0[2-9][0-9]{8}$/;
+      const cleanPhone = formData.subscriber_number.replace(/\s/g, "");
+      return phoneRegex.test(cleanPhone);
+    }
+
+    return false;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -92,9 +131,23 @@ const WalletTopup: React.FC = () => {
         return;
       }
     } else if (formData.channel === "momo") {
-      if (!formData.subscriber_number || !formData.network) {
+      // More strict validation for mobile money
+      if (
+        !formData.subscriber_number ||
+        formData.subscriber_number.trim() === ""
+      ) {
+        setError("Mobile number is required for mobile money");
+        return;
+      }
+      if (!formData.network || formData.network.trim() === "") {
+        setError("Network provider is required for mobile money");
+        return;
+      }
+      // Validate phone number format (Ghana format)
+      const phoneRegex = /^0[2-9][0-9]{8}$/;
+      if (!phoneRegex.test(formData.subscriber_number.replace(/\s/g, ""))) {
         setError(
-          "Subscriber number and network provider are required for mobile money"
+          "Please enter a valid Ghana mobile number (e.g., 024 567 8905)"
         );
         return;
       }
@@ -435,8 +488,8 @@ const WalletTopup: React.FC = () => {
           {/* Submit Button */}
           <Button
             type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-base shadow-lg"
+            disabled={loading || !isFormValid()}
+            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 text-base shadow-lg disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
