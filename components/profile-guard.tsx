@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useUser } from "@/contexts/UserContext";
 import ProfileCompletionModal from "@/components/profile-completion-modal";
+import Loading from "@/components/ui/loading";
 
 interface ProfileGuardProps {
   children: React.ReactNode;
@@ -44,14 +45,7 @@ const ProfileGuard: React.FC<ProfileGuardProps> = ({ children }) => {
 
   // Show loading state while checking profile
   if (isLoading || (user && !hasCheckedProfile)) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading...</p>
-        </div>
-      </div>
-    );
+    return <Loading size="md" className="min-h-screen" />;
   }
 
   // Don't render children if profile completion is required

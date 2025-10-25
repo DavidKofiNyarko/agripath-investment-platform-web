@@ -1,24 +1,30 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
-import Image from 'next/image';
-import { 
-  Bell, 
-  ChevronRight, 
-  X, 
+import React, { useState } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import Image from "next/image";
+import {
+  Bell,
+  ChevronRight,
+  X,
   Play,
   Calendar,
   FolderOpen,
-  Search
-} from 'lucide-react';
-import DashboardLayout from '@/components/dashboard-layout';
-import { useUpdates } from '@/contexts/UpdatesContext';
-import { useNotifications } from '@/contexts/NotificationContext';
+  Search,
+} from "lucide-react";
+import DashboardLayout from "@/components/dashboard-layout";
+import { useUpdates } from "@/contexts/UpdatesContext";
+import { useNotifications } from "@/contexts/NotificationContext";
+import Loading from "@/components/ui/loading";
 
 interface Update {
   id: number;
@@ -39,29 +45,23 @@ interface MediaItem {
 }
 
 const UpdatesPage = () => {
-  const { 
-    updates, 
-    loading, 
-    error, 
-    filters, 
-    setFilters, 
-    refreshUpdates
-  } = useUpdates();
-  
-  const { 
-    notifications, 
-    unreadCount, 
-    markAsRead, 
-    isLoading: notificationsLoading 
+  const { updates, loading, error, filters, setFilters, refreshUpdates } =
+    useUpdates();
+
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    isLoading: notificationsLoading,
   } = useNotifications();
-  
-  const [activeTab, setActiveTab] = useState('notifications');
+
+  const [activeTab, setActiveTab] = useState("notifications");
   const [selectedUpdate, setSelectedUpdate] = useState<Update | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
@@ -81,28 +81,22 @@ const UpdatesPage = () => {
 
   // Handle enter key in search input
   const handleSearchKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       handleSearchSubmit();
     }
   };
 
   // Clear search
   const handleClearSearch = () => {
-    setSearchQuery('');
-    setFilters({ ...filters, search: '' });
+    setSearchQuery("");
+    setFilters({ ...filters, search: "" });
   };
-
 
   // Loading state
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading updates...</p>
-          </div>
-        </div>
+        <Loading size="lg" className="min-h-screen" />
       </DashboardLayout>
     );
   }
@@ -116,9 +110,14 @@ const UpdatesPage = () => {
             <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bell className="h-8 w-8 text-red-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Updates</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Error Loading Updates
+            </h3>
             <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={refreshUpdates} className="bg-green-600 hover:bg-green-700">
+            <Button
+              onClick={refreshUpdates}
+              className="bg-green-600 hover:bg-green-700"
+            >
               Try Again
             </Button>
           </div>
@@ -132,24 +131,30 @@ const UpdatesPage = () => {
     id: index + 1,
     title: update.title,
     description: update.description,
-    date: new Date(update.created_at).toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
+    date: new Date(update.created_at).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
     }),
-    category: update.project_name || 'Unknown Project',
-    image: update.image_url || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop',
+    category: update.project_name || "Unknown Project",
+    image:
+      update.image_url ||
+      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop",
     content: update.update_text,
-    media: update.image_url ? [{
-      id: 1,
-      image: update.image_url,
-      title: update.title
-    }] : [],
-    isRead: false
+    media: update.image_url
+      ? [
+          {
+            id: 1,
+            image: update.image_url,
+            title: update.title,
+          },
+        ]
+      : [],
+    isRead: false,
   }));
 
-  const newUpdates = formattedUpdates.filter(update => !update.isRead);
-  const readUpdates = formattedUpdates.filter(update => update.isRead);
+  const newUpdates = formattedUpdates.filter((update) => !update.isRead);
+  const readUpdates = formattedUpdates.filter((update) => update.isRead);
 
   // Pagination logic
   const getPaginatedItems = (items: any[]) => {
@@ -179,9 +184,9 @@ const UpdatesPage = () => {
   const handleNotificationClick = async (notification: any) => {
     setSelectedNotification(notification);
     setIsNotificationModalOpen(true);
-    
+
     // Mark as read if it's unread
-    if (notification.status === 'unread') {
+    if (notification.status === "unread") {
       await markAsRead(notification.id);
     }
   };
@@ -189,7 +194,7 @@ const UpdatesPage = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     // Scroll to top when page changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleTabChange = (tab: string) => {
@@ -201,12 +206,12 @@ const UpdatesPage = () => {
 
   const getCategoryColor = (category: string) => {
     const colors: { [key: string]: string } = {
-      'Cassava 2025': 'bg-orange-100 text-orange-800',
-      'Tomatoes 2025': 'bg-red-100 text-red-800',
-      'Peppers 2025': 'bg-green-100 text-green-800',
-      'Cucumbers 2025': 'bg-blue-100 text-blue-800'
+      "Cassava 2025": "bg-orange-100 text-orange-800",
+      "Tomatoes 2025": "bg-red-100 text-red-800",
+      "Peppers 2025": "bg-green-100 text-green-800",
+      "Cucumbers 2025": "bg-blue-100 text-blue-800",
     };
-    return colors[category] || 'bg-gray-100 text-gray-800';
+    return colors[category] || "bg-gray-100 text-gray-800";
   };
 
   return (
@@ -216,19 +221,27 @@ const UpdatesPage = () => {
         <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 sm:gap-0">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Latest Updates</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
+                Latest Updates
+              </h1>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">
               <div className="text-xs sm:text-sm text-gray-600">
-                <span className="hidden sm:inline">Thursday, 18 September 2025 • 05:53 PM GMT</span>
+                <span className="hidden sm:inline">
+                  Thursday, 18 September 2025 • 05:53 PM GMT
+                </span>
                 <span className="sm:hidden">Sep 18, 2025</span>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 sm:h-10 sm:w-10"
+              >
                 <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
               </Button>
             </div>
           </div>
-          
+
           {/* Search Bar */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
@@ -239,7 +252,9 @@ const UpdatesPage = () => {
               onChange={(e) => handleSearch(e.target.value)}
               onKeyPress={handleSearchKeyPress}
               className={`w-full pl-10 pr-20 sm:pr-24 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                searchQuery.length > 0 && searchQuery.length < 4 ? 'border-orange-300 bg-orange-50' : 'border-gray-300'
+                searchQuery.length > 0 && searchQuery.length < 4
+                  ? "border-orange-300 bg-orange-50"
+                  : "border-gray-300"
               }`}
             />
             <div className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
@@ -266,15 +281,19 @@ const UpdatesPage = () => {
             </div>
             {searchQuery.length > 0 && searchQuery.length < 4 && (
               <p className="absolute -bottom-6 left-0 text-xs text-orange-600">
-                Type {4 - searchQuery.length} more character{4 - searchQuery.length === 1 ? '' : 's'} to search
+                Type {4 - searchQuery.length} more character
+                {4 - searchQuery.length === 1 ? "" : "s"} to search
               </p>
             )}
           </div>
-          
+
           {/* Active Search Indicator */}
           {filters.search && (
             <div className="mt-3 flex items-center gap-2">
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-800"
+              >
                 Search: &quot;{filters.search}&quot;
               </Badge>
               <Button
@@ -296,23 +315,23 @@ const UpdatesPage = () => {
             <div className="p-3 sm:p-4 border-b border-gray-200">
               <div className="flex space-x-1 overflow-x-auto">
                 <Button
-                  variant={activeTab === 'notifications' ? 'default' : 'ghost'}
-                  onClick={() => handleTabChange('notifications')}
+                  variant={activeTab === "notifications" ? "default" : "ghost"}
+                  onClick={() => handleTabChange("notifications")}
                   className={`px-3 sm:px-4 py-2 text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'notifications' 
-                      ? 'bg-green-600 text-white' 
-                      : 'text-gray-600 hover:text-gray-900'
+                    activeTab === "notifications"
+                      ? "bg-green-600 text-white"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Notifications ({notifications.length})
                 </Button>
                 <Button
-                  variant={activeTab === 'new' ? 'default' : 'ghost'}
-                  onClick={() => handleTabChange('new')}
+                  variant={activeTab === "new" ? "default" : "ghost"}
+                  onClick={() => handleTabChange("new")}
                   className={`px-3 sm:px-4 py-2 text-sm whitespace-nowrap flex-shrink-0 ${
-                    activeTab === 'new' 
-                      ? 'bg-green-600 text-white' 
-                      : 'text-gray-600 hover:text-gray-900'
+                    activeTab === "new"
+                      ? "bg-green-600 text-white"
+                      : "text-gray-600 hover:text-gray-900"
                   }`}
                 >
                   Updates ({newUpdates.length})
@@ -322,83 +341,89 @@ const UpdatesPage = () => {
 
             {/* Content List */}
             <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
-              {activeTab === 'notifications' ? (
-                  notificationsLoading ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-                      <p className="text-gray-600">Loading notifications...</p>
-                    </div>
-                  ) : notifications.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600">No notifications yet</p>
-                    </div>
-                  ) : (
-                    paginatedNotifications.map((notification, index) => (
-                      <div
-                        key={notification.id}
-                        className={`cursor-pointer transition-colors duration-150 ${
-                          selectedNotification?.id === notification.id 
-                            ? 'bg-green-50 border-green-200' 
-                            : 'hover:bg-gray-50'
+              {activeTab === "notifications" ? (
+                notificationsLoading ? (
+                  <div className="text-center py-8">
+                    <Loading size="sm" />
+                  </div>
+                ) : notifications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600">No notifications yet</p>
+                  </div>
+                ) : (
+                  paginatedNotifications.map((notification, index) => (
+                    <div
+                      key={notification.id}
+                      className={`cursor-pointer transition-colors duration-150 ${
+                        selectedNotification?.id === notification.id
+                          ? "bg-green-50 border-green-200"
+                          : "hover:bg-gray-50"
+                      }`}
+                      onClick={() => handleNotificationClick(notification)}
+                    >
+                      <Card
+                        className={`${
+                          selectedNotification?.id === notification.id
+                            ? "border-green-200 bg-green-50"
+                            : "border-gray-200"
                         }`}
-                        onClick={() => handleNotificationClick(notification)}
                       >
-                        <Card className={`${
-                          selectedNotification?.id === notification.id 
-                            ? 'border-green-200 bg-green-50' 
-                            : 'border-gray-200'
-                        }`}>
-                          <CardContent className="p-3 sm:p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <Badge 
-                                    variant="secondary" 
-                                    className={`text-xs ${
-                                      notification.type === 'Email' 
-                                        ? 'bg-blue-100 text-blue-800' 
-                                        : 'bg-green-100 text-green-800'
-                                    }`}
-                                  >
-                                    {notification.type}
-                                  </Badge>
-                                  {notification.status === 'unread' && (
-                                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                                  )}
-                                </div>
-                                <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 line-clamp-2">
-                                  {notification.title}
-                                </h3>
-                                <p className="text-gray-600 text-xs sm:text-sm line-clamp-2">
-                                  {notification.body}
-                                </p>
-                                <p className="text-gray-500 text-xs mt-2">
-                                  {new Date(notification.created_at).toLocaleDateString()}
-                                </p>
+                        <CardContent className="p-3 sm:p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-2">
+                                <Badge
+                                  variant="secondary"
+                                  className={`text-xs ${
+                                    notification.type === "Email"
+                                      ? "bg-blue-100 text-blue-800"
+                                      : "bg-green-100 text-green-800"
+                                  }`}
+                                >
+                                  {notification.type}
+                                </Badge>
+                                {notification.status === "unread" && (
+                                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                )}
                               </div>
-                              <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0 ml-2" />
+                              <h3 className="font-semibold text-gray-900 text-sm sm:text-base mb-1 line-clamp-2">
+                                {notification.title}
+                              </h3>
+                              <p className="text-gray-600 text-xs sm:text-sm line-clamp-2">
+                                {notification.body}
+                              </p>
+                              <p className="text-gray-500 text-xs mt-2">
+                                {new Date(
+                                  notification.created_at
+                                ).toLocaleDateString()}
+                              </p>
                             </div>
-                          </CardContent>
-                        </Card>
-                      </div>
-                    ))
-                  )
-                ) : paginatedUpdates.map((update, index) => (
+                            <ChevronRight className="h-4 w-4 text-gray-400 flex-shrink-0 ml-2" />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </div>
+                  ))
+                )
+              ) : (
+                paginatedUpdates.map((update, index) => (
                   <div
                     key={update.id}
                     className={`cursor-pointer transition-colors duration-150 ${
-                      selectedUpdate?.id === update.id 
-                        ? 'bg-green-50 border-green-200' 
-                        : 'hover:bg-gray-50'
+                      selectedUpdate?.id === update.id
+                        ? "bg-green-50 border-green-200"
+                        : "hover:bg-gray-50"
                     }`}
                     onClick={() => handleUpdateClick(update)}
                   >
-                    <Card className={`${
-                      selectedUpdate?.id === update.id 
-                        ? 'border-green-200 bg-green-50' 
-                        : 'border-gray-200'
-                    }`}>
+                    <Card
+                      className={`${
+                        selectedUpdate?.id === update.id
+                          ? "border-green-200 bg-green-50"
+                          : "border-gray-200"
+                      }`}
+                    >
                       <CardContent className="p-3 sm:p-4">
                         <div className="flex space-x-2 sm:space-x-3">
                           <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0">
@@ -419,13 +444,21 @@ const UpdatesPage = () => {
                             </p>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center space-x-1 sm:space-x-2">
-                                <span className="text-xs text-gray-500">{update.date}</span>
-                                <Badge 
-                                  variant="secondary" 
-                                  className={`text-xs ${getCategoryColor(update.category)}`}
+                                <span className="text-xs text-gray-500">
+                                  {update.date}
+                                </span>
+                                <Badge
+                                  variant="secondary"
+                                  className={`text-xs ${getCategoryColor(
+                                    update.category
+                                  )}`}
                                 >
-                                  <span className="hidden sm:inline">{update.category}</span>
-                                  <span className="sm:hidden">{update.category.split(' ')[0]}</span>
+                                  <span className="hidden sm:inline">
+                                    {update.category}
+                                  </span>
+                                  <span className="sm:hidden">
+                                    {update.category.split(" ")[0]}
+                                  </span>
                                 </Badge>
                               </div>
                               <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4 text-gray-400 flex-shrink-0" />
@@ -433,18 +466,22 @@ const UpdatesPage = () => {
                           </div>
                         </div>
                       </CardContent>
-                        </Card>
-                      </div>
-                ))}
+                    </Card>
+                  </div>
+                ))
+              )}
             </div>
 
             {/* Pagination */}
-            {((activeTab === 'notifications' && totalNotificationPages > 1) || 
-              (activeTab === 'new' && totalUpdatePages > 1)) && (
+            {((activeTab === "notifications" && totalNotificationPages > 1) ||
+              (activeTab === "new" && totalUpdatePages > 1)) && (
               <div className="p-3 sm:p-4 border-t border-gray-200">
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-gray-600">
-                    Page {currentPage} of {activeTab === 'notifications' ? totalNotificationPages : totalUpdatePages}
+                    Page {currentPage} of{" "}
+                    {activeTab === "notifications"
+                      ? totalNotificationPages
+                      : totalUpdatePages}
                   </div>
                   <div className="flex space-x-2">
                     <Button
@@ -460,7 +497,12 @@ const UpdatesPage = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => handlePageChange(currentPage + 1)}
-                      disabled={currentPage === (activeTab === 'notifications' ? totalNotificationPages : totalUpdatePages)}
+                      disabled={
+                        currentPage ===
+                        (activeTab === "notifications"
+                          ? totalNotificationPages
+                          : totalUpdatePages)
+                      }
                       className="px-3 py-1 text-xs"
                     >
                       Next
@@ -478,17 +520,17 @@ const UpdatesPage = () => {
                 {/* Notification Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <Badge 
-                      variant="secondary" 
+                    <Badge
+                      variant="secondary"
                       className={`${
-                        selectedNotification.type === 'Email' 
-                          ? 'bg-blue-100 text-blue-800' 
-                          : 'bg-green-100 text-green-800'
+                        selectedNotification.type === "Email"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-green-100 text-green-800"
                       }`}
                     >
                       {selectedNotification.type}
                     </Badge>
-                    {selectedNotification.status === 'unread' && (
+                    {selectedNotification.status === "unread" && (
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     )}
                   </div>
@@ -520,13 +562,18 @@ const UpdatesPage = () => {
                 <div className="border-t border-gray-200 pt-4">
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Calendar className="h-4 w-4" />
-                    <span>Received on {new Date(selectedNotification.created_at).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}</span>
+                    <span>
+                      Received on{" "}
+                      {new Date(
+                        selectedNotification.created_at
+                      ).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -559,7 +606,9 @@ const UpdatesPage = () => {
                 {/* Media Section */}
                 {selectedUpdate.media && selectedUpdate.media.length > 0 && (
                   <div className="mt-6 sm:mt-8">
-                    <h3 className="text-base sm:text-lg font-semibold text-green-600 mb-4">Media</h3>
+                    <h3 className="text-base sm:text-lg font-semibold text-green-600 mb-4">
+                      Media
+                    </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                       {selectedUpdate.media.map((media) => (
                         <div
@@ -596,13 +645,14 @@ const UpdatesPage = () => {
                     <Bell className="h-8 w-8 text-gray-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {activeTab === 'notifications' ? 'Select a Notification' : 'Select an Update'}
+                    {activeTab === "notifications"
+                      ? "Select a Notification"
+                      : "Select an Update"}
                   </h3>
                   <p className="text-gray-600">
-                    {activeTab === 'notifications' 
-                      ? 'Choose a notification from the list to view details' 
-                      : 'Choose an update from the list to view details'
-                    }
+                    {activeTab === "notifications"
+                      ? "Choose a notification from the list to view details"
+                      : "Choose an update from the list to view details"}
                   </p>
                 </div>
               </div>
@@ -618,7 +668,9 @@ const UpdatesPage = () => {
                 <VisuallyHidden>{selectedMedia?.title}</VisuallyHidden>
               </DialogTitle>
               <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">{selectedMedia?.title}</h2>
+                <h2 className="text-lg font-semibold">
+                  {selectedMedia?.title}
+                </h2>
                 <Button
                   variant="ghost"
                   size="icon"
@@ -646,9 +698,9 @@ const UpdatesPage = () => {
                         key={media.id}
                         onClick={() => setSelectedMedia(media)}
                         className={`w-16 h-16 rounded-lg overflow-hidden ${
-                          selectedMedia.id === media.id 
-                            ? 'ring-2 ring-green-500' 
-                            : 'hover:opacity-80'
+                          selectedMedia.id === media.id
+                            ? "ring-2 ring-green-500"
+                            : "hover:opacity-80"
                         }`}
                       >
                         <Image

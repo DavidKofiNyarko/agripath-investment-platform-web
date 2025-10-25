@@ -222,7 +222,7 @@ const WalletWithdrawal: React.FC = () => {
   };
 
   return (
-    <Card className="w-full max-w-2xl mx-auto">
+    <Card className="w-full max-w-xl mx-auto">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <ArrowUpRight className="w-5 h-5 text-green-600" />

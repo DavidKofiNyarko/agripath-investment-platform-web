@@ -1,31 +1,43 @@
-'use client';
+"use client";
 
-import React, { useState } from 'react';
-import DashboardLayout from '@/components/dashboard-layout';
-import UserHeader from '@/components/user-header';
-import { usePortfolio } from '@/contexts/PortfolioContext';
-import type { Project } from '@/contexts/PortfolioContext';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React, { useState } from "react";
+import DashboardLayout from "@/components/dashboard-layout";
+import UserHeader from "@/components/user-header";
+import { usePortfolio } from "@/contexts/PortfolioContext";
+import type { Project } from "@/contexts/PortfolioContext";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 // import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'; // Unused imports
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Progress } from '@/components/ui/progress';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  getProjectTimeline, 
-  calculateProjectProgress, 
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import Loading from "@/components/ui/loading";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  getProjectTimeline,
+  calculateProjectProgress,
   mapOldStageToNew,
   calculateProjectDates,
   formatProjectDuration,
   getProjectTimeProgress,
   ProjectType,
-  ProjectStage 
-} from '@/lib/project-stages';
-import { 
-  Search, 
+  ProjectStage,
+} from "@/lib/project-stages";
+import {
+  Search,
   // Bell, // Unused import
   Eye,
   ChevronLeft,
@@ -38,37 +50,37 @@ import {
   Package,
   X,
   ChevronUp,
-  ChevronDown
-} from 'lucide-react';
+  ChevronDown,
+} from "lucide-react";
 
 // Animation variants
 // const timelineVariants = { // Unused variable
 //   hidden: { opacity: 0, x: -20 },
-//   visible: { 
-//     opacity: 1, 
-//     x: 0, 
+//   visible: {
+//     opacity: 1,
+//     x: 0,
 //     transition: { duration: 0.5 }
 //   }
 // };
 
 const stepVariants = {
   hidden: { opacity: 0, scale: 0.8 },
-  visible: { 
-    opacity: 1, 
-    scale: 1, 
-    transition: { 
+  visible: {
+    opacity: 1,
+    scale: 1,
+    transition: {
       duration: 0.4,
-      stiffness: 100
-    }
-  }
+      stiffness: 100,
+    },
+  },
 };
 
 const progressVariants = {
   hidden: { scaleX: 0 },
-  visible: { 
-    scaleX: 1, 
-    transition: { duration: 0.8 }
-  }
+  visible: {
+    scaleX: 1,
+    transition: { duration: 0.8 },
+  },
 };
 
 // Project interface is imported from PortfolioContext
@@ -79,30 +91,46 @@ const progressVariants = {
 
 const getStatusBadge = (status: string) => {
   switch (status) {
-    case 'Completed':
-    case 'Complete':
-      return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Complete</Badge>;
-    case 'In progress':
-      return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">In progress</Badge>;
-    case 'Canceled':
-      return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Canceled</Badge>;
+    case "Completed":
+    case "Complete":
+      return (
+        <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
+          Complete
+        </Badge>
+      );
+    case "In progress":
+      return (
+        <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">
+          In progress
+        </Badge>
+      );
+    case "Canceled":
+      return (
+        <Badge className="bg-red-100 text-red-800 hover:bg-red-100">
+          Canceled
+        </Badge>
+      );
     default:
-      return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">{status}</Badge>;
+      return (
+        <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">
+          {status}
+        </Badge>
+      );
   }
 };
 
 const PortfolioPage = () => {
-  const { 
-    projects, 
-    metrics, 
-    transactions, 
-    loading, 
-    error, 
+  const {
+    projects,
+    metrics,
+    transactions,
+    loading,
+    error,
     filters,
     setFilters,
     pagination,
     setPagination,
-    refreshPortfolio 
+    refreshPortfolio,
   } = usePortfolio();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -129,23 +157,23 @@ const PortfolioPage = () => {
   };
 
   // Apply client-side filtering
-  const filteredProjects = projects.filter(project => {
+  const filteredProjects = projects.filter((project) => {
     // Apply type filter
-    if (filters.type !== 'All' && project.project_type !== filters.type) {
+    if (filters.type !== "All" && project.project_type !== filters.type) {
       return false;
     }
-    
+
     // Apply status filter
-    if (filters.status !== 'All' && project.status !== filters.status) {
+    if (filters.status !== "All" && project.status !== filters.status) {
       return false;
     }
-    
+
     // Apply search filter
-    if (filters.search && filters.search.trim() !== '') {
+    if (filters.search && filters.search.trim() !== "") {
       const searchTerm = filters.search.toLowerCase();
       return project.project_name.toLowerCase().includes(searchTerm);
     }
-    
+
     return true;
   });
 
@@ -160,12 +188,7 @@ const PortfolioPage = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading portfolio data...</p>
-          </div>
-        </div>
+        <Loading size="lg" className="min-h-screen" />
       </DashboardLayout>
     );
   }
@@ -179,9 +202,14 @@ const PortfolioPage = () => {
             <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <X className="h-8 w-8 text-red-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Portfolio</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Error Loading Portfolio
+            </h3>
             <p className="text-gray-600 mb-4">{error}</p>
-            <Button onClick={refreshPortfolio} className="bg-green-600 hover:bg-green-700">
+            <Button
+              onClick={refreshPortfolio}
+              className="bg-green-600 hover:bg-green-700"
+            >
               Try Again
             </Button>
           </div>
@@ -192,13 +220,19 @@ const PortfolioPage = () => {
 
   return (
     <DashboardLayout>
-      <div className={`space-y-4 sm:space-y-6 px-4 sm:px-0 transition-all duration-300 ${isDrawerOpen ? 'main-content-blur' : ''}`}>
+      <div
+        className={`space-y-4 sm:space-y-6 px-4 sm:px-0 transition-all duration-300 ${
+          isDrawerOpen ? "main-content-blur" : ""
+        }`}
+      >
         {/* Header */}
         <UserHeader />
 
         {/* Page Title */}
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">My Portfolio</h2>
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900">
+            My Portfolio
+          </h2>
         </div>
 
         {/* Portfolio Metrics */}
@@ -207,8 +241,12 @@ const PortfolioPage = () => {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">Total Invested</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold truncate">GHS {metrics?.total_invested?.toLocaleString() || '0.00'}</p>
+                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">
+                    Total Invested
+                  </p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold truncate">
+                    GHS {metrics?.total_invested?.toLocaleString() || "0.00"}
+                  </p>
                 </div>
                 <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-yellow-500 flex-shrink-0 ml-2" />
               </div>
@@ -219,8 +257,12 @@ const PortfolioPage = () => {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">Expected Returns</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold truncate">GHS {metrics?.expected_returns?.toLocaleString() || '0.00'}</p>
+                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">
+                    Expected Returns
+                  </p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold truncate">
+                    GHS {metrics?.expected_returns?.toLocaleString() || "0.00"}
+                  </p>
                 </div>
                 <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-yellow-500 flex-shrink-0 ml-2" />
               </div>
@@ -231,8 +273,12 @@ const PortfolioPage = () => {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">Active Projects</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold">{metrics?.active_projects || 0}</p>
+                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">
+                    Active Projects
+                  </p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold">
+                    {metrics?.active_projects || 0}
+                  </p>
                 </div>
                 <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-blue-500 flex-shrink-0 ml-2" />
               </div>
@@ -243,8 +289,12 @@ const PortfolioPage = () => {
             <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">Total Units</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold">{metrics?.total_units || 0}</p>
+                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">
+                    Total Units
+                  </p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold">
+                    {metrics?.total_units || 0}
+                  </p>
                 </div>
                 <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-green-500 flex-shrink-0 ml-2" />
               </div>
@@ -259,7 +309,10 @@ const PortfolioPage = () => {
             <div className="p-4 sm:p-6 border-b bg-gray-50">
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                 <div>
-                  <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
+                  <Select
+                    value={filters.type}
+                    onValueChange={(value) => handleFilterChange("type", value)}
+                  >
                     <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Type" />
                     </SelectTrigger>
@@ -271,7 +324,12 @@ const PortfolioPage = () => {
                   </Select>
                 </div>
                 <div>
-                  <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                  <Select
+                    value={filters.status}
+                    onValueChange={(value) =>
+                      handleFilterChange("status", value)
+                    }
+                  >
                     <SelectTrigger className="text-sm">
                       <SelectValue placeholder="Status" />
                     </SelectTrigger>
@@ -328,11 +386,19 @@ const PortfolioPage = () => {
                 <tbody className="bg-white divide-y divide-gray-200">
                   {paginatedProjects.length === 0 ? (
                     <tr>
-                      <td colSpan={7} className="px-6 py-12 text-center text-gray-500">
+                      <td
+                        colSpan={7}
+                        className="px-6 py-12 text-center text-gray-500"
+                      >
                         <div className="flex flex-col items-center">
                           <Package className="h-12 w-12 text-gray-300 mb-4" />
-                          <p className="text-lg font-medium">No investments yet</p>
-                          <p className="text-sm">Start investing in agricultural projects to see them here</p>
+                          <p className="text-lg font-medium">
+                            No investments yet
+                          </p>
+                          <p className="text-sm">
+                            Start investing in agricultural projects to see them
+                            here
+                          </p>
                         </div>
                       </td>
                     </tr>
@@ -343,27 +409,37 @@ const PortfolioPage = () => {
                           {project.project_name}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          GHS {project.invested_amount?.toLocaleString() || '0.00'}
+                          GHS{" "}
+                          {project.invested_amount?.toLocaleString() || "0.00"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                           {project.units_owned || 0}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          {project.last_investment ? new Date(project.last_investment).toLocaleDateString() : 'N/A'}
+                          {project.last_investment
+                            ? new Date(
+                                project.last_investment
+                              ).toLocaleDateString()
+                            : "N/A"}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <div className="flex items-center gap-2">
-                            <Progress value={project.progress} className="flex-1 h-2" />
-                            <span className="text-sm text-gray-600 w-12">{project.progress}%</span>
+                            <Progress
+                              value={project.progress}
+                              className="flex-1 h-2"
+                            />
+                            <span className="text-sm text-gray-600 w-12">
+                              {project.progress}%
+                            </span>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           {getStatusBadge(project.status)}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="h-8 w-8 p-0"
                             onClick={() => handleProjectClick(project)}
                           >
@@ -384,7 +460,9 @@ const PortfolioPage = () => {
                   <div className="flex flex-col items-center">
                     <Package className="h-12 w-12 text-gray-300 mb-4" />
                     <p className="text-lg font-medium">No investments yet</p>
-                    <p className="text-sm">Start investing in agricultural projects to see them here</p>
+                    <p className="text-sm">
+                      Start investing in agricultural projects to see them here
+                    </p>
                   </div>
                 </div>
               ) : (
@@ -398,27 +476,37 @@ const PortfolioPage = () => {
                               {project.project_name}
                             </h3>
                             <p className="text-xs text-gray-500 mt-1">
-                              {project.last_investment ? new Date(project.last_investment).toLocaleDateString() : 'N/A'}
+                              {project.last_investment
+                                ? new Date(
+                                    project.last_investment
+                                  ).toLocaleDateString()
+                                : "N/A"}
                             </p>
                           </div>
                           <div className="ml-2">
                             {getStatusBadge(project.status)}
                           </div>
                         </div>
-                        
+
                         <div className="grid grid-cols-2 gap-3 text-sm">
                           <div>
-                            <p className="text-xs text-gray-500">Amount Invested</p>
+                            <p className="text-xs text-gray-500">
+                              Amount Invested
+                            </p>
                             <p className="font-medium text-gray-900">
-                              GHS {project.invested_amount?.toLocaleString() || '0.00'}
+                              GHS{" "}
+                              {project.invested_amount?.toLocaleString() ||
+                                "0.00"}
                             </p>
                           </div>
                           <div>
                             <p className="text-xs text-gray-500">Units Owned</p>
-                            <p className="font-medium text-gray-900">{project.units_owned || 0}</p>
+                            <p className="font-medium text-gray-900">
+                              {project.units_owned || 0}
+                            </p>
                           </div>
                         </div>
-                        
+
                         <div>
                           <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
                             <span>Progress</span>
@@ -426,11 +514,11 @@ const PortfolioPage = () => {
                           </div>
                           <Progress value={project.progress} className="h-2" />
                         </div>
-                        
+
                         <div className="flex justify-end pt-2">
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
+                          <Button
+                            variant="ghost"
+                            size="sm"
                             className="text-green-600 hover:text-green-700"
                             onClick={() => handleProjectClick(project)}
                           >
@@ -449,13 +537,15 @@ const PortfolioPage = () => {
             <div className="px-4 sm:px-6 py-4 border-t bg-gray-50">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-0">
                 <div className="text-xs sm:text-sm text-gray-700 text-center sm:text-left">
-                  Showing {filteredProjects.length === 0 ? 0 : startIndex + 1} to {Math.min(endIndex, filteredProjects.length)} of {filteredProjects.length} projects
+                  Showing {filteredProjects.length === 0 ? 0 : startIndex + 1}{" "}
+                  to {Math.min(endIndex, filteredProjects.length)} of{" "}
+                  {filteredProjects.length} projects
                 </div>
-                
+
                 <div className="flex items-center gap-1 sm:gap-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+                  <Button
+                    variant="outline"
+                    size="sm"
                     disabled={pagination.currentPage === 1}
                     onClick={() => handlePageChange(pagination.currentPage - 1)}
                     className="text-xs sm:text-sm px-2 sm:px-3"
@@ -464,19 +554,23 @@ const PortfolioPage = () => {
                     <span className="hidden sm:inline">Previous</span>
                     <span className="sm:hidden">Prev</span>
                   </Button>
-                  
+
                   <div className="flex items-center gap-1">
                     {Array.from({ length: Math.min(3, totalPages) }, (_, i) => {
                       const page = i + 1;
                       return (
                         <Button
                           key={page}
-                          variant={pagination.currentPage === page ? "default" : "outline"}
+                          variant={
+                            pagination.currentPage === page
+                              ? "default"
+                              : "outline"
+                          }
                           size="sm"
                           className={`h-7 w-7 sm:h-8 sm:w-8 p-0 text-xs sm:text-sm ${
-                            pagination.currentPage === page 
-                              ? 'bg-green-600 hover:bg-green-700 text-white' 
-                              : 'text-gray-600'
+                            pagination.currentPage === page
+                              ? "bg-green-600 hover:bg-green-700 text-white"
+                              : "text-gray-600"
                           }`}
                           onClick={() => handlePageChange(page)}
                         >
@@ -485,10 +579,10 @@ const PortfolioPage = () => {
                       );
                     })}
                   </div>
-                  
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
+
+                  <Button
+                    variant="outline"
+                    size="sm"
                     disabled={pagination.currentPage === totalPages}
                     onClick={() => handlePageChange(pagination.currentPage + 1)}
                     className="text-xs sm:text-sm px-2 sm:px-3"
@@ -505,122 +599,197 @@ const PortfolioPage = () => {
 
         {/* Project Details Drawer */}
         <Sheet open={isDrawerOpen} onOpenChange={setIsDrawerOpen}>
-          <SheetContent side="right" className="w-full sm:max-w-lg p-0 overflow-y-auto">
+          <SheetContent
+            side="right"
+            className="w-full sm:max-w-lg p-0 overflow-y-auto"
+          >
             {selectedProject && (
               <div className="h-full flex flex-col">
                 <SheetHeader className="p-6 border-b">
                   <div className="flex items-center justify-between">
-                    <SheetTitle className="text-xl font-semibold">Investment Summary</SheetTitle>
-                    <Badge className={`${
-                      selectedProject.status === 'In progress' 
-                        ? 'bg-orange-100 text-orange-800' 
-                        : selectedProject.status === 'Complete' || selectedProject.status === 'Complete'
-                        ? 'bg-green-100 text-green-800'
-                        : 'bg-red-100 text-red-800'
-                    }`}>
+                    <SheetTitle className="text-xl font-semibold">
+                      Investment Summary
+                    </SheetTitle>
+                    <Badge
+                      className={`${
+                        selectedProject.status === "In progress"
+                          ? "bg-orange-100 text-orange-800"
+                          : selectedProject.status === "Complete" ||
+                            selectedProject.status === "Complete"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
                       {selectedProject.status.toUpperCase()}
                     </Badge>
                   </div>
                 </SheetHeader>
-                
+
                 <div className="flex-1 p-6 space-y-6">
-                  <img 
+                  <img
                     src={selectedProject.cover_image_url}
                     alt={selectedProject.project_name}
                     className="w-full h-48 object-cover rounded-lg"
                   />
-                  
+
                   <div className="bg-white rounded-lg border border-gray-200 shadow-sm">
                     <div className="p-4 space-y-0">
                       <div className="flex justify-between items-center py-3">
                         <span className="text-gray-600 text-sm">Project</span>
-                        <div className="text-right justify-center text-green-950 text-sm font-semibold leading-tight">{selectedProject.project_name}</div>
+                        <div className="text-right justify-center text-green-950 text-sm font-semibold leading-tight">
+                          {selectedProject.project_name}
+                        </div>
                       </div>
                       <div className="border-t border-gray-200"></div>
-                      
+
                       <div className="flex justify-between items-center py-3">
-                        <span className="text-gray-600 text-sm">Amount Invested</span>
-                        <span className="font-semibold text-sm">GHS {selectedProject.amount?.toLocaleString() || '0.00'}</span>
-                      </div>
-                      <div className="border-t border-gray-200"></div>
-                      
-                      <div className="flex justify-between items-center py-3">
-                        <span className="text-gray-600 text-sm">Return (ROI)</span>
-                        <span className="font-semibold text-sm text-orange-600">{selectedProject.roi}</span>
-                      </div>
-                      <div className="border-t border-gray-200"></div>
-                      
-                      <div className="flex justify-between items-center py-3">
-                        <span className="text-gray-600 text-sm">Duration</span>
-                        <span className="font-semibold text-sm text-orange-600">
-                          {formatProjectDuration(selectedProject.project_type as ProjectType)}
+                        <span className="text-gray-600 text-sm">
+                          Amount Invested
+                        </span>
+                        <span className="font-semibold text-sm">
+                          GHS{" "}
+                          {selectedProject.amount?.toLocaleString() || "0.00"}
                         </span>
                       </div>
                       <div className="border-t border-gray-200"></div>
-                      
+
                       <div className="flex justify-between items-center py-3">
-                        <span className="text-gray-600 text-sm">Status</span>
-                        <span className="font-semibold text-sm">{selectedProject.status}</span>
+                        <span className="text-gray-600 text-sm">
+                          Return (ROI)
+                        </span>
+                        <span className="font-semibold text-sm text-orange-600">
+                          {selectedProject.roi}
+                        </span>
                       </div>
                       <div className="border-t border-gray-200"></div>
-                      
+
                       <div className="flex justify-between items-center py-3">
-                        <span className="text-gray-600 text-sm">Units Owned</span>
-                        <span className="font-semibold text-sm">{selectedProject.units || 0} Unit(s)</span>
+                        <span className="text-gray-600 text-sm">Duration</span>
+                        <span className="font-semibold text-sm text-orange-600">
+                          {formatProjectDuration(
+                            selectedProject.project_type as ProjectType
+                          )}
+                        </span>
+                      </div>
+                      <div className="border-t border-gray-200"></div>
+
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-600 text-sm">Status</span>
+                        <span className="font-semibold text-sm">
+                          {selectedProject.status}
+                        </span>
+                      </div>
+                      <div className="border-t border-gray-200"></div>
+
+                      <div className="flex justify-between items-center py-3">
+                        <span className="text-gray-600 text-sm">
+                          Units Owned
+                        </span>
+                        <span className="font-semibold text-sm">
+                          {selectedProject.units || 0} Unit(s)
+                        </span>
                       </div>
                     </div>
                   </div>
 
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-700">Project Progress</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        Project Progress
+                      </span>
                       <span className="text-sm text-gray-600">
                         {(() => {
-                          const projectType = selectedProject.project_type as ProjectType;
-                          const currentStage = selectedProject.project_stages ? mapOldStageToNew(selectedProject.project_stages) as ProjectStage : undefined;
-                          const startDate = selectedProject.start_date ? new Date(selectedProject.start_date) : new Date(selectedProject.date || Date.now());
-                          
+                          const projectType =
+                            selectedProject.project_type as ProjectType;
+                          const currentStage = selectedProject.project_stages
+                            ? (mapOldStageToNew(
+                                selectedProject.project_stages
+                              ) as ProjectStage)
+                            : undefined;
+                          const startDate = selectedProject.start_date
+                            ? new Date(selectedProject.start_date)
+                            : new Date(selectedProject.date || Date.now());
+
                           // For completed projects, show 100% progress
-                          if (selectedProject.status === 'Completed' || selectedProject.status === 'Complete') {
+                          if (
+                            selectedProject.status === "Completed" ||
+                            selectedProject.status === "Complete"
+                          ) {
                             return 100;
                           }
-                          
-                          return getProjectTimeProgress(projectType, startDate, currentStage);
-                        })()}% complete
+
+                          return getProjectTimeProgress(
+                            projectType,
+                            startDate,
+                            currentStage
+                          );
+                        })()}
+                        % complete
                       </span>
                     </div>
                     <div className="relative">
-                      <Progress value={(() => {
-                        const projectType = selectedProject.project_type as ProjectType;
-                        const currentStage = selectedProject.project_stages ? mapOldStageToNew(selectedProject.project_stages) as ProjectStage : undefined;
-                        const startDate = selectedProject.start_date ? new Date(selectedProject.start_date) : new Date(selectedProject.date || Date.now());
-                        
-                        // For completed projects, show 100% progress
-                        if (selectedProject.status === 'Completed' || selectedProject.status === 'Complete') {
-                          return 100;
-                        }
-                        
-                        return getProjectTimeProgress(projectType, startDate, currentStage);
-                      })()} className="h-2" />
+                      <Progress
+                        value={(() => {
+                          const projectType =
+                            selectedProject.project_type as ProjectType;
+                          const currentStage = selectedProject.project_stages
+                            ? (mapOldStageToNew(
+                                selectedProject.project_stages
+                              ) as ProjectStage)
+                            : undefined;
+                          const startDate = selectedProject.start_date
+                            ? new Date(selectedProject.start_date)
+                            : new Date(selectedProject.date || Date.now());
+
+                          // For completed projects, show 100% progress
+                          if (
+                            selectedProject.status === "Completed" ||
+                            selectedProject.status === "Complete"
+                          ) {
+                            return 100;
+                          }
+
+                          return getProjectTimeProgress(
+                            projectType,
+                            startDate,
+                            currentStage
+                          );
+                        })()}
+                        className="h-2"
+                      />
                       <motion.div
                         className="absolute top-0 left-0 h-2 bg-green-600 rounded-full"
                         variants={progressVariants}
                         initial="hidden"
                         animate="visible"
-                        style={{ 
+                        style={{
                           width: `${(() => {
-                            const projectType = selectedProject.project_type as ProjectType;
-                            const currentStage = selectedProject.project_stages ? mapOldStageToNew(selectedProject.project_stages) as ProjectStage : undefined;
-                            const startDate = selectedProject.start_date ? new Date(selectedProject.start_date) : new Date(selectedProject.date || Date.now());
-                            
+                            const projectType =
+                              selectedProject.project_type as ProjectType;
+                            const currentStage = selectedProject.project_stages
+                              ? (mapOldStageToNew(
+                                  selectedProject.project_stages
+                                ) as ProjectStage)
+                              : undefined;
+                            const startDate = selectedProject.start_date
+                              ? new Date(selectedProject.start_date)
+                              : new Date(selectedProject.date || Date.now());
+
                             // For completed projects, show 100% progress
-                            if (selectedProject.status === 'Completed' || selectedProject.status === 'Complete') {
+                            if (
+                              selectedProject.status === "Completed" ||
+                              selectedProject.status === "Complete"
+                            ) {
                               return 100;
                             }
-                            
-                            return getProjectTimeProgress(projectType, startDate, currentStage);
+
+                            return getProjectTimeProgress(
+                              projectType,
+                              startDate,
+                              currentStage
+                            );
                           })()}%`,
-                          transformOrigin: 'left'
+                          transformOrigin: "left",
                         }}
                       />
                     </div>
@@ -629,23 +798,35 @@ const PortfolioPage = () => {
                   <div className="space-y-3 pt-4 border-t">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Project</span>
-                      <span className="font-semibold">{selectedProject.project_name}</span>
+                      <span className="font-semibold">
+                        {selectedProject.project_name}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Potential Return</span>
-                      <span className="font-semibold text-green-600">{selectedProject.potentialReturn}</span>
+                      <span className="font-semibold text-green-600">
+                        {selectedProject.potentialReturn}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Units Selected</span>
-                      <span className="font-semibold">{selectedProject.units} Unit(s)</span>
+                      <span className="font-semibold">
+                        {selectedProject.units} Unit(s)
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">End Date</span>
                       <span className="font-semibold">
                         {(() => {
-                          const projectType = selectedProject.project_type as ProjectType;
-                          const startDate = selectedProject.start_date ? new Date(selectedProject.start_date) : new Date(selectedProject.date || Date.now());
-                          const projectDates = calculateProjectDates(projectType, startDate);
+                          const projectType =
+                            selectedProject.project_type as ProjectType;
+                          const startDate = selectedProject.start_date
+                            ? new Date(selectedProject.start_date)
+                            : new Date(selectedProject.date || Date.now());
+                          const projectDates = calculateProjectDates(
+                            projectType,
+                            startDate
+                          );
                           return projectDates.endDate.toLocaleDateString();
                         })()}
                       </span>
@@ -660,9 +841,13 @@ const PortfolioPage = () => {
                       className="w-full justify-between p-0 h-auto"
                     >
                       <span className="font-semibold">Project Timeline</span>
-                      {showTimeline ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                      {showTimeline ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
                     </Button>
-                    
+
                     <AnimatePresence>
                       {showTimeline && (
                         <motion.div
@@ -673,18 +858,30 @@ const PortfolioPage = () => {
                           className="mt-4 space-y-4"
                         >
                           {(() => {
-                            const projectType = selectedProject.project_type as ProjectType;
-                            const currentStage = selectedProject.project_stages ? mapOldStageToNew(selectedProject.project_stages) as ProjectStage : undefined;
-                            const startDate = selectedProject.start_date ? new Date(selectedProject.start_date) : new Date(selectedProject.date || Date.now());
-                            
+                            const projectType =
+                              selectedProject.project_type as ProjectType;
+                            const currentStage = selectedProject.project_stages
+                              ? (mapOldStageToNew(
+                                  selectedProject.project_stages
+                                ) as ProjectStage)
+                              : undefined;
+                            const startDate = selectedProject.start_date
+                              ? new Date(selectedProject.start_date)
+                              : new Date(selectedProject.date || Date.now());
+
                             // Calculate project dates and timeline
-                            const projectDates = calculateProjectDates(projectType, startDate, currentStage, selectedProject.status);
+                            const projectDates = calculateProjectDates(
+                              projectType,
+                              startDate,
+                              currentStage,
+                              selectedProject.status
+                            );
                             const timeline = projectDates.stages;
-                            
+
                             return timeline.map((stage, index) => {
                               const isCompleted = stage.isCompleted;
                               const isCurrent = stage.isCurrent;
-                              
+
                               return (
                                 <motion.div
                                   key={stage.id}
@@ -695,57 +892,71 @@ const PortfolioPage = () => {
                                   className="flex items-start gap-3"
                                 >
                                   <div className="flex flex-col items-center">
-                                    <motion.div 
+                                    <motion.div
                                       className={`w-6 h-6 rounded-full flex items-center justify-center ${
-                                        isCompleted 
-                                          ? 'bg-green-600' 
-                                          : isCurrent 
-                                          ? 'bg-green-600 border-2 border-green-600' 
-                                          : 'bg-white border-2 border-gray-300'
+                                        isCompleted
+                                          ? "bg-green-600"
+                                          : isCurrent
+                                          ? "bg-green-600 border-2 border-green-600"
+                                          : "bg-white border-2 border-gray-300"
                                       }`}
                                       whileHover={{ scale: 1.1 }}
-                                      transition={{ type: "spring", stiffness: 300 }}
+                                      transition={{
+                                        type: "spring",
+                                        stiffness: 300,
+                                      }}
                                     >
                                       {isCompleted && (
                                         <motion.div
                                           initial={{ scale: 0 }}
                                           animate={{ scale: 1 }}
-                                          transition={{ delay: 0.2, type: "spring", stiffness: 300 }}
+                                          transition={{
+                                            delay: 0.2,
+                                            type: "spring",
+                                            stiffness: 300,
+                                          }}
                                         >
                                           <CheckCircle className="h-4 w-4 text-white" />
                                         </motion.div>
                                       )}
                                       {isCurrent && !isCompleted && (
-                                        <motion.div 
+                                        <motion.div
                                           className="w-2 h-2 bg-white rounded-full"
-                                          animate={{ 
+                                          animate={{
                                             scale: [1, 1.2, 1],
-                                            opacity: [1, 0.7, 1]
+                                            opacity: [1, 0.7, 1],
                                           }}
-                                          transition={{ 
+                                          transition={{
                                             duration: 2,
                                             repeat: Infinity,
-                                            ease: "easeInOut"
+                                            ease: "easeInOut",
                                           }}
                                         />
                                       )}
                                     </motion.div>
                                     {index < timeline.length - 1 && (
-                                      <motion.div 
+                                      <motion.div
                                         className={`w-0.5 h-8 mt-2 ${
-                                          isCompleted ? 'bg-green-600' : 'bg-gray-300'
+                                          isCompleted
+                                            ? "bg-green-600"
+                                            : "bg-gray-300"
                                         }`}
                                         initial={{ scaleY: 0 }}
                                         animate={{ scaleY: 1 }}
-                                        transition={{ delay: 0.3 + index * 0.1, duration: 0.5 }}
-                                        style={{ transformOrigin: 'top' }}
+                                        transition={{
+                                          delay: 0.3 + index * 0.1,
+                                          duration: 0.5,
+                                        }}
+                                        style={{ transformOrigin: "top" }}
                                       />
                                     )}
                                   </div>
                                   <div className="flex-1">
-                                    <motion.p 
+                                    <motion.p
                                       className={`font-medium ${
-                                        isCompleted || isCurrent ? 'text-gray-900' : 'text-gray-500'
+                                        isCompleted || isCurrent
+                                          ? "text-gray-900"
+                                          : "text-gray-500"
                                       }`}
                                       initial={{ opacity: 0, x: -10 }}
                                       animate={{ opacity: 1, x: 0 }}
@@ -753,23 +964,21 @@ const PortfolioPage = () => {
                                     >
                                       {stage.displayName}
                                     </motion.p>
-                                    <motion.p 
+                                    <motion.p
                                       className="text-sm text-gray-500"
                                       initial={{ opacity: 0, x: -10 }}
                                       animate={{ opacity: 1, x: 0 }}
                                       transition={{ delay: 0.15 + index * 0.1 }}
                                     >
-                                      {stage.startDate && stage.endDate ? (
-                                        `${stage.startDate.toLocaleDateString()} - ${stage.endDate.toLocaleDateString()}`
-                                      ) : (
-                                        isCompleted 
-                                          ? 'This stage has been completed successfully.' 
-                                          : isCurrent 
-                                          ? 'This stage is currently in progress.' 
-                                          : 'This stage is upcoming.'
-                                      )}
+                                      {stage.startDate && stage.endDate
+                                        ? `${stage.startDate.toLocaleDateString()} - ${stage.endDate.toLocaleDateString()}`
+                                        : isCompleted
+                                        ? "This stage has been completed successfully."
+                                        : isCurrent
+                                        ? "This stage is currently in progress."
+                                        : "This stage is upcoming."}
                                     </motion.p>
-                                    <motion.p 
+                                    <motion.p
                                       className="text-xs text-gray-400 mt-1"
                                       initial={{ opacity: 0, x: -10 }}
                                       animate={{ opacity: 1, x: 0 }}

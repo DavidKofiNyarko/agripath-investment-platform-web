@@ -1,14 +1,19 @@
-'use client';
+"use client";
 
-import React, { useState, createContext, useContext } from 'react';
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { cn } from '@/lib/utils';
-import Image from 'next/image';
-import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
-import { useUser } from '@/contexts/UserContext';
-import { useProfile } from '@/contexts/ProfileContext';
+import React, { useState, createContext, useContext } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { useUser } from "@/contexts/UserContext";
+import { useProfile } from "@/contexts/ProfileContext";
 import {
   LayoutDashboard,
   PiggyBank,
@@ -21,9 +26,9 @@ import {
   LogOut,
   Menu,
   ChevronLeft,
-  ChevronRight
-} from 'lucide-react';
-import LogoSVG from '@/components/logo-svg';
+  ChevronRight,
+} from "lucide-react";
+import LogoSVG from "@/components/logo-svg";
 
 // Context for sidebar state
 const SidebarContext = createContext<{
@@ -38,56 +43,56 @@ export const useSidebar = () => useContext(SidebarContext);
 
 const menuItems = [
   {
-    title: 'Dashboard',
+    title: "Dashboard",
     icon: LayoutDashboard,
-    href: '/dashboard',
-    section: 'main'
+    href: "/dashboard",
+    section: "main",
   },
   {
-    title: 'Investments',
+    title: "Investments",
     icon: PiggyBank,
-    href: '/investments',
-    section: 'main'
+    href: "/investments",
+    section: "main",
   },
   {
-    title: 'Transactions',
+    title: "Transactions",
     icon: Receipt,
-    href: '/transactions',
-    section: 'main'
+    href: "/transactions",
+    section: "main",
   },
   {
-    title: 'My Portfolio',
+    title: "My Portfolio",
     icon: Briefcase,
-    href: '/portfolio',
-    section: 'main'
+    href: "/portfolio",
+    section: "main",
   },
   {
-    title: 'Updates',
+    title: "Updates",
     icon: Bell,
-    href: '/updates',
-    section: 'main'
-  }
+    href: "/updates",
+    section: "main",
+  },
 ];
 
 const secondaryItems = [
   {
-    title: 'Support',
+    title: "Support",
     icon: HelpCircle,
-    href: '/support',
-    section: 'secondary'
+    href: "/support",
+    section: "secondary",
   },
   {
-    title: 'Legal',
+    title: "Legal",
     icon: FileText,
-    href: '/legal',
-    section: 'secondary'
+    href: "/legal",
+    section: "secondary",
   },
   {
-    title: 'Settings',
+    title: "Settings",
     icon: Settings,
-    href: '/settings',
-    section: 'secondary'
-  }
+    href: "/settings",
+    section: "secondary",
+  },
 ];
 
 interface SidebarProps {
@@ -106,33 +111,42 @@ const SidebarContent = ({ className }: SidebarProps) => {
     try {
       setIsLoggingOut(true);
       await signOut();
-      router.push('/signin');
+      router.push("/signin");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     } finally {
       setIsLoggingOut(false);
     }
   };
 
   return (
-    <div className={cn('flex h-full flex-col bg-white border-r  shadow-sm', className)}>
+    <div
+      className={cn(
+        "flex h-full flex-col bg-white border-r  shadow-sm",
+        className
+      )}
+    >
       {/* Logo */}
       <div className="flex items-center justify-between px-4 py-4 border-b">
         <div className="flex items-center gap-2">
           {isCollapsed ? (
             <div className="relative w-10 h-10 flex-shrink-0">
               {/* Farm house icon */}
-              <Image src="/s-logo.png" alt="Farm House" width={300} height={300} />
-              
+              <Image
+                src="/s-logo.png"
+                alt="Farm House"
+                width={300}
+                height={300}
+              />
             </div>
           ) : (
             <div className="transition-opacity duration-200">
-             <LogoSVG/>
+              <LogoSVG />
               {/* <Image src="/logo.png" alt="Farm House" width={300} height={300} /> */}
             </div>
           )}
         </div>
-        
+
         {/* Collapse Toggle */}
         <Button
           variant="ghost"
@@ -153,31 +167,36 @@ const SidebarContent = ({ className }: SidebarProps) => {
         {/* Main Menu */}
         <div className="mb-8">
           {!isCollapsed && (
-            <h2 className="text-sm font-medium text-gray-500 mb-3 px-2">Menu</h2>
+            <h2 className="text-sm font-medium text-gray-500 mb-3 px-2">
+              Menu
+            </h2>
           )}
           <nav className="space-y-1">
             {menuItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
-              const showKycBadge = item.title === 'Settings' && profile?.kyc_status !== 'verified';
-              
+              const showKycBadge =
+                item.title === "Settings" && profile?.kyc_status !== "verified";
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-none transition-colors duration-150 relative',
-                    isCollapsed ? 'justify-center' : 'justify-start',
+                    "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-none transition-colors duration-150 relative",
+                    isCollapsed ? "justify-center" : "justify-start",
                     isActive
-                      ? 'bg-green-50 text-green-700 border-r-2 border-green-600'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      ? "bg-green-50 text-green-700  border-green-800"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                   )}
                   title={isCollapsed ? item.title : undefined}
                 >
-                  <Icon className={cn(
-                    'w-5 h-5 flex-shrink-0',
-                    isActive ? 'text-green-600' : 'text-gray-500'
-                  )} />
+                  <Icon
+                    className={cn(
+                      "w-5 h-5 flex-shrink-0",
+                      isActive ? "text-green-600" : "text-gray-500"
+                    )}
+                  />
                   {!isCollapsed && (
                     <span className="truncate">{item.title}</span>
                   )}
@@ -198,30 +217,34 @@ const SidebarContent = ({ className }: SidebarProps) => {
         {/* Secondary Menu */}
         <div className="mb-8">
           {!isCollapsed && (
-            <h2 className="text-sm font-medium text-gray-500 mb-3 px-2">Secondary</h2>
+            <h2 className="text-sm font-medium text-gray-500 mb-3 px-2">
+              Secondary
+            </h2>
           )}
           <nav className="space-y-1">
             {secondaryItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
-              
+
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    'flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-none transition-colors duration-150',
-                    isCollapsed ? 'justify-center' : 'justify-start',
+                    "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-none transition-colors duration-150",
+                    isCollapsed ? "justify-center" : "justify-start",
                     isActive
-                      ? 'bg-green-50 text-green-700'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                      ? "bg-green-50 text-green-700"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
                   )}
                   title={isCollapsed ? item.title : undefined}
                 >
-                  <Icon className={cn(
-                    'w-5 h-5 flex-shrink-0',
-                    isActive ? 'text-green-600' : 'text-gray-500'
-                  )} />
+                  <Icon
+                    className={cn(
+                      "w-5 h-5 flex-shrink-0",
+                      isActive ? "text-green-600" : "text-gray-500"
+                    )}
+                  />
                   {!isCollapsed && (
                     <span className="truncate">{item.title}</span>
                   )}
@@ -238,10 +261,10 @@ const SidebarContent = ({ className }: SidebarProps) => {
             onClick={handleLogout}
             disabled={isLoggingOut}
             className={cn(
-              'w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors duration-150 text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50',
-              isCollapsed ? 'justify-center' : 'justify-start'
+              "w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors duration-150 text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50",
+              isCollapsed ? "justify-center" : "justify-start"
             )}
-            title={isCollapsed ? 'Logout' : undefined}
+            title={isCollapsed ? "Logout" : undefined}
           >
             {isLoggingOut ? (
               <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
@@ -249,7 +272,9 @@ const SidebarContent = ({ className }: SidebarProps) => {
               <LogOut className="w-5 h-5 flex-shrink-0" />
             )}
             {!isCollapsed && (
-              <span className="truncate">{isLoggingOut ? 'Signing out...' : 'Logout'}</span>
+              <span className="truncate">
+                {isLoggingOut ? "Signing out..." : "Logout"}
+              </span>
             )}
           </Button>
         </div>
@@ -260,12 +285,12 @@ const SidebarContent = ({ className }: SidebarProps) => {
 
 export const Sidebar = ({ className }: SidebarProps) => {
   const { isCollapsed } = useSidebar();
-  
+
   return (
-    <div 
+    <div
       className={cn(
-        'hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 z-50 transition-all duration-300 ease-in-out',
-        isCollapsed ? 'lg:w-20' : 'lg:w-64',
+        "hidden lg:flex lg:flex-col lg:fixed lg:inset-y-0 z-50 transition-all duration-300 ease-in-out",
+        isCollapsed ? "lg:w-20" : "lg:w-64",
         className
       )}
     >
@@ -280,18 +305,16 @@ export const MobileSidebar = () => {
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="lg:hidden h-10 w-10 p-0"
-        >
+        <Button variant="ghost" size="sm" className="lg:hidden h-10 w-10 p-0">
           <Menu className="w-5 h-5" />
           <span className="sr-only">Toggle navigation menu</span>
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="p-0 w-64">
         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-        <SidebarContext.Provider value={{ isCollapsed: false, setIsCollapsed: () => {} }}>
+        <SidebarContext.Provider
+          value={{ isCollapsed: false, setIsCollapsed: () => {} }}
+        >
           <SidebarContent />
         </SidebarContext.Provider>
       </SheetContent>
@@ -300,7 +323,11 @@ export const MobileSidebar = () => {
 };
 
 // Provider component to wrap the app
-export const SidebarProvider = ({ children }: { children: React.ReactNode }) => {
+export const SidebarProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   return (

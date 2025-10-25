@@ -38,7 +38,6 @@ import {
   TrendUp,
   ChartLine,
   CheckCircle,
-  Spinner,
   Phone,
   CreditCard,
   Lock,
@@ -48,6 +47,7 @@ import {
   Buildings,
 } from "@phosphor-icons/react";
 import PinValidationModal from "@/components/pin-validation-modal";
+import Loading from "@/components/ui/loading";
 import WalletTestComponent from "@/components/WalletTestComponent";
 import ProfileSetupFlow from "@/components/profile-setup-flow";
 
@@ -389,12 +389,7 @@ const DashboardPage = () => {
   ) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
-          </div>
-        </div>
+        <Loading size="lg" className="min-h-screen" />
       </DashboardLayout>
     );
   }
@@ -616,8 +611,6 @@ const DashboardPage = () => {
             </Card>
           </div>
         </div>
-
-        {/* Wallet Test Component - Remove this in production */}
 
         {/* Available Investment Section */}
         <div>
@@ -1344,16 +1337,7 @@ const DashboardPage = () => {
                       className="relative"
                     >
                       <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                        <motion.div
-                          animate={{ rotate: 360 }}
-                          transition={{
-                            duration: 1,
-                            repeat: Infinity,
-                            ease: "linear",
-                          }}
-                        >
-                          <Spinner className="h-10 w-10 text-blue-600" />
-                        </motion.div>
+                        <Loading size="sm" text="" />
                       </div>
                     </motion.div>
 
@@ -1636,16 +1620,7 @@ const DashboardPage = () => {
                     className="relative"
                   >
                     <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                      <motion.div
-                        animate={{ rotate: 360 }}
-                        transition={{
-                          duration: 1,
-                          repeat: Infinity,
-                          ease: "linear",
-                        }}
-                      >
-                        <Spinner className="h-10 w-10 text-blue-600" />
-                      </motion.div>
+                      <Loading size="sm" text="" />
                     </div>
                   </motion.div>
                   <div className="space-y-2">
@@ -1996,10 +1971,7 @@ const DashboardPage = () => {
 
               {withdrawStep === "loading" && (
                 <div className="flex justify-center">
-                  <div className="flex items-center space-x-2 text-gray-600">
-                    <Spinner className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Processing...</span>
-                  </div>
+                  <Loading size="sm" />
                 </div>
               )}
 

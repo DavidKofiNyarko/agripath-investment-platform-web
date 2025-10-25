@@ -13,6 +13,7 @@ import KycModal from "@/components/kyc-modal";
 import PinValidationModal from "@/components/pin-validation-modal";
 import CustomAlert from "@/components/custom-alert";
 import APIConnectivityTest from "@/components/APIConnectivityTest";
+import Loading from "@/components/ui/loading";
 import { createClient } from "@/app/utils/supabase/client";
 import { paymentService } from "@/lib/paymentService";
 import { Card, CardContent } from "@/components/ui/card";
@@ -335,12 +336,7 @@ const InvestmentsPage = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading investment opportunities...</p>
-          </div>
-        </div>
+        <Loading size="lg" className="min-h-screen" />
       </DashboardLayout>
     );
   }
