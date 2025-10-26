@@ -131,24 +131,28 @@ const UserHeader: React.FC<UserHeaderProps> = ({
 
   return (
     <div
-      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0 ${className}`}
+      className={`flex items-center justify-between gap-2 sm:gap-4 ${className}`}
     >
-      <div className="flex items-center gap-3">
-        <Avatar className="h-10 w-10 sm:h-12 sm:w-12">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+        <Avatar className="h-9 w-9 sm:h-12 sm:w-12 flex-shrink-0">
           <AvatarImage src={getUserAvatar()} alt={getUserName()} />
-          <AvatarFallback className="text-sm sm:text-base">
+          <AvatarFallback className="text-xs sm:text-base">
             {getUserInitials()}
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <h1 className="text-lg sm:text-xl font-semibold text-gray-900 truncate">
+          <h1 className="text-base sm:text-xl font-semibold text-gray-900 truncate">
             {title || `Hi, ${getUserName()} 👋`}
           </h1>
-          {showDate && <p className="text-sm text-gray-600">{getGreeting()}</p>}
+          {showDate && (
+            <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
+              {getGreeting()}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-4">
+      <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
         {/* Notification Bell */}
         <div className="relative" ref={notificationRef}>
           <Button
@@ -167,7 +171,7 @@ const UserHeader: React.FC<UserHeaderProps> = ({
 
           {/* Notification Dropdown */}
           {isNotificationOpen && (
-            <div className="absolute left-0 sm:right-0 sm:left-auto top-12 w-[calc(100vw-1rem)] sm:w-80 lg:w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-[70vh] overflow-hidden">
+            <div className="absolute right-0 top-12 w-[calc(100vw-2rem)] sm:w-80 lg:w-96 bg-white rounded-lg shadow-lg border border-gray-200 z-50 max-h-[70vh] overflow-hidden">
               <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center justify-between">
                   <h3 className="font-semibold text-gray-900">Notifications</h3>
@@ -251,12 +255,10 @@ const UserHeader: React.FC<UserHeaderProps> = ({
         </div>
 
         {showDate && (
-          <div className="text-left sm:text-right text-xs sm:text-sm text-gray-600">
-            <div className="sm:hidden">{getShortDate()}</div>
-            <div className="hidden sm:block">
+          <div className="text-left sm:text-right text-xs sm:text-sm text-gray-600 hidden sm:block">
+            <div>
               {getCurrentDate()} • {getCurrentTime()}
             </div>
-            <div className="sm:hidden text-gray-500">{getShortTime()}</div>
           </div>
         )}
       </div>

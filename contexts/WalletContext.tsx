@@ -486,7 +486,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
               }
             : {
                 recipient_number: withdrawalData.recipient_number,
-                network: withdrawalData.network,
+                network: withdrawalData.network, // API expects network field
+                account_issuer: withdrawalData.network, // Also include account_issuer
               }),
         };
 

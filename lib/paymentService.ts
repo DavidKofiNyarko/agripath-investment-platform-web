@@ -404,6 +404,7 @@ class PaymentService {
     account_bank?: string;
     // Momo fields
     recipient_number?: string;
+    network?: string;
     account_issuer?: string;
   }): Promise<PaymentResponse> {
     try {

@@ -1,37 +1,37 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, Suspense } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { motion } from 'framer-motion';
-import { 
-  Bell, 
+import React, { useState, useEffect, Suspense } from "react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
+import {
+  Bell,
   FileText,
   Shield,
   RefreshCw,
   Scale,
-  ArrowLeft
-} from 'lucide-react';
-import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+  ArrowLeft,
+} from "lucide-react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const LegalContent = () => {
-  const [activeTab, setActiveTab] = useState('terms');
+  const [activeTab, setActiveTab] = useState("terms");
   const searchParams = useSearchParams();
 
   // Handle URL parameters to set active tab
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab && ['terms', 'privacy', 'refund', 'service'].includes(tab)) {
+    const tab = searchParams.get("tab");
+    if (tab && ["terms", "privacy", "refund", "service"].includes(tab)) {
       setActiveTab(tab);
     }
   }, [searchParams]);
 
   const legalTabs = [
-    { id: 'terms', label: 'Investment Terms & Conditions', icon: FileText },
-    { id: 'privacy', label: 'Privacy Policy', icon: Shield },
-    { id: 'refund', label: 'Refund Policy', icon: RefreshCw },
-    { id: 'service', label: 'Terms of Service', icon: Scale }
+    { id: "terms", label: "Investment Terms & Conditions", icon: FileText },
+    { id: "privacy", label: "Privacy Policy", icon: Shield },
+    { id: "refund", label: "Refund Policy", icon: RefreshCw },
+    { id: "service", label: "Terms of Service", icon: Scale },
   ];
 
   const investmentTerms = {
@@ -152,7 +152,7 @@ const LegalContent = () => {
           </ul>
         </div>
       </div>
-    `
+    `,
   };
 
   const privacyPolicy = {
@@ -242,7 +242,7 @@ const LegalContent = () => {
           </ul>
         </div>
       </div>
-    `
+    `,
   };
 
   const refundPolicy = {
@@ -320,7 +320,7 @@ const LegalContent = () => {
           </ul>
         </div>
       </div>
-    `
+    `,
   };
 
   const termsOfService = {
@@ -440,18 +440,18 @@ const LegalContent = () => {
           </p>
         </div>
       </div>
-    `
+    `,
   };
 
   const getCurrentContent = () => {
     switch (activeTab) {
-      case 'terms':
+      case "terms":
         return investmentTerms;
-      case 'privacy':
+      case "privacy":
         return privacyPolicy;
-      case 'refund':
+      case "refund":
         return refundPolicy;
-      case 'service':
+      case "service":
         return termsOfService;
       default:
         return investmentTerms;
@@ -463,27 +463,32 @@ const LegalContent = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-6">
+      <div className="bg-white border-b border-gray-200 px-4 py-4 sm:px-6 sm:py-6">
         <div className="flex items-center justify-between max-w-4xl mx-auto">
-          <div className="flex items-center space-x-4">
-            <Link 
-              href="/signin" 
-              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+            <Link
+              href="/signin"
+              className="flex items-center text-gray-600 hover:text-gray-900 transition-colors text-sm sm:text-base"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back 
+              <ArrowLeft className="w-4 h-4 mr-1 sm:mr-2" />
+              Back
             </Link>
           </div>
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-gray-900">Legal Documents</h1>
-            <p className="text-sm text-gray-600 mt-1">Terms, Privacy Policy, and Policies</p>
+          <div className="text-center flex-1 px-2">
+            <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">
+              Legal Documents
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-600 mt-1">
+              Terms, Privacy Policy, and Policies
+            </p>
           </div>
-          <div className="w-24"></div> {/* Spacer for centering */}
+          <div className="w-16 sm:w-24 flex-shrink-0"></div>{" "}
+          {/* Spacer for centering */}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {/* Tab Navigation */}
         <div className="mb-8">
           <div className="flex flex-wrap gap-3">
@@ -492,12 +497,12 @@ const LegalContent = () => {
               return (
                 <Button
                   key={tab.id}
-                  variant={activeTab === tab.id ? 'default' : 'outline'}
+                  variant={activeTab === tab.id ? "default" : "outline"}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center space-x-2 px-4 py-2 ${
-                    activeTab === tab.id 
-                      ? 'bg-green-600 hover:bg-green-700 text-white' 
-                      : 'text-gray-700 hover:bg-gray-50 border-gray-300'
+                    activeTab === tab.id
+                      ? "bg-green-600 hover:bg-green-700 text-white"
+                      : "text-gray-700 hover:bg-gray-50 border-gray-300"
                   }`}
                 >
                   <Icon className="w-4 h-4" />
@@ -510,18 +515,18 @@ const LegalContent = () => {
 
         {/* Content */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="p-8">
+          <div className="p-4 sm:p-6 lg:p-8">
             <motion.div
               key={activeTab}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <h1 className="text-2xl font-bold text-gray-900 mb-8">
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-8">
                 {currentContent.title}
               </h1>
-              
-              <div 
+
+              <div
                 className="text-gray-700 leading-relaxed"
                 dangerouslySetInnerHTML={{ __html: currentContent.content }}
               />
@@ -530,10 +535,14 @@ const LegalContent = () => {
               <div className="mt-12 pt-8 border-t border-gray-200">
                 <div className="text-center">
                   <p className="text-gray-600 mb-4">
-                    {activeTab === 'terms' && "Still have questions about our Investment Terms & Conditions?"}
-                    {activeTab === 'privacy' && "Not sure about something in our Privacy Policy?"}
-                    {activeTab === 'refund' && "Need clarity on our Refund Policy?"}
-                    {activeTab === 'service' && "Confused about our Terms of Service?"}
+                    {activeTab === "terms" &&
+                      "Still have questions about our Investment Terms & Conditions?"}
+                    {activeTab === "privacy" &&
+                      "Not sure about something in our Privacy Policy?"}
+                    {activeTab === "refund" &&
+                      "Need clarity on our Refund Policy?"}
+                    {activeTab === "service" &&
+                      "Confused about our Terms of Service?"}
                   </p>
                   <Button className="bg-green-600 hover:bg-green-700 text-white px-6 py-2">
                     Contact Support
@@ -553,14 +562,16 @@ const LegalContent = () => {
 
 const LegalPage = () => {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Loading legal documents...</p>
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading legal documents...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <LegalContent />
     </Suspense>
   );

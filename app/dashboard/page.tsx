@@ -28,6 +28,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { Loader2 } from "lucide-react";
 import {
   Upload,
   Download,
@@ -742,23 +743,23 @@ const DashboardPage = () => {
                           </div>
                         </div>
                       </div>
-                      {/* Mobile-first responsive layout: Vertical on small screens, horizontal on larger screens */}
+                      {/* ROI and Duration side by side: ROI on left, Duration on right */}
                       <div className="py-2">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-6">
+                        <div className="flex flex-row justify-between items-start gap-4">
                           <div className="flex-1 flex flex-col justify-start items-start gap-2">
-                            <div className="text-center sm:text-left text-neutral-800 text-xs font-semibold">
+                            <div className="text-left text-neutral-800 text-xs font-semibold">
                               Return (ROI)
                             </div>
-                            <div className="self-stretch justify-center sm:justify-start text-orange-500 text-sm font-bold leading-none tracking-tight">
+                            <div className="text-left text-orange-500 text-sm font-bold leading-none tracking-tight">
                               {project.expected_return_rate}-
                               {project.max_expected_return_rate}%
                             </div>
                           </div>
-                          <div className="flex-1 flex flex-col justify-start items-start gap-2">
-                            <div className="text-center sm:text-right text-neutral-800 text-xs font-semibold">
+                          <div className="flex-1 flex flex-col justify-start items-end gap-2">
+                            <div className="text-right text-neutral-800 text-xs font-semibold">
                               Duration
                             </div>
-                            <div className="self-stretch text-center sm:text-right text-orange-500 text-sm font-bold leading-none tracking-tight">
+                            <div className="text-right text-orange-500 text-sm font-bold leading-none tracking-tight">
                               {project.duration_months} Months
                             </div>
                           </div>
@@ -1616,6 +1617,7 @@ const DashboardPage = () => {
       {/* Withdraw Account Sheet */}
       <Sheet open={isWithdrawOpen} onOpenChange={setIsWithdrawOpen}>
         <SheetContent className="w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl p-2">
+          <SheetTitle className="sr-only">Withdraw Funds</SheetTitle>
           <div className="flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
@@ -1727,31 +1729,8 @@ const DashboardPage = () => {
               {/* Loading Screen */}
               {withdrawStep === "loading" && (
                 <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 10,
-                    }}
-                    className="relative"
-                  >
-                    <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center">
-                      <Loading size="sm" text="" />
-                    </div>
-                  </motion.div>
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-bold text-gray-900 mb-2">
-                      Processing Withdrawal
-                    </h3>
-                    <p className="text-gray-600">
-                      Please wait while we process your{" "}
-                      <span className="font-semibold text-green-600">
-                        GHS {withdrawAmount}
-                      </span>{" "}
-                      withdrawal...
-                    </p>
+                  <div className="w-16 h-16">
+                    <Loader2 className="w-16 h-16 animate-spin text-green-600" />
                   </div>
                 </div>
               )}

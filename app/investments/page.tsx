@@ -1357,10 +1357,10 @@ const InvestmentsPage = () => {
                           /Per Unit
                         </span>
                       </p>
-                      {/* Mobile-first responsive layout for ROI and Duration */}
+                      {/* ROI and Duration side by side: ROI on left, Duration on right */}
                       <div className="py-2">
-                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4 sm:gap-6">
-                          <div className="flex-1 text-center sm:text-left">
+                        <div className="flex flex-row justify-between items-start gap-4">
+                          <div className="flex-1 text-left">
                             <div className="text-neutral-800 text-sm font-semibold mb-2">
                               Return (ROI)
                             </div>
@@ -1369,7 +1369,7 @@ const InvestmentsPage = () => {
                               {project.max_expected_return_rate}%
                             </div>
                           </div>
-                          <div className="flex-1 text-center sm:text-right">
+                          <div className="flex-1 text-right">
                             <div className="text-neutral-800 text-sm font-semibold mb-2">
                               Duration
                             </div>
@@ -1546,9 +1546,9 @@ const InvestmentsPage = () => {
                           className="w-full h-48 object-cover rounded-lg"
                         />
 
-                        {/* Mobile-first responsive layout: Vertical on small screens, horizontal on larger screens */}
-                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-6 sm:gap-8">
-                          <div className="flex-1 text-center sm:text-left">
+                        {/* ROI and Duration side by side: ROI on left, Duration on right */}
+                        <div className="flex flex-row items-start justify-between gap-6">
+                          <div className="flex-1 text-left">
                             <p className="text-sm text-gray-600 mb-2">
                               Price per Unit
                             </p>
@@ -1556,8 +1556,8 @@ const InvestmentsPage = () => {
                               GHS {selectedInvestment.price.toLocaleString()}
                             </p>
                           </div>
-                          <div className="hidden sm:block w-px h-12 bg-gray-300"></div>
-                          <div className="flex-1 text-center sm:text-left">
+                          <div className="w-px h-12 bg-gray-300"></div>
+                          <div className="flex-1 text-left">
                             <p className="text-sm text-gray-600 mb-2">
                               Return (ROI)
                             </p>
@@ -1565,8 +1565,8 @@ const InvestmentsPage = () => {
                               {selectedInvestment.roi}
                             </p>
                           </div>
-                          <div className="hidden sm:block w-px h-12 bg-gray-300"></div>
-                          <div className="flex-1 text-center sm:text-right">
+                          <div className="w-px h-12 bg-gray-300"></div>
+                          <div className="flex-1 text-right">
                             <p className="text-sm text-gray-600 mb-2">
                               Duration
                             </p>

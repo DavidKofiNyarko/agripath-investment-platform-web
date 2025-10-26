@@ -175,7 +175,8 @@ const WalletWithdrawal: React.FC = () => {
             }
           : {
               recipient_number: formData.recipient_number,
-              network: formData.network,
+              network: formData.network, // API requires network field
+              account_issuer: formData.network, // Also send as account_issuer
             }),
       };
 
