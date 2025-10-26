@@ -124,9 +124,11 @@ const InvestmentsPage = () => {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   // Multi-step flow state
-  const [currentStep, setCurrentStep] = useState("details"); // details, review, payment, process, success
+  const [currentStep, setCurrentStep] = useState("details"); // details, review, payment, process, success, verification
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
+  const [redirectUrl, setRedirectUrl] = useState<string>("");
+  const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState({
     mobileNumber: "",
     provider: "MTN",
@@ -866,11 +868,23 @@ const InvestmentsPage = () => {
       console.log("Payment result:", paymentResult);
 
       // Handle payment response
-      // Backend returns status: "pending" for successful payments that need user action
-      // Check both direct status and nested details.status
+      // Check if payment requires verification (has redirect_url)
+      if ((paymentResult as any).redirect_url) {
+        // Payment requires verification - open popup and show verification screen
+        window.open((paymentResult as any).redirect_url, "_blank");
+
+        // Store redirect URL for verification
+        setRedirectUrl((paymentResult as any).redirect_url);
+
+        // Show verification required screen instead of success
+        setIsProcessing(false);
+        setCurrentStep("verification");
+        return;
+      }
+
+      // Handle successful payments without redirect
       const isSuccess =
         paymentResult.status === "success" ||
-        paymentResult.status === "pending" || // Updated to match new API
         paymentResult.status === "approved" ||
         paymentResult.status === "completed" ||
         paymentResult.status === "Complete" ||
@@ -1000,9 +1014,80 @@ const InvestmentsPage = () => {
     }
   };
 
+  const verifyPayment = async () => {
+    if (!redirectUrl) return;
+
+    setIsVerifyingPayment(true);
+
+    try {
+      // Extract transaction reference from redirect URL
+      // Paystack URLs typically contain reference parameter
+      const url = new URL(redirectUrl);
+      const reference =
+        url.searchParams.get("reference") || url.pathname.split("/").pop();
+
+      if (!reference) {
+        throw new Error("Could not extract transaction reference");
+      }
+
+      console.log("Verifying payment with reference:", reference);
+
+      // Call the payment verification API
+      const response = await fetch("/api/payments/verify", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          reference: reference,
+          trxref: reference, // Use same value for both
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        // Payment verified successfully
+        setCurrentStep("success");
+
+        // Update project units and create transaction record
+        const updateResult = await createInvestmentTransaction(
+          selectedInvestment?.id || "",
+          quantity,
+          selectedInvestment?.price ? selectedInvestment.price * quantity : 0
+        );
+
+        if (updateResult.success) {
+          // Refresh projects to update available units
+          refreshProjects();
+        }
+      } else {
+        // Payment verification failed
+        setCurrentStep("error");
+        showAlert(
+          "Payment Verification Failed",
+          result.message || "Payment could not be verified. Please try again.",
+          "error"
+        );
+      }
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      setCurrentStep("error");
+      showAlert(
+        "Verification Error",
+        "Failed to verify payment. Please try again.",
+        "error"
+      );
+    } finally {
+      setIsVerifyingPayment(false);
+    }
+  };
+
   const resetForm = () => {
     setQuantity(1);
     setSelectedPaymentMethod("");
+    setRedirectUrl("");
+    setIsVerifyingPayment(false);
     setPaymentDetails({
       mobileNumber: "",
       provider: "MTN",
@@ -2274,7 +2359,87 @@ const InvestmentsPage = () => {
                   </motion.div>
                 )}
 
-                {/* Step 5: Success */}
+                {/* Step 5: Payment Verification Required */}
+                {currentStep === "verification" && (
+                  <motion.div
+                    key="verification"
+                    variants={stepVariants}
+                    initial="hidden"
+                    animate="visible"
+                    exit="hidden"
+                    className="flex flex-col items-center justify-center h-full space-y-6 text-center"
+                  >
+                    {isVerifyingPayment ? (
+                      <>
+                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                          <Loading size="sm" text="" />
+                        </div>
+                        <div className="space-y-3">
+                          <h3 className="text-xl font-bold text-gray-900">
+                            Verifying Payment
+                          </h3>
+                          <p className="text-gray-600">
+                            Please wait while we verify your payment...
+                          </p>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center">
+                          <svg
+                            className="w-8 h-8 text-orange-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                            />
+                          </svg>
+                        </div>
+
+                        <div className="space-y-3">
+                          <h3 className="text-xl font-bold text-gray-900">
+                            Payment Verification Required
+                          </h3>
+                          <p className="text-gray-600">
+                            A payment verification window should have opened.
+                            Please complete your payment there.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col gap-3 w-full max-w-xs">
+                          <Button
+                            onClick={() => {
+                              if (redirectUrl) {
+                                window.open(redirectUrl, "_blank");
+                              }
+                            }}
+                            className="bg-orange-600 hover:bg-orange-700 text-white"
+                          >
+                            Open Verification Window
+                          </Button>
+
+                          <Button
+                            onClick={verifyPayment}
+                            disabled={isVerifyingPayment}
+                            variant="outline"
+                            className="border-gray-300 text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+                          >
+                            {isVerifyingPayment
+                              ? "Verifying..."
+                              : "I've Completed Payment"}
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </motion.div>
+                )}
+
+                {/* Step 6: Success */}
                 {currentStep === "success" && (
                   <motion.div
                     key="success"
