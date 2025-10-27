@@ -49,7 +49,6 @@ import {
 } from "@phosphor-icons/react";
 import PinValidationModal from "@/components/pin-validation-modal";
 import Loading from "@/components/ui/loading";
-import WalletTestComponent from "@/components/WalletTestComponent";
 import ProfileSetupFlow from "@/components/profile-setup-flow";
 
 // --- ViewMoreButton custom component ---
@@ -114,6 +113,7 @@ const DashboardPage = () => {
   const [currentStep, setCurrentStep] = useState("amount");
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [redirectUrl, setRedirectUrl] = useState<string>("");
+  const [transactionId, setTransactionId] = useState<string>("");
   const [withdrawStep, setWithdrawStep] = useState("amount");
   const [isWithdrawProcessing, setIsWithdrawProcessing] = useState(false);
   const [amountError, setAmountError] = useState("");
@@ -250,6 +250,7 @@ const DashboardPage = () => {
         } else if (result.redirect_url) {
           window.open(result.redirect_url, "_blank");
           setRedirectUrl(result.redirect_url);
+          setTransactionId((result as any).transaction_id || "");
           // Don't set success - payment is pending verification
           setCurrentStep("loading");
         } else {
@@ -271,6 +272,7 @@ const DashboardPage = () => {
         } else if (result.redirect_url) {
           window.open(result.redirect_url, "_blank");
           setRedirectUrl(result.redirect_url);
+          setTransactionId((result as any).transaction_id || "");
           // Don't set success - payment is pending verification
           setCurrentStep("loading");
         } else {
@@ -367,6 +369,7 @@ const DashboardPage = () => {
     setAmount("");
     setPaymentMethod("");
     setRedirectUrl("");
+    setTransactionId("");
     setIsVerifyingPayment(false);
     setIsTopUpOpen(false);
   };
@@ -374,17 +377,21 @@ const DashboardPage = () => {
   const verifyPayment = async () => {
     setIsVerifyingPayment(true);
     try {
-      // Use the same verification logic as the callback page
-      // Check if we have a redirect URL with transaction reference
-      if (!redirectUrl) {
+      // Use the transaction_id if available, otherwise extract from redirect URL
+      if (!transactionId && !redirectUrl) {
         throw new Error("No payment reference available");
       }
 
-      // Extract transaction reference from redirect URL
-      // Paystack URLs typically contain reference parameter
-      const url = new URL(redirectUrl);
-      const reference =
-        url.searchParams.get("reference") || url.pathname.split("/").pop();
+      let reference = transactionId || "";
+
+      if (!reference && redirectUrl) {
+        // Extract transaction reference from redirect URL
+        const url = new URL(redirectUrl);
+        reference =
+          url.searchParams.get("reference") ||
+          url.pathname.split("/").pop() ||
+          "";
+      }
 
       if (!reference) {
         throw new Error("Could not extract transaction reference");
@@ -392,22 +399,21 @@ const DashboardPage = () => {
 
       console.log("Verifying payment with reference:", reference);
 
-      // Call the same verification API that callback page uses
-      const response = await fetch("/api/payments/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          reference: reference,
-          trxref: reference, // Use same value for both
-        }),
-      });
+      // Call the backend verification API directly
+      const response = await fetch(
+        `https://infra.agripath.co/api/payments/verify/${reference}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const result = await response.json();
       console.log("Payment verification result:", result);
 
-      if (response.ok && result.success) {
+      if (result.status === "success") {
         // Refresh wallet balance
         try {
           await fetch("/api/wallet/refresh", { method: "POST" });
@@ -417,20 +423,8 @@ const DashboardPage = () => {
 
         setCurrentStep("success");
       } else {
-        // If verification fails, assume success for robustness (same as callback page)
-        console.warn(
-          "Payment verification failed, assuming success:",
-          result.message
-        );
-
-        // Refresh wallet balance
-        try {
-          await fetch("/api/wallet/refresh", { method: "POST" });
-        } catch (refreshError) {
-          console.error("Failed to refresh wallet:", refreshError);
-        }
-
-        setCurrentStep("success");
+        console.error("Payment verification failed:", result);
+        setCurrentStep("error");
       }
 
       setIsVerifyingPayment(false);

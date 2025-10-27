@@ -606,12 +606,12 @@ const TransactionsPage = () => {
                                   </div>
                                 ) : (
                                   <div>
-                                    <p className="text-xs text-gray-500">
+                                    {/* <p className="text-xs text-gray-500">
                                       Status
-                                    </p>
-                                    <div className="mt-1">
+                                    </p> */}
+                                    {/* <div className="mt-1">
                                       {getStatusBadge(transaction.status)}
-                                    </div>
+                                    </div> */}
                                   </div>
                                 )}
                               </div>

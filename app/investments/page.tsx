@@ -12,7 +12,6 @@ import { useWallet } from "@/contexts/WalletContext";
 import KycModal from "@/components/kyc-modal";
 import PinValidationModal from "@/components/pin-validation-modal";
 import CustomAlert from "@/components/custom-alert";
-import APIConnectivityTest from "@/components/APIConnectivityTest";
 import Loading from "@/components/ui/loading";
 import { createClient } from "@/app/utils/supabase/client";
 import { paymentService } from "@/lib/paymentService";
@@ -128,6 +127,7 @@ const InvestmentsPage = () => {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState("");
   const [redirectUrl, setRedirectUrl] = useState<string>("");
+  const [transactionId, setTransactionId] = useState<string>("");
   const [isVerifyingPayment, setIsVerifyingPayment] = useState(false);
   const [paymentDetails, setPaymentDetails] = useState({
     mobileNumber: "",
@@ -873,8 +873,9 @@ const InvestmentsPage = () => {
         // Payment requires verification - open popup and show verification screen
         window.open((paymentResult as any).redirect_url, "_blank");
 
-        // Store redirect URL for verification
+        // Store redirect URL and transaction_id for verification
         setRedirectUrl((paymentResult as any).redirect_url);
+        setTransactionId((paymentResult as any).transaction_id);
 
         // Show verification required screen instead of success
         setIsProcessing(false);
@@ -1015,16 +1016,24 @@ const InvestmentsPage = () => {
   };
 
   const verifyPayment = async () => {
-    if (!redirectUrl) return;
-
     setIsVerifyingPayment(true);
 
     try {
-      // Extract transaction reference from redirect URL
-      // Paystack URLs typically contain reference parameter
-      const url = new URL(redirectUrl);
-      const reference =
-        url.searchParams.get("reference") || url.pathname.split("/").pop();
+      // Use the transaction_id if available, otherwise extract from redirect URL
+      if (!transactionId && !redirectUrl) {
+        throw new Error("No payment reference available");
+      }
+
+      let reference = transactionId || "";
+
+      if (!reference && redirectUrl) {
+        // Extract transaction reference from redirect URL
+        const url = new URL(redirectUrl);
+        reference =
+          url.searchParams.get("reference") ||
+          url.pathname.split("/").pop() ||
+          "";
+      }
 
       if (!reference) {
         throw new Error("Could not extract transaction reference");
@@ -1032,21 +1041,20 @@ const InvestmentsPage = () => {
 
       console.log("Verifying payment with reference:", reference);
 
-      // Call the payment verification API
-      const response = await fetch("/api/payments/verify", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          reference: reference,
-          trxref: reference, // Use same value for both
-        }),
-      });
+      // Call the backend verification API directly
+      const response = await fetch(
+        `https://infra.agripath.co/api/payments/verify/${reference}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       const result = await response.json();
 
-      if (result.success) {
+      if (result.status === "success") {
         // Payment verified successfully
         setCurrentStep("success");
 
@@ -1087,6 +1095,7 @@ const InvestmentsPage = () => {
     setQuantity(1);
     setSelectedPaymentMethod("");
     setRedirectUrl("");
+    setTransactionId("");
     setIsVerifyingPayment(false);
     setPaymentDetails({
       mobileNumber: "",
