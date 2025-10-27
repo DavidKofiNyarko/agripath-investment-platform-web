@@ -1,17 +1,23 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState, useCallback } from 'react';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import { Badge } from '@/components/ui/badge';
-import { createClient } from '@/app/utils/supabase/client';
-import { 
-  Calendar, 
-  DollarSign, 
-  CreditCard, 
-  User, 
-  Building2, 
-  Hash, 
-  CheckCircle2, 
+import React, { useEffect, useState, useCallback } from "react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { Badge } from "@/components/ui/badge";
+import { createClient } from "@/app/utils/supabase/client";
+import {
+  Calendar,
+  DollarSign,
+  CreditCard,
+  User,
+  Building2,
+  Hash,
+  CheckCircle2,
   Clock,
   XCircle,
   FileText,
@@ -31,8 +37,8 @@ import {
   Phone,
   CalendarDays,
   Clock3,
-  Receipt
-} from 'lucide-react';
+  Receipt,
+} from "lucide-react";
 
 interface TransactionDetail {
   id: string;
@@ -77,21 +83,21 @@ interface TransactionDetailDrawerProps {
 
 const getStatusBadge = (status: string) => {
   switch (status) {
-    case 'Complete':
+    case "Complete":
       return (
         <Badge className="bg-green-100 text-green-800 hover:bg-green-100 flex items-center gap-1">
           <CheckCircle2 className="h-3 w-3" />
           Complete
         </Badge>
       );
-    case 'Pending':
+    case "Pending":
       return (
         <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100 flex items-center gap-1">
           <Clock3 className="h-3 w-3" />
           Pending
         </Badge>
       );
-    case 'Failed':
+    case "Failed":
       return (
         <Badge className="bg-red-100 text-red-800 hover:bg-red-100 flex items-center gap-1">
           <XCircle className="h-3 w-3" />
@@ -109,12 +115,12 @@ const getStatusBadge = (status: string) => {
 
 const getTypeLabel = (type: string) => {
   switch (type) {
-    case 'Payin':
-      return 'Investment';
-    case 'Payout':
-      return 'Withdrawal';
-    case 'Refund':
-      return 'Refund';
+    case "Payin":
+      return "Investment";
+    case "Payout":
+      return "Withdrawal";
+    case "Refund":
+      return "Refund";
     default:
       return type;
   }
@@ -122,17 +128,17 @@ const getTypeLabel = (type: string) => {
 
 const getTypeIcon = (type: string) => {
   switch (type) {
-    case 'Payin':
-    case 'investment':
+    case "Payin":
+    case "investment":
       return ArrowUpRight;
-    case 'Payout':
+    case "Payout":
       return ArrowDownLeft;
-    case 'Refund':
+    case "Refund":
       return RefreshCw;
-    case 'momo_topup':
+    case "momo_topup":
       return Smartphone;
-    case 'momo_withdrawal':
-    case 'bank_withdrawal':
+    case "momo_withdrawal":
+    case "bank_withdrawal":
       return Banknote;
     default:
       return Receipt;
@@ -142,55 +148,64 @@ const getTypeIcon = (type: string) => {
 const formatHumanReadableDate = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
-  const diffInHours = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60));
+  const diffInHours = Math.floor(
+    (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+  );
   const diffInDays = Math.floor(diffInHours / 24);
-  
-  let relativeTime = '';
+
+  let relativeTime = "";
   if (diffInDays === 0) {
     if (diffInHours === 0) {
-      relativeTime = 'Just now';
+      relativeTime = "Just now";
     } else if (diffInHours === 1) {
-      relativeTime = '1 hour ago';
+      relativeTime = "1 hour ago";
     } else {
       relativeTime = `${diffInHours} hours ago`;
     }
   } else if (diffInDays === 1) {
-    relativeTime = 'Yesterday';
+    relativeTime = "Yesterday";
   } else if (diffInDays < 7) {
     relativeTime = `${diffInDays} days ago`;
   } else {
     relativeTime = `${Math.floor(diffInDays / 7)} weeks ago`;
   }
-  
+
   return {
-    fullDate: date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    fullDate: date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     }),
-    time: date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: true
+    time: date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
     }),
-    relative: relativeTime
+    relative: relativeTime,
   };
 };
 
-export function TransactionDetailDrawer({ transactionId, open, onClose }: TransactionDetailDrawerProps) {
-  const [transaction, setTransaction] = useState<TransactionDetail | null>(null);
+export function TransactionDetailDrawer({
+  transactionId,
+  open,
+  onClose,
+}: TransactionDetailDrawerProps) {
+  const [transaction, setTransaction] = useState<TransactionDetail | null>(
+    null
+  );
   const [loading, setLoading] = useState(false);
   const supabase = createClient();
 
   const fetchTransactionDetail = useCallback(async () => {
     if (!transactionId) return;
-    
+
     setLoading(true);
     try {
-      const { data, error} = await supabase
-        .from('transactions')
-        .select(`
+      const { data, error } = await supabase
+        .from("transactions")
+        .select(
+          `
           *,
           projects:project_id(
             project_name,
@@ -205,19 +220,22 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
             email,
             phone_number
           )
-        `)
-        .eq('id', transactionId)
+        `
+        )
+        .eq("id", transactionId)
         .single();
 
       if (error) throw error;
 
       setTransaction({
         ...data,
-        project: Array.isArray(data.projects) ? data.projects[0] : data.projects,
+        project: Array.isArray(data.projects)
+          ? data.projects[0]
+          : data.projects,
         profile: Array.isArray(data.profile) ? data.profile[0] : data.profile,
       });
     } catch (error) {
-      console.error('Error fetching transaction detail:', error);
+      console.error("Error fetching transaction detail:", error);
     } finally {
       setLoading(false);
     }
@@ -234,7 +252,9 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
       <Sheet open={open} onOpenChange={onClose}>
         <SheetContent className="w-full sm:max-w-lg p-0 overflow-y-auto">
           <SheetHeader className="p-6 border-b">
-            <SheetTitle className="text-xl font-semibold">Transaction Details</SheetTitle>
+            <SheetTitle className="text-xl font-semibold">
+              Transaction Details
+            </SheetTitle>
           </SheetHeader>
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
@@ -254,7 +274,9 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
     <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-lg p-0 overflow-y-auto">
         <SheetHeader className="p-6 border-none">
-          <SheetTitle className="text-xl font-semibold">Transaction Details</SheetTitle>
+          <SheetTitle className="text-xl font-semibold">
+            Transaction Details
+          </SheetTitle>
           <SheetDescription className="text-gray-600">
             Complete information about this transaction
           </SheetDescription>
@@ -269,8 +291,12 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
                   <TypeIcon className="h-5 w-5 text-green-700" />
                 </div>
                 <div>
-                  <h2 className="font-semibold text-gray-900">{getTypeLabel(transaction.type)}</h2>
-                  <p className="text-sm text-gray-600">#{transaction.transaction_id}</p>
+                  <h2 className="font-semibold text-gray-900">
+                    {getTypeLabel(transaction.type)}
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    #{transaction.transaction_id}
+                  </p>
                 </div>
               </div>
               {getStatusBadge(transaction.status)}
@@ -283,7 +309,7 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
               <Banknote className="h-4 w-4 text-green-600" />
               Financial Summary
             </h3>
-            
+
             <div className="space-y-4">
               <div className="flex items-center justify-between py-2">
                 <span className="text-gray-600 font-medium">Amount</span>
@@ -291,14 +317,16 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
                   GHS {transaction.amount.toLocaleString()}
                 </span>
               </div>
-              
+
               {transaction.fees > 0 && (
                 <div className="flex items-center justify-between py-2 border-t border-gray-50/20">
                   <span className="text-gray-600">Transaction Fee</span>
-                  <span className="font-semibold text-gray-700">GHS {transaction.fees.toLocaleString()}</span>
+                  <span className="font-semibold text-gray-700">
+                    GHS {transaction.fees.toLocaleString()}
+                  </span>
                 </div>
               )}
-              
+
               <div className="flex items-center justify-between py-2 border-t border-gray-50/20">
                 <span className="text-gray-600 font-medium">Net Amount</span>
                 <span className="text-lg font-bold text-gray-900">
@@ -306,9 +334,11 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
                 </span>
               </div>
 
-                  <div className="flex items-center justify-between py-2 border-t border-gray-50/20">
+              <div className="flex items-center justify-between py-2 border-t border-gray-50/20">
                 <span className="text-gray-600 font-medium">Units</span>
-                <span className="text-lg font-bold text-gray-900">{transaction.unit}</span>
+                <span className="text-lg font-bold text-gray-900">
+                  {transaction.unit}
+                </span>
               </div>
             </div>
           </div>
@@ -319,37 +349,52 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
               <Wallet className="h-4 w-4 text-blue-600" />
               Payment Information
             </h3>
-            
+
             <div className="space-y-3">
-              <div className="flex items-center justify-between py-2">
-                <span className="text-gray-600 font-medium">Method</span>
-                <Badge variant="secondary" className="capitalize bg-blue-100 text-blue-800">
-                  {transaction.channel === 'wallet' ? 'Agripath Account' : transaction.channel}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                <span className="text-gray-600 font-medium text-sm sm:text-base">
+                  Method
+                </span>
+                <Badge
+                  variant="secondary"
+                  className="capitalize bg-blue-100 text-blue-800 w-fit"
+                >
+                  {transaction.channel === "wallet"
+                    ? "Agripath Account"
+                    : transaction.channel}
                 </Badge>
               </div>
-              
+
               {transaction.network && (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base flex items-center gap-2">
                     <Network className="h-4 w-4" />
                     Network
                   </span>
-                  <span className="font-semibold text-gray-900">{transaction.network}</span>
+                  <span className="font-semibold text-gray-900 text-sm sm:text-base break-all sm:break-normal">
+                    {transaction.network}
+                  </span>
                 </div>
               )}
-              
-              <div className="flex items-center justify-between py-2">
-                <span className="text-gray-600 flex items-center gap-2">
+
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                <span className="text-gray-600 text-sm sm:text-base flex items-center gap-2">
                   <Hash className="h-4 w-4" />
                   Account Number
                 </span>
-                <span className="font-semibold text-gray-900 font-mono">{transaction.account_number}</span>
+                <span className="font-semibold text-gray-900 font-mono text-sm sm:text-base break-all sm:break-normal">
+                  {transaction.account_number}
+                </span>
               </div>
 
               {transaction.external_id && (
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium">External ID</span>
-                  <span className="font-semibold text-gray-900 text-sm">{transaction.external_id}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                  <span className="text-gray-600 font-medium text-sm sm:text-base">
+                    External ID
+                  </span>
+                  <span className="font-semibold text-gray-900 text-xs sm:text-sm break-all sm:break-normal">
+                    {transaction.external_id}
+                  </span>
                 </div>
               )}
             </div>
@@ -362,39 +407,59 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
                 <Package className="h-4 w-4 text-purple-600" />
                 Project Information
               </h3>
-              
+
               <div className="space-y-3">
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium">Project Name</span>
-                  <span className="font-semibold text-gray-900">{transaction.project.project_name}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                  <span className="text-gray-600 font-medium text-sm sm:text-base">
+                    Project Name
+                  </span>
+                  <span className="font-semibold text-gray-900 text-sm sm:text-base break-words sm:break-normal">
+                    {transaction.project.project_name}
+                  </span>
                 </div>
-                
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium flex items-center gap-2">
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base font-medium flex items-center gap-2">
                     <MapPin className="h-4 w-4" />
                     Location
                   </span>
-                  <span className="font-semibold text-gray-900">{transaction.project.farm_location}</span>
-                </div>
-                
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium">Price per Unit</span>
-                  <span className="font-semibold text-gray-900">GHS {transaction.project.unit_price.toLocaleString()}</span>
-                </div>
-                
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium">Total Units</span>
-                  <span className="font-semibold text-gray-900">{transaction.project.total_units}</span>
+                  <span className="font-semibold text-gray-900 text-sm sm:text-base break-words sm:break-normal">
+                    {transaction.project.farm_location}
+                  </span>
                 </div>
 
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium">Project Status</span>
-                  <Badge 
-                    variant={transaction.project.status === 'Active' ? 'default' : 'secondary'}
-                    className={`capitalize ${
-                      transaction.project.status === 'Active' 
-                        ? 'bg-green-100 text-green-800 hover:bg-green-100' 
-                        : 'bg-gray-100 text-gray-800 hover:bg-gray-100'
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base font-medium">
+                    Price per Unit
+                  </span>
+                  <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                    GHS {transaction.project.unit_price.toLocaleString()}
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base font-medium">
+                    Total Units
+                  </span>
+                  <span className="font-semibold text-gray-900 text-sm sm:text-base">
+                    {transaction.project.total_units}
+                  </span>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base font-medium">
+                    Project Status
+                  </span>
+                  <Badge
+                    variant={
+                      transaction.project.status === "Active"
+                        ? "default"
+                        : "secondary"
+                    }
+                    className={`capitalize w-fit ${
+                      transaction.project.status === "Active"
+                        ? "bg-green-100 text-green-800 hover:bg-green-100"
+                        : "bg-gray-100 text-gray-800 hover:bg-gray-100"
                     }`}
                   >
                     {transaction.project.status}
@@ -411,28 +476,37 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
                 <UserCheck className="h-4 w-4 text-orange-600" />
                 Investor Information
               </h3>
-              
+
               <div className="space-y-3">
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium">Name</span>
-                  <span className="font-semibold text-gray-900">{transaction.profile.first_name} {transaction.profile.last_name}</span>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base font-medium">
+                    Name
+                  </span>
+                  <span className="font-semibold text-gray-900 text-sm sm:text-base break-words sm:break-normal">
+                    {transaction.profile.first_name}{" "}
+                    {transaction.profile.last_name}
+                  </span>
                 </div>
-                
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-gray-600 font-medium flex items-center gap-2">
+
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                  <span className="text-gray-600 text-sm sm:text-base font-medium flex items-center gap-2">
                     <Mail className="h-4 w-4" />
                     Email
                   </span>
-                  <span className="font-semibold text-gray-900 text-sm">{transaction.profile.email}</span>
+                  <span className="font-semibold text-gray-900 text-xs sm:text-sm break-all sm:break-normal">
+                    {transaction.profile.email}
+                  </span>
                 </div>
-                
+
                 {transaction.profile.phone_number && (
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-gray-600 font-medium flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
+                    <span className="text-gray-600 text-sm sm:text-base font-medium flex items-center gap-2">
                       <Phone className="h-4 w-4" />
                       Phone
                     </span>
-                    <span className="font-semibold text-gray-900">{transaction.profile.phone_number}</span>
+                    <span className="font-semibold text-gray-900 text-sm sm:text-base break-all sm:break-normal">
+                      {transaction.profile.phone_number}
+                    </span>
                   </div>
                 )}
               </div>
@@ -444,19 +518,23 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
             <h3 className="font-semibold text-gray-900 mb-6">
               Transaction Timeline
             </h3>
-            
+
             <div className="space-y-6">
               <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/50">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <h4 className="font-semibold text-gray-900">Transaction Created</h4>
-                    <p className="text-sm text-gray-600">When this transaction was initiated</p>
+                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0">
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
+                      Transaction Created
+                    </h4>
+                    <p className="text-xs sm:text-sm text-gray-600">
+                      When this transaction was initiated
+                    </p>
                   </div>
-                  <div className="text-right min-w-0 flex-shrink-0 ml-4">
-                    <div className="font-semibold text-gray-900 text-sm leading-tight">
+                  <div className="text-left sm:text-right">
+                    <div className="font-semibold text-gray-900 text-xs sm:text-sm leading-tight">
                       {formatHumanReadableDate(transaction.created_at).fullDate}
                     </div>
-                    <div className="text-sm text-gray-600 mt-1">
+                    <div className="text-xs sm:text-sm text-gray-600 mt-1">
                       at {formatHumanReadableDate(transaction.created_at).time}
                     </div>
                     <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mt-2">
@@ -465,23 +543,34 @@ export function TransactionDetailDrawer({ transactionId, open, onClose }: Transa
                   </div>
                 </div>
               </div>
-              
+
               {transaction.processed_at && (
                 <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/50">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-semibold text-gray-900">Transaction Processed</h4>
-                      <p className="text-sm text-gray-600">When this transaction was completed</p>
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
+                        Transaction Processed
+                      </h4>
+                      <p className="text-xs sm:text-sm text-gray-600">
+                        When this transaction was completed
+                      </p>
                     </div>
-                    <div className="text-right min-w-0 flex-shrink-0 ml-4">
-                      <div className="font-semibold text-gray-900 text-sm leading-tight">
-                        {formatHumanReadableDate(transaction.processed_at).fullDate}
+                    <div className="text-left sm:text-right">
+                      <div className="font-semibold text-gray-900 text-xs sm:text-sm leading-tight">
+                        {
+                          formatHumanReadableDate(transaction.processed_at)
+                            .fullDate
+                        }
                       </div>
-                      <div className="text-sm text-gray-600 mt-1">
-                        at {formatHumanReadableDate(transaction.processed_at).time}
+                      <div className="text-xs sm:text-sm text-gray-600 mt-1">
+                        at{" "}
+                        {formatHumanReadableDate(transaction.processed_at).time}
                       </div>
                       <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 mt-2">
-                        {formatHumanReadableDate(transaction.processed_at).relative}
+                        {
+                          formatHumanReadableDate(transaction.processed_at)
+                            .relative
+                        }
                       </div>
                     </div>
                   </div>
