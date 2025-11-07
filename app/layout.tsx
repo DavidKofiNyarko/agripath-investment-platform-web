@@ -92,7 +92,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </head>
-      <body className="antialiased">
+      <body className="antialiased" style={{ fontFamily: 'var(--font-sans)' }}>
         <UserProvider>
           <ProfileProvider>
             <NotificationProvider>
