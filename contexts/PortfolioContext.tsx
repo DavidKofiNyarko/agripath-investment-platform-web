@@ -336,6 +336,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
 
       // Fetch all projects data - only include completed investment transactions
       // Payin transactions are pending payments and shouldn't be counted as investments
+      // This includes both Active and Completed projects where the user has invested
       const { data: projectsData, error: projectsError } = await supabase
         .from('transactions')
         .select(`
@@ -362,7 +363,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         `)
         .eq('profile_id', user.id)
         .eq('type', 'investment')
-        .eq('status', 'Complete')
+        .eq('status', 'Complete') // Transaction status must be Complete (not project status)
         .order('created_at', { ascending: false });
 
       if (projectsError) {
