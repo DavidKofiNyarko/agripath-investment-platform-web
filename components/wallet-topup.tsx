@@ -208,8 +208,27 @@ const WalletTopup: React.FC = () => {
           network: "",
         });
       } else if (result.redirect_url) {
+        // For mobile money payments, append phone number to the redirect URL
+        let redirectUrl = result.redirect_url;
+        
+        if (formData.channel === "momo" && formData.subscriber_number) {
+          // Format phone number (remove spaces)
+          const phoneNumber = formData.subscriber_number.replace(/\s/g, "");
+          
+          // Try multiple parameter names as Paystack may use different ones
+          // Paystack doesn't officially support phone prepopulation, but we'll try common variations
+          const url = new URL(redirectUrl);
+          url.searchParams.set("phone", phoneNumber);
+          url.searchParams.set("mobile", phoneNumber);
+          url.searchParams.set("phone_number", phoneNumber);
+          url.searchParams.set("subscriber_number", phoneNumber);
+          // Also try metadata format
+          url.searchParams.set("metadata[phone]", phoneNumber);
+          redirectUrl = url.toString();
+        }
+        
         // Handle payment verification redirect
-        window.open(result.redirect_url, "_blank");
+        window.open(redirectUrl, "_blank");
         setPending(
           "Payment verification required. Please complete the payment in the popup window. Your wallet will be updated once payment is confirmed."
         );

@@ -270,8 +270,27 @@ const DashboardPage = () => {
             setCurrentStep("success");
           }, 1000);
         } else if (result.redirect_url) {
-          window.open(result.redirect_url, "_blank");
-          setRedirectUrl(result.redirect_url);
+          // For mobile money payments, append phone number to the redirect URL
+          let redirectUrl = result.redirect_url;
+
+          if (paymentDetails.phoneNumber) {
+            // Format phone number (remove spaces)
+            const phoneNumber = paymentDetails.phoneNumber.replace(/\s/g, "");
+
+            // Try multiple parameter names as Paystack may use different ones
+            // Paystack doesn't officially support phone prepopulation, but we'll try common variations
+            const url = new URL(redirectUrl);
+            url.searchParams.set("phone", phoneNumber);
+            url.searchParams.set("mobile", phoneNumber);
+            url.searchParams.set("phone_number", phoneNumber);
+            url.searchParams.set("subscriber_number", phoneNumber);
+            // Also try metadata format
+            url.searchParams.set("metadata[phone]", phoneNumber);
+            redirectUrl = url.toString();
+          }
+
+          window.open(redirectUrl, "_blank");
+          setRedirectUrl(redirectUrl);
           setTransactionId((result as any).transaction_id || "");
           // Don't set success - payment is pending verification
           setCurrentStep("loading");

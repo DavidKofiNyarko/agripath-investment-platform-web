@@ -870,11 +870,30 @@ const InvestmentsPage = () => {
       // Handle payment response
       // Check if payment requires verification (has redirect_url)
       if ((paymentResult as any).redirect_url) {
+        // For mobile money payments, append phone number to the redirect URL
+        let redirectUrl = (paymentResult as any).redirect_url;
+
+        if (selectedPaymentMethod === "mobile" && paymentDetails.mobileNumber) {
+          // Format phone number (remove spaces)
+          const phoneNumber = paymentDetails.mobileNumber.replace(/\s/g, "");
+
+          // Try multiple parameter names as Paystack may use different ones
+          // Paystack doesn't officially support phone prepopulation, but we'll try common variations
+          const url = new URL(redirectUrl);
+          url.searchParams.set("phone", phoneNumber);
+          url.searchParams.set("mobile", phoneNumber);
+          url.searchParams.set("phone_number", phoneNumber);
+          url.searchParams.set("subscriber_number", phoneNumber);
+          // Also try metadata format
+          url.searchParams.set("metadata[phone]", phoneNumber);
+          redirectUrl = url.toString();
+        }
+
         // Payment requires verification - open popup and show verification screen
-        window.open((paymentResult as any).redirect_url, "_blank");
+        window.open(redirectUrl, "_blank");
 
         // Store redirect URL and transaction_id for verification
-        setRedirectUrl((paymentResult as any).redirect_url);
+        setRedirectUrl(redirectUrl);
         setTransactionId((paymentResult as any).transaction_id);
 
         // Show verification required screen instead of success
@@ -1072,20 +1091,10 @@ const InvestmentsPage = () => {
       } else {
         // Payment verification failed
         setCurrentStep("error");
-        showAlert(
-          "Payment Verification Failed",
-          result.message || "Payment could not be verified. Please try again.",
-          "error"
-        );
       }
     } catch (error) {
       console.error("Payment verification error:", error);
       setCurrentStep("error");
-      showAlert(
-        "Verification Error",
-        "Failed to verify payment. Please try again.",
-        "error"
-      );
     } finally {
       setIsVerifyingPayment(false);
     }
