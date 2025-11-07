@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { getApiBaseDomain } from "@/lib/apiConfig";
 
 const PaymentCallbackContent = () => {
   const router = useRouter();
@@ -32,22 +33,55 @@ const PaymentCallbackContent = () => {
 
         // We need a reference to verify the payment
         // Use reference from URL, or trxref as fallback
-        const paymentReference = reference || trxref;
+        // This is the Paystack reference (like "wjkyuc51ysxabcq")
+        const paystackReference = reference || trxref;
 
-        if (!paymentReference) {
+        if (!paystackReference) {
           throw new Error("Missing transaction reference");
         }
 
-        setTransactionId(paymentReference);
+        setTransactionId(paystackReference);
+
+        // First, find the transaction in our database using the Paystack reference
+        // The backend verification API expects our internal transaction_id format (like "txn225862451")
+        let internalTransactionId = null;
+        try {
+          const findResponse = await fetch("/api/payments/update-transaction", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              reference: paystackReference,
+              status: "pending", // Check mode - just find the transaction
+            }),
+          });
+
+          const findResult = await findResponse.json();
+          if (findResponse.ok && findResult.success && findResult.transaction) {
+            internalTransactionId = findResult.transaction.transaction_id;
+            console.log("Found transaction with internal ID:", internalTransactionId);
+          }
+        } catch (findError) {
+          console.error("Error finding transaction:", findError);
+        }
 
         // Always verify payment with backend API
         // Don't trust URL status parameters alone
+        let verificationSuccess = false;
+        let verificationError = null;
+
         try {
-          console.log("Verifying payment with reference:", paymentReference);
+          // Use internal transaction_id if found, otherwise fall back to Paystack reference
+          const verificationReference = internalTransactionId || paystackReference;
+          console.log("Verifying payment with reference:", verificationReference);
 
           // Call the backend verification API directly (same as dashboard/investments pages)
+          // The backend expects our internal transaction_id format (like "txn225862451")
+          const apiBaseUrl = getApiBaseDomain();
+
           const response = await fetch(
-            `https://infra.agripath.co/api/payments/verify/${paymentReference}`,
+            `${apiBaseUrl}/api/payments/verify/${verificationReference}`,
             {
               method: "GET",
               headers: {
@@ -57,44 +91,117 @@ const PaymentCallbackContent = () => {
           );
 
           if (!response.ok) {
-            throw new Error(
-              `Verification failed with status: ${response.status}`
-            );
-          }
-
-          const result = await response.json();
-          console.log("Payment verification result:", result);
-
-          // Only mark as success if the backend confirms payment was successful
-          if (result.status === "success" || result.success === true) {
-            setStatus("success");
-            setMessage("Payment completed successfully!");
-
-            // Refresh wallet balance
-            try {
-              await fetch("/api/wallet/refresh", { method: "POST" });
-            } catch (refreshError) {
-              console.error("Failed to refresh wallet:", refreshError);
-            }
-
-            // Redirect to dashboard after 3 seconds
-            setTimeout(() => {
-              router.push("/dashboard");
-            }, 3000);
+            const errorData = await response.json().catch(() => ({}));
+            verificationError = errorData.message || `Verification failed with status: ${response.status}`;
+            console.warn("Backend verification failed:", verificationError);
+            // Don't throw - we'll try to update transaction from database instead
           } else {
-            // Payment verification failed or payment not completed
-            setStatus("error");
-            setMessage(
-              result.message ||
-                "Payment verification failed. Please contact support if you have completed the payment."
-            );
+            const result = await response.json();
+            console.log("Payment verification result:", result);
+
+            // Only mark as success if the backend confirms payment was successful
+            if (result.status === "success" || result.success === true) {
+              verificationSuccess = true;
+            } else {
+              verificationError = result.message || "Payment verification failed";
+            }
           }
         } catch (verifyError) {
           console.error("Payment verification error:", verifyError);
-          setStatus("error");
-          setMessage(
-            "Unable to verify payment. Please contact support if you have completed the payment."
-          );
+          verificationError = "Unable to verify payment with backend";
+          // Don't throw - we'll try to update transaction from database instead
+        }
+
+        // Only update transaction if backend verification succeeded
+        // This ensures we only mark transactions as Complete when payment is actually verified
+        if (verificationSuccess) {
+          // Try to update transaction status from our database
+          try {
+            const updateResponse = await fetch("/api/payments/update-transaction", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                reference: paystackReference, // Use Paystack reference to find transaction
+                status: "success",
+              }),
+            });
+
+            const updateResult = await updateResponse.json();
+            
+            if (updateResponse.ok && updateResult.success) {
+              // Transaction was found and updated
+              setStatus("success");
+              setMessage("Payment completed successfully!");
+
+              // Refresh wallet balance
+              try {
+                await fetch("/api/wallet/refresh", { method: "POST" });
+              } catch (refreshError) {
+                console.error("Failed to refresh wallet:", refreshError);
+              }
+
+              // Redirect to dashboard after 3 seconds
+              setTimeout(() => {
+                router.push("/dashboard");
+              }, 3000);
+            } else {
+              // Backend says success but transaction not in our DB
+              // This might happen if transaction wasn't created yet
+              setStatus("success");
+              setMessage("Payment verified successfully! Your wallet will be updated shortly.");
+              setTimeout(() => {
+                router.push("/dashboard");
+              }, 3000);
+            }
+          } catch (updateError) {
+            console.error("Error updating transaction status:", updateError);
+            // Backend verification succeeded but update failed
+            setStatus("success");
+            setMessage("Payment verified successfully! Your wallet will be updated shortly.");
+            setTimeout(() => {
+              router.push("/dashboard");
+            }, 3000);
+          }
+        } else {
+          // Backend verification failed - check if transaction exists in our database
+          try {
+            const checkResponse = await fetch("/api/payments/update-transaction", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                reference: paystackReference, // Use Paystack reference to find transaction
+                status: "pending", // Don't update status, just check if transaction exists
+              }),
+            });
+
+            const checkResult = await checkResponse.json();
+            
+            if (checkResponse.ok && checkResult.success && checkResult.transaction) {
+              // Transaction exists but payment not yet verified
+              setStatus("loading");
+              setMessage(
+                "Payment is being processed. The transaction was found but payment verification is pending. Please wait a few moments and refresh, or contact support if payment was completed."
+              );
+            } else {
+              // Transaction not found in our database
+              setStatus("error");
+              setMessage(
+                verificationError ||
+                  "Transaction not found. Please contact support if you have completed the payment."
+              );
+            }
+          } catch (checkError) {
+            console.error("Error checking transaction:", checkError);
+            setStatus("error");
+            setMessage(
+              verificationError ||
+                "Unable to process payment. Please contact support if you have completed the payment."
+            );
+          }
         }
       } catch (error) {
         console.error("Payment callback error:", error);

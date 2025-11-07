@@ -15,6 +15,7 @@ import CustomAlert from "@/components/custom-alert";
 import Loading from "@/components/ui/loading";
 import { createClient } from "@/app/utils/supabase/client";
 import { paymentService } from "@/lib/paymentService";
+import { getApiBaseDomain } from "@/lib/apiConfig";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -685,8 +686,10 @@ const InvestmentsPage = () => {
         JSON.stringify(investmentData, null, 2)
       );
 
+      const apiBaseUrl = getApiBaseDomain();
+
       const response = await fetch(
-        "https://infra.agripath.co/api/payments/wallet/invest",
+        `${apiBaseUrl}/api/payments/wallet/invest`,
         {
           method: "POST",
           headers: {
@@ -894,7 +897,7 @@ const InvestmentsPage = () => {
 
         // Store redirect URL and transaction_id for verification
         setRedirectUrl(redirectUrl);
-        setTransactionId((paymentResult as any).transaction_id);
+        setTransactionId(transactionId);
 
         // Show verification required screen instead of success
         setIsProcessing(false);
@@ -1061,8 +1064,10 @@ const InvestmentsPage = () => {
       console.log("Verifying payment with reference:", reference);
 
       // Call the backend verification API directly
+      const apiBaseUrl = getApiBaseDomain();
+
       const response = await fetch(
-        `https://infra.agripath.co/api/payments/verify/${reference}`,
+        `${apiBaseUrl}/api/payments/verify/${reference}`,
         {
           method: "GET",
           headers: {

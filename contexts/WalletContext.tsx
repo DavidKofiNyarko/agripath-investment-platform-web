@@ -359,36 +359,63 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           };
         }
 
-        const walletTopupData = {
+        // Build payload matching backend API structure
+        // user_email is required for both card and mobile money payments
+        // Use profile email as the primary source
+        const userEmail = userData.email;
+
+        if (
+          !userEmail ||
+          typeof userEmail !== "string" ||
+          userEmail.trim() === ""
+        ) {
+          return {
+            success: false,
+            error:
+              "Email address is required for payment. Please ensure your profile has a valid email address.",
+          };
+        }
+
+        // Base payload structure - user_email is required for both channels
+        const walletTopupData: {
+          profile_id: string;
+          project_id: string;
+          amount: number;
+          channel: "card" | "momo";
+          description: string;
+          user_email: string;
+          pan?: string;
+          exp_month?: string;
+          exp_year?: string;
+          cvv?: string;
+          card_holder?: string;
+          redirect_url?: string;
+          subscriber_number?: string;
+          network?: string;
+        } = {
           profile_id: userData.id,
           project_id: "16beb80e-cb97-44b0-ab8e-13542a6add60", // Default project ID for wallet operations
           amount: topupData.amount,
           channel: topupData.channel,
           description:
             topupData.description || `Wallet topup - ${topupData.channel}`,
-          redirect_url: `${window.location.origin}/dashboard`,
-          // Include KYC fields that backend expects
-          kyc_status: userData.kyc_status,
-          kyc_verified: userData.kyc_status === "verified",
-          first_name: userData.first_name || "",
-          last_name: userData.last_name || "",
-          email: userData.email,
-          phone_number: userData.phone_number || "",
-          // Always include user_email for both card and mobile money
-          user_email: topupData.user_email || userData.email,
-          ...(topupData.channel === "card"
-            ? {
-                pan: topupData.pan,
-                exp_month: topupData.exp_month,
-                exp_year: topupData.exp_year,
-                cvv: topupData.cvv,
-                card_holder: topupData.card_holder,
-              }
-            : {
-                subscriber_number: topupData.subscriber_number,
-                network: topupData.network,
-              }),
+          user_email: userEmail.trim(), // Required for both card and mobile money - ensure it's a valid string
         };
+
+        // Add channel-specific fields
+        if (topupData.channel === "card") {
+          // Card payment requires: pan, exp_month, exp_year, cvv, card_holder, redirect_url
+          walletTopupData.pan = topupData.pan;
+          walletTopupData.exp_month = topupData.exp_month;
+          walletTopupData.exp_year = topupData.exp_year;
+          walletTopupData.cvv = topupData.cvv;
+          walletTopupData.card_holder = topupData.card_holder;
+          walletTopupData.redirect_url = `${window.location.origin}/callback`;
+        } else if (topupData.channel === "momo") {
+          // Mobile money requires: subscriber_number, network
+          walletTopupData.subscriber_number = topupData.subscriber_number;
+          walletTopupData.network = topupData.network;
+        }
 
         console.log(
           "Calling paymentService.processWalletTopup with:",

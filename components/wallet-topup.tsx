@@ -210,11 +210,11 @@ const WalletTopup: React.FC = () => {
       } else if (result.redirect_url) {
         // For mobile money payments, append phone number to the redirect URL
         let redirectUrl = result.redirect_url;
-        
+
         if (formData.channel === "momo" && formData.subscriber_number) {
           // Format phone number (remove spaces)
           const phoneNumber = formData.subscriber_number.replace(/\s/g, "");
-          
+
           // Try multiple parameter names as Paystack may use different ones
           // Paystack doesn't officially support phone prepopulation, but we'll try common variations
           const url = new URL(redirectUrl);
@@ -226,7 +226,7 @@ const WalletTopup: React.FC = () => {
           url.searchParams.set("metadata[phone]", phoneNumber);
           redirectUrl = url.toString();
         }
-        
+
         // Handle payment verification redirect
         window.open(redirectUrl, "_blank");
         setPending(
@@ -261,16 +261,20 @@ const WalletTopup: React.FC = () => {
           {/* Amount */}
           <div className="space-y-2">
             <Label htmlFor="amount">Amount (GHS)</Label>
-            <Input
-              id="amount"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.amount}
-              onChange={(e) => handleInputChange("amount", e.target.value)}
-              placeholder="Enter amount to add"
-              required
-            />
+            <div className="relative group">
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.amount}
+                onChange={(e) => handleInputChange("amount", e.target.value)}
+                placeholder="Enter amount to add"
+                required
+                className="border-0 border-b-2 border-gray-300 rounded-none px-0 pb-2 focus:border-b-2 focus:border-transparent focus:ring-0 focus:outline-none transition-all duration-300 ease-in-out bg-transparent shadow-none"
+              />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 transform scale-x-0 origin-left transition-transform duration-300 ease-in-out group-focus-within:scale-x-100" />
+            </div>
           </div>
 
           {/* Channel Selection */}

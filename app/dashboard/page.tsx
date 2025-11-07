@@ -28,6 +28,7 @@ import {
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { getApiBaseDomain } from "@/lib/apiConfig";
 import { Loader2 } from "lucide-react";
 import {
   Upload,
@@ -419,8 +420,10 @@ const DashboardPage = () => {
       console.log("Verifying payment with reference:", reference);
 
       // Call the backend verification API directly
+      const apiBaseUrl = getApiBaseDomain();
+
       const response = await fetch(
-        `https://infra.agripath.co/api/payments/verify/${reference}`,
+        `${apiBaseUrl}/api/payments/verify/${reference}`,
         {
           method: "GET",
           headers: {

@@ -100,14 +100,14 @@ export interface PayoutResponse {
   reason?: string;
 }
 
+import { getApiBaseUrl } from "./apiConfig";
+
 class PaymentService {
   private baseUrl: string;
 
   constructor() {
-    // Use environment variable or default to production URL
-    this.baseUrl =
-      process.env.NEXT_PUBLIC_PAYMENT_API_URL ||
-      "https://infra.agripath.co/api/payments";
+    // Use getApiBaseUrl to automatically detect localhost vs production
+    this.baseUrl = getApiBaseUrl();
   }
 
   /**
