@@ -48,7 +48,12 @@ interface WalletContextType {
     subscriber_number?: string;
     network?: string;
     description?: string;
-  }) => Promise<{ success: boolean; redirect_url?: string; error?: string }>;
+  }) => Promise<{
+    success: boolean;
+    redirect_url?: string;
+    transaction_id?: string;
+    error?: string;
+  }>;
 
   processWalletWithdrawal: (withdrawalData: {
     amount: number;
