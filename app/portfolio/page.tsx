@@ -236,67 +236,91 @@ const PortfolioPage = () => {
         </div>
 
         {/* Portfolio Metrics */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           <Card className="bg-green-800 text-white">
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">
-                    Total Invested
-                  </p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold truncate">
-                    GHS {metrics?.total_invested?.toLocaleString() || "0.00"}
-                  </p>
+            <CardContent className="p-0">
+              <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
+                <div className="flex-1 flex justify-start items-center gap-2">
+                  <div className="flex justify-center items-center gap-2.5">
+                    <div className="justify-start text-green-100 text-xs sm:text-sm font-medium">
+                      Total Invested
+                    </div>
+                  </div>
                 </div>
-                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-yellow-500 flex-shrink-0 ml-2" />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden flex-shrink-0">
+                  <FolderOpen className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-yellow-500" />
+                </div>
+              </div>
+              <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                <div className="justify-start text-white text-xl sm:text-2xl font-extrabold tracking-tight">
+                  GHS {metrics?.total_invested?.toLocaleString() || "0.00"}
+                </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-green-800 text-white">
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">
-                    Expected Returns
-                  </p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold truncate">
-                    GHS {metrics?.expected_returns?.toLocaleString() || "0.00"}
-                  </p>
+            <CardContent className="p-0">
+              <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
+                <div className="flex-1 flex justify-start items-center gap-2">
+                  <div className="flex justify-center items-center gap-2.5">
+                    <div className="justify-start text-green-100 text-xs sm:text-sm font-medium">
+                      Expected Returns
+                    </div>
+                  </div>
                 </div>
-                <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-yellow-500 flex-shrink-0 ml-2" />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden flex-shrink-0">
+                  <DollarSign className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-yellow-500" />
+                </div>
+              </div>
+              <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                <div className="justify-start text-white text-xl sm:text-2xl font-extrabold tracking-tight">
+                  GHS {metrics?.expected_returns?.toLocaleString() || "0.00"}
+                </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-green-800 text-white">
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">
-                    Active Projects
-                  </p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold">
-                    {metrics?.active_projects || 0}
-                  </p>
+            <CardContent className="p-0">
+              <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
+                <div className="flex-1 flex justify-start items-center gap-2">
+                  <div className="flex justify-center items-center gap-2.5">
+                    <div className="justify-start text-green-100 text-xs sm:text-sm font-medium">
+                      Active Projects
+                    </div>
+                  </div>
                 </div>
-                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-blue-500 flex-shrink-0 ml-2" />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden flex-shrink-0">
+                  <TrendingUp className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-yellow-500" />
+                </div>
+              </div>
+              <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                <div className="justify-start text-white text-xl sm:text-2xl font-extrabold tracking-tight">
+                  {metrics?.active_projects || 0}
+                </div>
               </div>
             </CardContent>
           </Card>
 
           <Card className="bg-green-800 text-white">
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex-1 min-w-0">
-                  <p className="text-green-100 text-xs sm:text-sm font-medium mb-1">
-                    Total Units
-                  </p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold">
-                    {metrics?.total_units || 0}
-                  </p>
+            <CardContent className="p-0">
+              <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
+                <div className="flex-1 flex justify-start items-center gap-2">
+                  <div className="flex justify-center items-center gap-2.5">
+                    <div className="justify-start text-green-100 text-xs sm:text-sm font-medium">
+                      Total Units
+                    </div>
+                  </div>
                 </div>
-                <CheckCircle className="h-5 w-5 sm:h-6 sm:w-6 lg:h-8 lg:w-8 text-green-500 flex-shrink-0 ml-2" />
+                <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden flex-shrink-0">
+                  <CheckCircle className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-yellow-500" />
+                </div>
+              </div>
+              <div className="px-4 sm:px-6 pb-4 sm:pb-6">
+                <div className="justify-start text-white text-xl sm:text-2xl font-extrabold tracking-tight">
+                  {metrics?.total_units || 0}
+                </div>
               </div>
             </CardContent>
           </Card>
