@@ -766,11 +766,16 @@ const InvestmentsPage = () => {
       // If response is successful (201 Created or 200 OK), treat as success
       if (response.ok) {
         console.log("Wallet investment successful - 201 Created");
+        
+        // Try to get transaction_id from response
+        // If not in response body, we'll need to query the database later
+        const transactionId = responseData?.transaction_id || undefined;
+        
         return {
           status: "success",
           code: "000",
           message: "Investment successful",
-          transaction_id: responseData?.transaction_id || "created",
+          transaction_id: transactionId, // undefined if not provided - will be queried from DB
         };
       }
 
@@ -951,7 +956,33 @@ const InvestmentsPage = () => {
       if (isSuccess) {
         // Check if backend already created transaction (to avoid double unit deduction)
         // Backend API creates transaction and deducts units, so we should check first
-        const backendTransactionId = (paymentResult as any).transaction_id;
+        let backendTransactionId = (paymentResult as any).transaction_id;
+        
+        // If wallet investment didn't return transaction_id, try to find it in the database
+        // by looking for the most recent investment transaction for this project
+        if (!backendTransactionId || backendTransactionId === "created") {
+          console.log("No transaction_id from backend, querying database for recent transaction...");
+          try {
+            const { data: recentTransactions, error: queryError } = await supabase
+              .from("transactions")
+              .select("transaction_id")
+              .eq("profile_id", profile?.id)
+              .eq("project_id", projectId)
+              .eq("type", "investment")
+              .eq("amount", totalAmount)
+              .eq("unit", quantity)
+              .order("created_at", { ascending: false })
+              .limit(1);
+            
+            if (!queryError && recentTransactions && recentTransactions.length > 0) {
+              backendTransactionId = recentTransactions[0].transaction_id;
+              console.log("Found transaction in database:", backendTransactionId);
+            }
+          } catch (error) {
+            console.warn("Error querying for transaction:", error);
+          }
+        }
+        
         const updateResult = await checkOrCreateInvestmentTransaction(
           backendTransactionId,
           projectId,
