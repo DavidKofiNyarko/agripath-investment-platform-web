@@ -336,7 +336,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
 
       // Fetch all projects data - only include completed investment transactions
       // Payin transactions are pending payments and shouldn't be counted as investments
-      // This includes both Active and Completed projects where the user has invested
+      // RLS policy now allows users to see both Active and Completed projects where they have invested
       const { data: projectsData, error: projectsError } = await supabase
         .from('transactions')
         .select(`
