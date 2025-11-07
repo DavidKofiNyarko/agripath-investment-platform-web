@@ -210,15 +210,48 @@ const InvestmentsPage = () => {
     });
   };
 
-  // Create investment transaction record
-  // Database triggers will automatically handle project unit updates
-  const createInvestmentTransaction = async (
+  // Check if transaction already exists (backend may have created it)
+  // IMPORTANT: Backend API already creates transaction and deducts units
+  // We should NOT create duplicate transactions to avoid double deduction
+  const checkOrCreateInvestmentTransaction = async (
+    backendTransactionId: string | undefined,
     projectId: string,
     quantity: number,
     totalAmount: number
   ) => {
     try {
-      // Create transaction record - database triggers will handle unit updates
+      // If backend provided a transaction_id, check if it already exists
+      if (backendTransactionId) {
+        const { data: existingTransaction, error: checkError } = await supabase
+          .from("transactions")
+          .select("transaction_id, status")
+          .eq("transaction_id", backendTransactionId)
+          .eq("profile_id", profile?.id)
+          .eq("project_id", projectId)
+          .limit(1);
+
+        if (checkError && checkError.code !== "PGRST116") {
+          console.error("Error checking existing transaction:", checkError);
+        }
+
+        // If transaction already exists, backend already handled everything
+        if (existingTransaction && existingTransaction.length > 0) {
+          console.log(
+            "Transaction already exists (created by backend):",
+            backendTransactionId,
+            "- Skipping duplicate creation to avoid double unit deduction"
+          );
+          return { success: true, transactionId: backendTransactionId, alreadyExists: true };
+        }
+      }
+
+      // Only create transaction if backend didn't create it
+      // NOTE: This should rarely happen - backend typically creates the transaction
+      console.warn(
+        "Backend did not create transaction, creating frontend transaction record",
+        "This may cause double unit deduction if backend also deducts units"
+      );
+
       const transactionId = `TXN${Date.now()}${Math.floor(
         Math.random() * 1000
       )}`;
@@ -260,7 +293,7 @@ const InvestmentsPage = () => {
       console.log(
         "Investment transaction created successfully - database triggers will update project units"
       );
-      return { success: true, transactionId };
+      return { success: true, transactionId, alreadyExists: false };
     } catch (error) {
       console.error("Failed to create investment transaction:", error);
       throw error;
@@ -916,8 +949,11 @@ const InvestmentsPage = () => {
         (paymentResult as any).details?.code === "000";
 
       if (isSuccess) {
-        // Update project units and create transaction record
-        const updateResult = await createInvestmentTransaction(
+        // Check if backend already created transaction (to avoid double unit deduction)
+        // Backend API creates transaction and deducts units, so we should check first
+        const backendTransactionId = (paymentResult as any).transaction_id;
+        const updateResult = await checkOrCreateInvestmentTransaction(
+          backendTransactionId,
           projectId,
           quantity,
           totalAmount
@@ -960,8 +996,10 @@ const InvestmentsPage = () => {
           window.open((paymentResult as any).redirect_url, "_blank");
         }
 
-        // Update project units and create transaction record for 3D Secure
-        const updateResult = await createInvestmentTransaction(
+        // Check if backend already created transaction (to avoid double unit deduction)
+        const backendTransactionId = (paymentResult as any).transaction_id;
+        const updateResult = await checkOrCreateInvestmentTransaction(
+          backendTransactionId,
           projectId,
           quantity,
           totalAmount
@@ -1137,8 +1175,11 @@ const InvestmentsPage = () => {
         // Payment verified successfully
         setCurrentStep("success");
 
-        // Update project units and create transaction record
-        const updateResult = await createInvestmentTransaction(
+        // Check if backend already created transaction (to avoid double unit deduction)
+        // Backend verification API should have already created the transaction
+        const backendTransactionId = result.transaction_id || internalTransactionId;
+        const updateResult = await checkOrCreateInvestmentTransaction(
+          backendTransactionId,
           selectedInvestment?.id || "",
           quantity,
           selectedInvestment?.price ? selectedInvestment.price * quantity : 0
