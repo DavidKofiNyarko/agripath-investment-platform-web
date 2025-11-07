@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useUser } from './UserContext';
-import { calculateProjectProgress as calculateStageProgress, mapOldStageToNew, ProjectType, ProjectStage, getProjectEndDate } from '@/lib/project-stages';
+import { calculateProjectProgress as calculateStageProgress, mapOldStageToNew, ProjectType, ProjectStage, getProjectEndDate, getProjectTimeProgress } from '@/lib/project-stages';
 
 export interface Project {
   id: string;
@@ -402,14 +402,14 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             amount: 0,
             units: 0,
             date: '',
-            progress: project.status === 'Complete' || project.status === 'Completed'
-              ? 100 
-              : calculateStageProgress(project.project_type as ProjectType, project.project_stages ? mapOldStageToNew(project.project_stages) as ProjectStage : undefined),
+            // Progress will be recalculated after invested_amount is accumulated
+            progress: 0,
             roi: `${project.expected_return_rate}% - ${project.max_expected_return_rate}%`,
-            potentialReturn: `GHS ${Math.round(project.expected_return_rate / 100 * 1000)} - ${Math.round(project.expected_return_rate / 100 * 1500)}`,
+            // Potential return will be recalculated after invested_amount is accumulated
+            potentialReturn: `GHS 0.00 - 0.00`,
             duration: `${project.duration_months} Months`,
-            endDate: getProjectEndDate(project.project_type as ProjectType, new Date(project.created_at || Date.now())).toISOString().split('T')[0],
-            timeline: generateProjectTimeline(project.project_stages, project.duration_months, new Date(project.created_at || Date.now()))
+            endDate: getProjectEndDate(project.project_type as ProjectType, new Date(project.start_date || project.created_at || Date.now())).toISOString().split('T')[0],
+            timeline: generateProjectTimeline(project.project_stages, project.duration_months, new Date(project.start_date || project.created_at || Date.now()))
           });
         }
 
@@ -422,6 +422,27 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         existingProject.amount = existingProject.invested_amount;
         existingProject.units = existingProject.units_owned;
         existingProject.date = item.created_at;
+        
+        // Recalculate progress using time-based calculation (to match detail view)
+        const projectType = existingProject.project_type as ProjectType;
+        const currentStage = existingProject.project_stages
+          ? (mapOldStageToNew(existingProject.project_stages) as ProjectStage)
+          : undefined;
+        // Use project start_date, fallback to transaction date if not available
+        const startDate = existingProject.start_date
+          ? new Date(existingProject.start_date)
+          : new Date(item.created_at);
+        
+        if (existingProject.status === 'Complete' || existingProject.status === 'Completed') {
+          existingProject.progress = 100;
+        } else {
+          existingProject.progress = getProjectTimeProgress(projectType, startDate, currentStage);
+        }
+        
+        // Recalculate potential return (principal + ROI) based on actual invested amount
+        const minReturn = existingProject.invested_amount * (1 + existingProject.expected_return_rate / 100);
+        const maxReturn = existingProject.invested_amount * (1 + existingProject.max_expected_return_rate / 100);
+        existingProject.potentialReturn = `GHS ${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)}`;
         
         // Update last investment date
         const investmentDate = new Date(item.created_at);
