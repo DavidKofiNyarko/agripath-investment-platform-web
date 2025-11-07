@@ -1061,13 +1061,68 @@ const InvestmentsPage = () => {
         throw new Error("Could not extract transaction reference");
       }
 
-      console.log("Verifying payment with reference:", reference);
+      // First, find the transaction in our database to get the internal transaction_id
+      // The backend verification API REQUIRES our internal transaction_id format (like "txn225862451")
+      let internalTransactionId = null;
+      
+      // If reference already starts with "txn", it's already the internal ID
+      if (reference.startsWith("txn")) {
+        internalTransactionId = reference;
+      } else {
+        // Otherwise, find the transaction using the Paystack reference
+        try {
+          const supabase = createClient();
+          const { data: { user } } = await supabase.auth.getUser();
+          
+          if (!user) {
+            throw new Error("User not authenticated");
+          }
+
+          // Find transaction by external_id (Paystack reference) first
+          let { data: transactions, error: findError } = await supabase
+            .from("transactions")
+            .select("transaction_id, external_id")
+            .eq("external_id", reference)
+            .eq("profile_id", user.id)
+            .limit(1);
+
+          let transaction = transactions && transactions.length > 0 ? transactions[0] : null;
+
+          // If not found by external_id, try transaction_id
+          if (findError || !transaction) {
+            const { data: transactionsByTxnId, error: findError2 } = await supabase
+              .from("transactions")
+              .select("transaction_id, external_id")
+              .eq("transaction_id", reference)
+              .eq("profile_id", user.id)
+              .limit(1);
+
+            if (findError2 || !transactionsByTxnId || transactionsByTxnId.length === 0) {
+              throw new Error("Transaction not found in database");
+            }
+            transaction = transactionsByTxnId[0];
+          }
+
+          internalTransactionId = transaction.transaction_id;
+          console.log("Found transaction with internal ID:", internalTransactionId);
+        } catch (findError) {
+          console.error("Error finding transaction:", findError);
+          throw new Error("Unable to find transaction. Please contact support.");
+        }
+      }
+
+      if (!internalTransactionId || !internalTransactionId.startsWith("txn")) {
+        throw new Error("Invalid transaction ID format");
+      }
+
+      console.log("Verifying payment with internal transaction_id:", internalTransactionId);
 
       // Call the backend verification API directly
+      // MUST use internal transaction_id - backend does not accept Paystack references
       const apiBaseUrl = getApiBaseDomain();
 
       const response = await fetch(
-        `${apiBaseUrl}/api/payments/verify/${reference}`,
+        `${apiBaseUrl}/api/payments/verify/${internalTransactionId}`,
         {
           method: "GET",
           headers: {

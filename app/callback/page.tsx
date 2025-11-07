@@ -7,10 +7,13 @@ import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { getApiBaseDomain } from "@/lib/apiConfig";
+import { createClient } from "@/app/utils/supabase/client";
+import { useWallet } from "@/contexts/WalletContext";
 
 const PaymentCallbackContent = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { refreshWallet } = useWallet();
   const [status, setStatus] = useState<"loading" | "success" | "error">(
     "loading"
   );
@@ -43,45 +46,113 @@ const PaymentCallbackContent = () => {
         setTransactionId(paystackReference);
 
         // First, find the transaction in our database using the Paystack reference
-        // The backend verification API expects our internal transaction_id format (like "txn225862451")
+        // The backend verification API REQUIRES our internal transaction_id format (like "txn225862451")
         let internalTransactionId = null;
         try {
-          const findResponse = await fetch("/api/payments/update-transaction", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              reference: paystackReference,
-              status: "pending", // Check mode - just find the transaction
-            }),
-          });
+          const supabase = createClient();
 
-          const findResult = await findResponse.json();
-          if (findResponse.ok && findResult.success && findResult.transaction) {
-            internalTransactionId = findResult.transaction.transaction_id;
-            console.log("Found transaction with internal ID:", internalTransactionId);
+          // Get current user
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+          if (!user) {
+            throw new Error("User not authenticated");
+          }
+
+          // Find transaction by external_id (Paystack reference) first
+          const { data: transactions, error: findError } = await supabase
+            .from("transactions")
+            .select("transaction_id, external_id")
+            .eq("external_id", paystackReference)
+            .eq("profile_id", user.id)
+            .limit(1);
+
+          let transaction =
+            transactions && transactions.length > 0 ? transactions[0] : null;
+
+          // If not found by external_id, try transaction_id (in case reference is already internal ID)
+          if (findError || !transaction) {
+            const { data: transactionsByTxnId, error: findError2 } =
+              await supabase
+                .from("transactions")
+                .select("transaction_id, external_id")
+                .eq("transaction_id", paystackReference)
+                .eq("profile_id", user.id)
+                .limit(1);
+
+            if (
+              findError2 ||
+              !transactionsByTxnId ||
+              transactionsByTxnId.length === 0
+            ) {
+              console.error(
+                "Transaction not found in database with reference:",
+                paystackReference
+              );
+              setStatus("error");
+              setMessage(
+                "Transaction not found. Please contact support with reference: " +
+                  paystackReference
+              );
+              return;
+            }
+            transaction = transactionsByTxnId[0];
+          }
+
+          internalTransactionId = transaction.transaction_id;
+          console.log(
+            "Found transaction with internal ID:",
+            internalTransactionId
+          );
+
+          // Update external_id if it doesn't match (for future lookups)
+          if (
+            transaction.external_id !== paystackReference &&
+            !paystackReference.startsWith("txn")
+          ) {
+            await supabase
+              .from("transactions")
+              .update({ external_id: paystackReference })
+              .eq("transaction_id", internalTransactionId);
           }
         } catch (findError) {
           console.error("Error finding transaction:", findError);
+          setStatus("error");
+          setMessage("Unable to find transaction. Please contact support.");
+          return;
         }
 
-        // Always verify payment with backend API
-        // Don't trust URL status parameters alone
+        // Always verify payment with backend API using internal transaction_id
+        // The backend ONLY accepts transaction_id format (txn...), NOT Paystack references
+        if (
+          !internalTransactionId ||
+          !internalTransactionId.startsWith("txn")
+        ) {
+          console.error(
+            "Invalid transaction_id format:",
+            internalTransactionId
+          );
+          setStatus("error");
+          setMessage("Invalid transaction ID format. Please contact support.");
+          return;
+        }
+
         let verificationSuccess = false;
         let verificationError = null;
 
         try {
-          // Use internal transaction_id if found, otherwise fall back to Paystack reference
-          const verificationReference = internalTransactionId || paystackReference;
-          console.log("Verifying payment with reference:", verificationReference);
+          // MUST use internal transaction_id - backend does not accept Paystack references
+          console.log(
+            "Verifying payment with internal transaction_id:",
+            internalTransactionId
+          );
 
           // Call the backend verification API directly (same as dashboard/investments pages)
           // The backend expects our internal transaction_id format (like "txn225862451")
           const apiBaseUrl = getApiBaseDomain();
 
           const response = await fetch(
-            `${apiBaseUrl}/api/payments/verify/${verificationReference}`,
+            `${apiBaseUrl}/api/payments/verify/${internalTransactionId}`,
             {
               method: "GET",
               headers: {
@@ -92,7 +163,9 @@ const PaymentCallbackContent = () => {
 
           if (!response.ok) {
             const errorData = await response.json().catch(() => ({}));
-            verificationError = errorData.message || `Verification failed with status: ${response.status}`;
+            verificationError =
+              errorData.message ||
+              `Verification failed with status: ${response.status}`;
             console.warn("Backend verification failed:", verificationError);
             // Don't throw - we'll try to update transaction from database instead
           } else {
@@ -103,7 +176,8 @@ const PaymentCallbackContent = () => {
             if (result.status === "success" || result.success === true) {
               verificationSuccess = true;
             } else {
-              verificationError = result.message || "Payment verification failed";
+              verificationError =
+                result.message || "Payment verification failed";
             }
           }
         } catch (verifyError) {
@@ -115,93 +189,67 @@ const PaymentCallbackContent = () => {
         // Only update transaction if backend verification succeeded
         // This ensures we only mark transactions as Complete when payment is actually verified
         if (verificationSuccess) {
-          // Try to update transaction status from our database
+          // Update transaction status in database
           try {
-            const updateResponse = await fetch("/api/payments/update-transaction", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                reference: paystackReference, // Use Paystack reference to find transaction
-                status: "success",
-              }),
-            });
+            const supabase = createClient();
+            const {
+              data: { user },
+            } = await supabase.auth.getUser();
 
-            const updateResult = await updateResponse.json();
-            
-            if (updateResponse.ok && updateResult.success) {
-              // Transaction was found and updated
-              setStatus("success");
-              setMessage("Payment completed successfully!");
+            if (user && internalTransactionId) {
+              // Update transaction status to Complete
+              const { error: updateError } = await supabase
+                .from("transactions")
+                .update({
+                  status: "Complete",
+                  processed_at: new Date().toISOString(),
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("transaction_id", internalTransactionId)
+                .eq("profile_id", user.id);
 
-              // Refresh wallet balance
-              try {
-                await fetch("/api/wallet/refresh", { method: "POST" });
-              } catch (refreshError) {
-                console.error("Failed to refresh wallet:", refreshError);
+              if (updateError) {
+                console.error(
+                  "Error updating transaction status:",
+                  updateError
+                );
+              } else {
+                console.log("Transaction status updated to Complete");
               }
-
-              // Redirect to dashboard after 3 seconds
-              setTimeout(() => {
-                router.push("/dashboard");
-              }, 3000);
-            } else {
-              // Backend says success but transaction not in our DB
-              // This might happen if transaction wasn't created yet
-              setStatus("success");
-              setMessage("Payment verified successfully! Your wallet will be updated shortly.");
-              setTimeout(() => {
-                router.push("/dashboard");
-              }, 3000);
             }
+
+            setStatus("success");
+            setMessage("Payment completed successfully!");
+
+            // Refresh wallet balance using WalletContext
+            try {
+              await refreshWallet();
+            } catch (refreshError) {
+              console.error("Failed to refresh wallet:", refreshError);
+            }
+
+            // Redirect to dashboard after 3 seconds
+            setTimeout(() => {
+              router.push("/dashboard");
+            }, 3000);
           } catch (updateError) {
             console.error("Error updating transaction status:", updateError);
             // Backend verification succeeded but update failed
             setStatus("success");
-            setMessage("Payment verified successfully! Your wallet will be updated shortly.");
+            setMessage(
+              "Payment verified successfully! Your wallet will be updated shortly."
+            );
             setTimeout(() => {
               router.push("/dashboard");
             }, 3000);
           }
         } else {
-          // Backend verification failed - check if transaction exists in our database
-          try {
-            const checkResponse = await fetch("/api/payments/update-transaction", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                reference: paystackReference, // Use Paystack reference to find transaction
-                status: "pending", // Don't update status, just check if transaction exists
-              }),
-            });
-
-            const checkResult = await checkResponse.json();
-            
-            if (checkResponse.ok && checkResult.success && checkResult.transaction) {
-              // Transaction exists but payment not yet verified
-              setStatus("loading");
-              setMessage(
-                "Payment is being processed. The transaction was found but payment verification is pending. Please wait a few moments and refresh, or contact support if payment was completed."
-              );
-            } else {
-              // Transaction not found in our database
-              setStatus("error");
-              setMessage(
-                verificationError ||
-                  "Transaction not found. Please contact support if you have completed the payment."
-              );
-            }
-          } catch (checkError) {
-            console.error("Error checking transaction:", checkError);
-            setStatus("error");
-            setMessage(
-              verificationError ||
-                "Unable to process payment. Please contact support if you have completed the payment."
-            );
-          }
+          // Backend verification failed
+          setStatus("error");
+          setMessage(
+            verificationError ||
+              "Payment verification failed. Please contact support if you have completed the payment."
+          );
         }
       } catch (error) {
         console.error("Payment callback error:", error);
@@ -211,7 +259,7 @@ const PaymentCallbackContent = () => {
     };
 
     processCallback();
-  }, [searchParams, router]);
+  }, [searchParams, router, refreshWallet]);
 
   const handleRetry = () => {
     router.push("/dashboard");

@@ -431,17 +431,29 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           // For now, be more conservative and treat most responses as requiring verification
           if (response.redirect_url) {
             // Even if status is "approved", if there's a redirect_url, user needs to complete verification
-            return { success: false, redirect_url: response.redirect_url };
+            return {
+              success: false,
+              redirect_url: response.redirect_url,
+              transaction_id: response.transaction_id || "",
+            };
           }
           // Only refresh wallet balance if no redirect is needed
           await refreshWallet();
           return { success: true };
         } else if (response.status === "pending" && response.redirect_url) {
           // Handle pending payment with redirect (like Paystack checkout)
-          return { success: false, redirect_url: response.redirect_url };
+          return {
+            success: false,
+            redirect_url: response.redirect_url,
+            transaction_id: response.transaction_id || "",
+          };
         } else if (response.redirect_url) {
           // Handle other redirects (3D Secure, etc.)
-          return { success: false, redirect_url: response.redirect_url };
+          return {
+            success: false,
+            redirect_url: response.redirect_url,
+            transaction_id: response.transaction_id || "",
+          };
         } else {
           return { success: false, error: response.reason || "Topup failed" };
         }
