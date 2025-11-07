@@ -30,87 +30,43 @@ const PaymentCallbackContent = () => {
           status,
         });
 
-        if (!trxref || !reference) {
+        // We need a reference to verify the payment
+        // Use reference from URL, or trxref as fallback
+        const paymentReference = reference || trxref;
+
+        if (!paymentReference) {
           throw new Error("Missing transaction reference");
         }
 
-        setTransactionId(reference);
+        setTransactionId(paymentReference);
 
-        // Check URL parameters for success indication
-        const urlStatus = searchParams.get("status");
+        // Always verify payment with backend API
+        // Don't trust URL status parameters alone
+        try {
+          console.log("Verifying payment with reference:", paymentReference);
 
-        if (urlStatus === "success" || urlStatus === "approved") {
-          setStatus("success");
-          setMessage("Payment completed successfully!");
-
-          // Refresh wallet balance
-          try {
-            await fetch("/api/wallet/refresh", { method: "POST" });
-          } catch (refreshError) {
-            console.error("Failed to refresh wallet:", refreshError);
-          }
-
-          // Redirect to dashboard after 3 seconds
-          setTimeout(() => {
-            router.push("/dashboard");
-          }, 3000);
-        } else {
-          // Try to verify with backend API
-          try {
-            const response = await fetch("/api/payments/verify", {
-              method: "POST",
+          // Call the backend verification API directly (same as dashboard/investments pages)
+          const response = await fetch(
+            `https://infra.agripath.co/api/payments/verify/${paymentReference}`,
+            {
+              method: "GET",
               headers: {
                 "Content-Type": "application/json",
               },
-              body: JSON.stringify({
-                reference: reference,
-                trxref: trxref,
-              }),
-            });
-
-            const result = await response.json();
-            console.log("Payment verification result:", result);
-
-            if (response.ok && result.success) {
-              setStatus("success");
-              setMessage("Payment completed successfully!");
-
-              // Refresh wallet balance
-              try {
-                await fetch("/api/wallet/refresh", { method: "POST" });
-              } catch (refreshError) {
-                console.error("Failed to refresh wallet:", refreshError);
-              }
-
-              // Redirect to dashboard after 3 seconds
-              setTimeout(() => {
-                router.push("/dashboard");
-              }, 3000);
-            } else {
-              // If verification fails, assume success for robustness
-              // This handles cases where Paystack API is down or keys are missing
-              console.warn(
-                "Payment verification failed, assuming success:",
-                result.message
-              );
-              setStatus("success");
-              setMessage("Payment completed successfully!");
-
-              // Refresh wallet balance
-              try {
-                await fetch("/api/wallet/refresh", { method: "POST" });
-              } catch (refreshError) {
-                console.error("Failed to refresh wallet:", refreshError);
-              }
-
-              // Redirect to dashboard after 3 seconds
-              setTimeout(() => {
-                router.push("/dashboard");
-              }, 3000);
             }
-          } catch (verifyError) {
-            console.error("Payment verification error:", verifyError);
-            // Fallback: assume success if we have a reference
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              `Verification failed with status: ${response.status}`
+            );
+          }
+
+          const result = await response.json();
+          console.log("Payment verification result:", result);
+
+          // Only mark as success if the backend confirms payment was successful
+          if (result.status === "success" || result.success === true) {
             setStatus("success");
             setMessage("Payment completed successfully!");
 
@@ -121,10 +77,24 @@ const PaymentCallbackContent = () => {
               console.error("Failed to refresh wallet:", refreshError);
             }
 
+            // Redirect to dashboard after 3 seconds
             setTimeout(() => {
               router.push("/dashboard");
             }, 3000);
+          } else {
+            // Payment verification failed or payment not completed
+            setStatus("error");
+            setMessage(
+              result.message ||
+                "Payment verification failed. Please contact support if you have completed the payment."
+            );
           }
+        } catch (verifyError) {
+          console.error("Payment verification error:", verifyError);
+          setStatus("error");
+          setMessage(
+            "Unable to verify payment. Please contact support if you have completed the payment."
+          );
         }
       } catch (error) {
         console.error("Payment callback error:", error);

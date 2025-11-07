@@ -2025,6 +2025,8 @@ const InvestmentsPage = () => {
                           className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
                             selectedPaymentMethod === "agripath"
                               ? "border-green-500 bg-green-50"
+                              : !wallet?.balance || wallet.balance <= 0
+                              ? "border-gray-200 bg-gray-50 opacity-60"
                               : wallet?.balance &&
                                 selectedInvestment &&
                                 wallet.balance <
@@ -2038,10 +2040,12 @@ const InvestmentsPage = () => {
                             id="agripath"
                             disabled={
                               !!(
-                                wallet?.balance &&
-                                selectedInvestment &&
-                                wallet.balance <
-                                  selectedInvestment.price * quantity
+                                !wallet?.balance ||
+                                wallet.balance <= 0 ||
+                                (wallet?.balance &&
+                                  selectedInvestment &&
+                                  wallet.balance <
+                                    selectedInvestment.price * quantity)
                               )
                             }
                           />
@@ -2051,14 +2055,20 @@ const InvestmentsPage = () => {
                             </Label>
                             <p className="text-sm text-gray-500">
                               Pay with your Agripath wallet balance
-                              {wallet?.balance &&
+                              {!wallet?.balance || wallet.balance <= 0 ? (
+                                <span className="block text-xs text-red-500 mt-1">
+                                  Wallet balance is zero
+                                </span>
+                              ) : (
+                                wallet?.balance &&
                                 selectedInvestment &&
                                 wallet.balance <
                                   selectedInvestment.price * quantity && (
                                   <span className="block text-xs text-red-500 mt-1">
                                     Insufficient balance for this investment
                                   </span>
-                                )}
+                                )
+                              )}
                             </p>
                           </div>
                           <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
