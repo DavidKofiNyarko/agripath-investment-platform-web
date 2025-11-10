@@ -309,7 +309,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         .from('transactions')
         .select('amount, unit, type, status')
         .eq('profile_id', user.id)
-        .eq('type', 'investment')
+        .in('type', ['Payin', 'investment']) // Include BOTH Payin and investment types
         .eq('status', 'Complete');
 
       if (metricsError) {
@@ -334,8 +334,8 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         average_investment: averageInvestment
       });
 
-      // Fetch all projects data - only include completed investment transactions
-      // Payin transactions are pending payments and shouldn't be counted as investments
+      // Fetch all projects data - include BOTH Payin and investment transactions
+      // Payin with project_id = investment in a project (same as investment type)
       // RLS policy now allows users to see both Active and Completed projects where they have invested
       const { data: projectsData, error: projectsError } = await supabase
         .from('transactions')
@@ -362,7 +362,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
           )
         `)
         .eq('profile_id', user.id)
-        .eq('type', 'investment')
+        .in('type', ['Payin', 'investment']) // Include BOTH Payin and investment types
         .eq('status', 'Complete') // Transaction status must be Complete (not project status)
         .order('created_at', { ascending: false });
 
