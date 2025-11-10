@@ -92,7 +92,6 @@ const DashboardPage = () => {
   const {
     wallet,
     loading: walletLoading,
-    updateBalance,
     refreshWallet,
     processWalletTopup,
     processWalletWithdrawal,
@@ -302,17 +301,11 @@ const DashboardPage = () => {
           setCurrentStep("error");
         }
       } else {
-        const success = await updateBalance(
-          topUpAmount,
-          "Top up via " + paymentMethod
-        );
-        if (success) {
-          setTimeout(() => {
-            setCurrentStep("success");
-          }, 1000);
-        } else {
-          setCurrentStep("error");
-        }
+        // Wallet balance is updated by backend API when transaction is completed
+        // No need to update balance here - backend handles it
+        setTimeout(() => {
+          setCurrentStep("success");
+        }, 1000);
       }
     } catch (error) {
       setCurrentStep("error");

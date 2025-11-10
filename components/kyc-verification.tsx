@@ -310,6 +310,25 @@ const KycVerification: React.FC<KycVerificationProps> = ({
               </p>
             </div>
 
+            {/* Instructions */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-blue-900 mb-2 text-sm">
+                    How to take a good ID photo:
+                  </h4>
+                  <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside">
+                    <li>Place your ID on a flat, well-lit surface</li>
+                    <li>Ensure all corners are visible and text is readable</li>
+                    <li>Use good lighting - avoid shadows and glare</li>
+                    <li>Take the photo from directly above the ID</li>
+                    <li>Make sure the entire ID fits in the frame</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             <div
               className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-500 transition-colors"
               onDragOver={handleDragOver}
@@ -317,8 +336,19 @@ const KycVerification: React.FC<KycVerificationProps> = ({
             >
               {idFront ? (
                 <div className="space-y-4">
-                  <div className="w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
-                    <Check className="w-8 h-8 text-green-600" />
+                  <div className="w-full max-w-md mx-auto">
+                    <img
+                      src={idFront}
+                      alt="National ID Front"
+                      className="w-full h-auto rounded-lg border-2 border-green-200 shadow-md"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                      }}
+                    />
+                    <div className="hidden w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
+                      <Check className="w-8 h-8 text-green-600" />
+                    </div>
                   </div>
                   <p className="text-green-600 font-medium">
                     National ID Front uploaded successfully!
@@ -384,6 +414,25 @@ const KycVerification: React.FC<KycVerificationProps> = ({
               </p>
             </div>
 
+            {/* Instructions */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-blue-900 mb-2 text-sm">
+                    How to take a good ID photo:
+                  </h4>
+                  <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside">
+                    <li>Place your ID on a flat, well-lit surface</li>
+                    <li>Ensure all corners are visible and text is readable</li>
+                    <li>Use good lighting - avoid shadows and glare</li>
+                    <li>Take the photo from directly above the ID</li>
+                    <li>Make sure the entire ID fits in the frame</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             <div
               className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-green-500 transition-colors"
               onDragOver={handleDragOver}
@@ -391,8 +440,19 @@ const KycVerification: React.FC<KycVerificationProps> = ({
             >
               {idBack ? (
                 <div className="space-y-4">
-                  <div className="w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
-                    <Check className="w-8 h-8 text-green-600" />
+                  <div className="w-full max-w-md mx-auto">
+                    <img
+                      src={idBack}
+                      alt="National ID Back"
+                      className="w-full h-auto rounded-lg border-2 border-green-200 shadow-md"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                      }}
+                    />
+                    <div className="hidden w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
+                      <Check className="w-8 h-8 text-green-600" />
+                    </div>
                   </div>
                   <p className="text-green-600 font-medium">
                     National ID Back uploaded successfully!
@@ -458,6 +518,25 @@ const KycVerification: React.FC<KycVerificationProps> = ({
               </p>
             </div>
 
+            {/* Instructions */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <h4 className="font-semibold text-blue-900 mb-2 text-sm">
+                    How to take a good selfie:
+                  </h4>
+                  <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside">
+                    <li>Use good lighting - face a window or bright light</li>
+                    <li>Look directly at the camera with a neutral expression</li>
+                    <li>Remove glasses, hat, or anything covering your face</li>
+                    <li>Ensure your full face is visible and in focus</li>
+                    <li>Use a plain background if possible</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <button
@@ -489,8 +568,19 @@ const KycVerification: React.FC<KycVerificationProps> = ({
               >
                 {selfie ? (
                   <div className="space-y-4">
-                    <div className="w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
-                      <Check className="w-8 h-8 text-green-600" />
+                    <div className="w-full max-w-md mx-auto">
+                      <img
+                        src={selfie}
+                        alt="Selfie"
+                        className="w-full h-auto max-h-64 mx-auto rounded-lg border-2 border-green-200 shadow-md object-cover"
+                        onError={(e) => {
+                          e.currentTarget.style.display = "none";
+                          e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                        }}
+                      />
+                      <div className="hidden w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
+                        <Check className="w-8 h-8 text-green-600" />
+                      </div>
                     </div>
                     <p className="text-green-600 font-medium">
                       Selfie uploaded successfully!
@@ -568,57 +658,102 @@ const KycVerification: React.FC<KycVerificationProps> = ({
             <div className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="text-center p-4 border rounded-lg">
-                  <div
-                    className={`w-16 h-16 mx-auto rounded-lg flex items-center justify-center mb-2 ${
-                      idFront ? "bg-green-100" : "bg-gray-100"
-                    }`}
-                  >
-                    {idFront ? (
-                      <Check className="w-8 h-8 text-green-600" />
-                    ) : (
-                      <X className="w-8 h-8 text-gray-400" />
-                    )}
-                  </div>
-                  <p className="font-medium">National ID Front</p>
-                  <p className="text-sm text-gray-500">
-                    {idFront ? "Uploaded" : "Not uploaded"}
-                  </p>
+                  {idFront ? (
+                    <div className="space-y-2">
+                      <div className="w-full max-w-xs mx-auto">
+                        <img
+                          src={idFront}
+                          alt="National ID Front"
+                          className="w-full h-auto rounded-lg border-2 border-green-200 shadow-sm mb-2"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                          }}
+                        />
+                        <div className="hidden w-16 h-16 mx-auto rounded-lg bg-green-100 flex items-center justify-center">
+                          <Check className="w-8 h-8 text-green-600" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <p className="text-sm font-medium text-green-600">Uploaded</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 mx-auto rounded-lg bg-gray-100 flex items-center justify-center mb-2">
+                        <X className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="font-medium">National ID Front</p>
+                      <p className="text-sm text-gray-500">Not uploaded</p>
+                    </>
+                  )}
                 </div>
 
                 <div className="text-center p-4 border rounded-lg">
-                  <div
-                    className={`w-16 h-16 mx-auto rounded-lg flex items-center justify-center mb-2 ${
-                      idBack ? "bg-green-100" : "bg-gray-100"
-                    }`}
-                  >
-                    {idBack ? (
-                      <Check className="w-8 h-8 text-green-600" />
-                    ) : (
-                      <X className="w-8 h-8 text-gray-400" />
-                    )}
-                  </div>
-                  <p className="font-medium">National ID Back</p>
-                  <p className="text-sm text-gray-500">
-                    {idBack ? "Uploaded" : "Not uploaded"}
-                  </p>
+                  {idBack ? (
+                    <div className="space-y-2">
+                      <div className="w-full max-w-xs mx-auto">
+                        <img
+                          src={idBack}
+                          alt="National ID Back"
+                          className="w-full h-auto rounded-lg border-2 border-green-200 shadow-sm mb-2"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                          }}
+                        />
+                        <div className="hidden w-16 h-16 mx-auto rounded-lg bg-green-100 flex items-center justify-center">
+                          <Check className="w-8 h-8 text-green-600" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <p className="text-sm font-medium text-green-600">Uploaded</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 mx-auto rounded-lg bg-gray-100 flex items-center justify-center mb-2">
+                        <X className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="font-medium">National ID Back</p>
+                      <p className="text-sm text-gray-500">Not uploaded</p>
+                    </>
+                  )}
                 </div>
 
                 <div className="text-center p-4 border rounded-lg">
-                  <div
-                    className={`w-16 h-16 mx-auto rounded-lg flex items-center justify-center mb-2 ${
-                      selfie ? "bg-green-100" : "bg-gray-100"
-                    }`}
-                  >
-                    {selfie ? (
-                      <Check className="w-8 h-8 text-green-600" />
-                    ) : (
-                      <X className="w-8 h-8 text-gray-400" />
-                    )}
-                  </div>
-                  <p className="font-medium">Selfie Photo</p>
-                  <p className="text-sm text-gray-500">
-                    {selfie ? "Uploaded" : "Not uploaded"}
-                  </p>
+                  {selfie ? (
+                    <div className="space-y-2">
+                      <div className="w-full max-w-xs mx-auto">
+                        <img
+                          src={selfie}
+                          alt="Selfie"
+                          className="w-full h-auto max-h-32 mx-auto rounded-lg border-2 border-green-200 shadow-sm mb-2 object-cover"
+                          onError={(e) => {
+                            e.currentTarget.style.display = "none";
+                            e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                          }}
+                        />
+                        <div className="hidden w-16 h-16 mx-auto rounded-lg bg-green-100 flex items-center justify-center">
+                          <Check className="w-8 h-8 text-green-600" />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-center gap-2">
+                        <Check className="w-4 h-4 text-green-600" />
+                        <p className="text-sm font-medium text-green-600">Uploaded</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="w-16 h-16 mx-auto rounded-lg bg-gray-100 flex items-center justify-center mb-2">
+                        <X className="w-8 h-8 text-gray-400" />
+                      </div>
+                      <p className="font-medium">Selfie Photo</p>
+                      <p className="text-sm text-gray-500">Not uploaded</p>
+                    </>
+                  )}
                 </div>
               </div>
 

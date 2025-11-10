@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/dashboard-layout";
 import UserHeader from "@/components/user-header";
 import { useUser } from "@/contexts/UserContext";
@@ -55,6 +56,7 @@ import { logoutAllDevices } from "@/lib/authService";
 import NotificationPreferencesComponent from "@/components/notification-preferences";
 
 function SettingsPage() {
+  const router = useRouter();
   const { user } = useUser();
   const { profile, updateProfile } = useProfile();
   const [activeTab, setActiveTab] = useState("profile");
@@ -424,7 +426,14 @@ function SettingsPage() {
                         : "Pending"}
                     </div>
                     <Button
-                      onClick={() => setIsKycModalOpen(true)}
+                      onClick={() => {
+                        if (profile?.kyc_status === "verified") {
+                          setIsKycModalOpen(true);
+                        } else {
+                          // Navigate to KYC verification page
+                          router.push("/kyc-verification");
+                        }
+                      }}
                       variant={
                         profile?.kyc_status === "verified"
                           ? "outline"
@@ -538,11 +547,12 @@ function SettingsPage() {
           onClose={() => setIsKycModalOpen(false)}
           onCompleteKyc={() => {
             setIsKycModalOpen(false);
-            // Handle KYC completion
+            // Navigate to KYC verification page
+            router.push("/kyc-verification");
           }}
           onEditKyc={() => {
             setIsKycModalOpen(false);
-            window.location.href = "/kyc-verification?edit=true";
+            router.push("/kyc-verification?edit=true");
           }}
         />
 

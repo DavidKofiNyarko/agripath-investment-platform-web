@@ -297,8 +297,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         );
 
         if (response.status === "success") {
-          // Update wallet balance
-          await updateBalance(cardData.amount, "Card payment top-up");
+          // Wallet balance is updated by backend API when transaction is completed
+          // No need to update balance here - backend handles it
           return { success: true };
         } else if (response.status === "vbv_required") {
           // 3D Secure required
@@ -623,8 +623,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         );
 
         if (response.status === "success") {
-          // Update wallet balance
-          await updateBalance(momoData.amount, "Mobile money top-up");
+          // Wallet balance is updated by backend API when transaction is completed
+          // No need to update balance here - backend handles it
           return { success: true };
         } else {
           return { success: false, error: response.reason || "Payment failed" };
@@ -686,11 +686,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         const response = await paymentService.processPayout(payoutRequest);
 
         if (response.status === "success") {
-          // Deduct from wallet balance
-          await updateBalance(
-            -payoutData.amount,
-            "Payout via " + payoutData.channel
-          );
+          // Wallet balance is updated by backend API when transaction is completed
+          // No need to update balance here - backend handles it
           return { success: true };
         } else {
           return { success: false, error: response.reason || "Payout failed" };
