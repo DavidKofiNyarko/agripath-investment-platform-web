@@ -260,8 +260,13 @@ const WalletTopup: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Amount */}
           <div className="space-y-2">
-            <Label htmlFor="amount">Amount (GHS)</Label>
-            <div className="relative group">
+            <Label
+              htmlFor="amount"
+              className="text-sm font-medium text-gray-700"
+            >
+              Amount (GHS)
+            </Label>
+            <div className="relative">
               <Input
                 id="amount"
                 type="number"
@@ -271,9 +276,8 @@ const WalletTopup: React.FC = () => {
                 onChange={(e) => handleInputChange("amount", e.target.value)}
                 placeholder="Enter amount to add"
                 required
-                className="border-0 border-b-2 border-gray-300 rounded-none px-0 pb-2 focus:border-b-2 focus:border-transparent focus:ring-0 focus:outline-none transition-all duration-300 ease-in-out bg-transparent shadow-none"
+                className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
               />
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-blue-600 transform scale-x-0 origin-left transition-transform duration-300 ease-in-out group-focus-within:scale-x-100" />
             </div>
           </div>
 
@@ -300,13 +304,19 @@ const WalletTopup: React.FC = () => {
           {formData.channel === "card" && (
             <>
               <div className="space-y-2">
-                <Label htmlFor="pan">Card Number</Label>
+                <Label
+                  htmlFor="pan"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Card Number
+                </Label>
                 <Input
                   id="pan"
                   value={formData.pan}
                   onChange={(e) => handleInputChange("pan", e.target.value)}
                   placeholder="5314455096498197"
                   required
+                  className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -358,7 +368,12 @@ const WalletTopup: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="cvv">CVV</Label>
+                <Label
+                  htmlFor="cvv"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  CVV
+                </Label>
                 <Input
                   id="cvv"
                   type="password"
@@ -367,10 +382,16 @@ const WalletTopup: React.FC = () => {
                   placeholder="553"
                   maxLength={4}
                   required
+                  className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="card_holder">Card Holder Name</Label>
+                <Label
+                  htmlFor="card_holder"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Card Holder Name
+                </Label>
                 <Input
                   id="card_holder"
                   value={formData.card_holder}
@@ -379,10 +400,16 @@ const WalletTopup: React.FC = () => {
                   }
                   placeholder="David"
                   required
+                  className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="user_email">Email</Label>
+                <Label
+                  htmlFor="user_email"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Email
+                </Label>
                 <Input
                   id="user_email"
                   type="email"
@@ -392,6 +419,7 @@ const WalletTopup: React.FC = () => {
                   }
                   placeholder="david@test.com"
                   required
+                  className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
                 />
               </div>
             </>
@@ -407,8 +435,8 @@ const WalletTopup: React.FC = () => {
                 >
                   Mobile Number
                 </Label>
-                <div className="flex rounded-lg border border-gray-300 overflow-hidden focus-within:ring-2 focus-within:ring-green-500 focus-within:border-green-500">
-                  <div className="flex items-center px-3 py-3 bg-gray-50 border-r border-gray-300">
+                <div className="flex rounded-xl bg-gray-50 border-0 overflow-hidden shadow-sm transition-all duration-200 focus-within:bg-white hover:bg-gray-100">
+                  <div className="flex items-center px-3 py-3 bg-transparent border-r border-gray-200">
                     <span className="text-lg mr-2">🇬🇭</span>
                     <span className="text-sm font-medium text-gray-700">
                       +233
@@ -422,7 +450,7 @@ const WalletTopup: React.FC = () => {
                     }
                     placeholder="024 567 8905"
                     required
-                    className="flex-1 border-0 rounded-none focus:ring-0 focus:border-0 py-3 px-3 text-gray-900 placeholder-gray-500"
+                    className="!flex-1 !border-0 !rounded-none !bg-transparent focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !py-3 !px-3 !text-gray-900 placeholder:!text-gray-400"
                   />
                 </div>
               </div>
@@ -491,12 +519,18 @@ const WalletTopup: React.FC = () => {
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Description (Optional)</Label>
+            <Label
+              htmlFor="description"
+              className="text-sm font-medium text-gray-700"
+            >
+              Description (Optional)
+            </Label>
             <Input
               id="description"
               value={formData.description}
               onChange={(e) => handleInputChange("description", e.target.value)}
               placeholder="Add a description for this topup"
+              className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
             />
           </div>
 
