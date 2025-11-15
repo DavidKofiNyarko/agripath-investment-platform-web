@@ -12,10 +12,18 @@ import { NotificationProvider } from "@/contexts/NotificationContext";
 export const metadata: Metadata = {
   title: {
     default: "AgriPath - Smart Agricultural Investment Platform",
-    template: "%s | AgriPath"
+    template: "%s | AgriPath",
   },
-  description: "Invest in sustainable agriculture with AgriPath. Access verified farming projects, track your investments, and earn returns while supporting Ghana's agricultural growth.",
-  keywords: ["agriculture investment", "farming projects", "sustainable agriculture", "Ghana farming", "agricultural returns", "farm investment platform"],
+  description:
+    "Invest in sustainable agriculture with AgriPath. Access verified farming projects, track your investments, and earn returns while supporting Ghana's agricultural growth.",
+  keywords: [
+    "agriculture investment",
+    "farming projects",
+    "sustainable agriculture",
+    "Ghana farming",
+    "agricultural returns",
+    "farm investment platform",
+  ],
   authors: [{ name: "AgriPath Team" }],
   creator: "AgriPath",
   publisher: "AgriPath",
@@ -36,7 +44,8 @@ export const metadata: Metadata = {
     url: "https://agripath.co",
     siteName: "AgriPath",
     title: "AgriPath - Smart Agricultural Investment Platform",
-    description: "Invest in sustainable agriculture with AgriPath. Access verified farming projects, track your investments, and earn returns while supporting Ghana's agricultural growth.",
+    description:
+      "Invest in sustainable agriculture with AgriPath. Access verified farming projects, track your investments, and earn returns while supporting Ghana's agricultural growth.",
     images: [
       {
         url: "/logo.png",
@@ -49,7 +58,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "AgriPath - Smart Agricultural Investment Platform",
-    description: "Invest in sustainable agriculture with AgriPath. Access verified farming projects and earn returns.",
+    description:
+      "Invest in sustainable agriculture with AgriPath. Access verified farming projects and earn returns.",
     images: ["/logo.png"],
   },
   viewport: {
@@ -67,21 +77,21 @@ export default function RootLayout({
   const structuredData = {
     "@context": "https://schema.org",
     "@type": "Organization",
-    "name": "AgriPath",
-    "description": "Smart Agricultural Investment Platform",
-    "url": "https://agripath.co",
-    "logo": "https://agripath.co/logo.png",
-    "sameAs": [
+    name: "AgriPath",
+    description: "Smart Agricultural Investment Platform",
+    url: "https://agripath.co",
+    logo: "https://agripath.co/logo.png",
+    sameAs: [
       "https://twitter.com/agripath",
-      "https://linkedin.com/company/agripath"
+      "https://linkedin.com/company/agripath",
     ],
-    "contactPoint": {
+    contactPoint: {
       "@type": "ContactPoint",
-      "telephone": "+233-XXX-XXXX",
-      "contactType": "customer service",
-      "areaServed": "GH",
-      "availableLanguage": "English"
-    }
+      telephone: "+233-XXX-XXXX",
+      contactType: "customer service",
+      areaServed: "GH",
+      availableLanguage: "English",
+    },
   };
 
   return (
@@ -92,7 +102,10 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </head>
-      <body className="antialiased" style={{ fontFamily: 'var(--font-sans)' }}>
+      <body
+        className="antialiased bg-[#f3f3f3f3]"
+        style={{ fontFamily: "var(--font-sans)" }}
+      >
         <UserProvider>
           <ProfileProvider>
             <NotificationProvider>
@@ -100,9 +113,7 @@ export default function RootLayout({
                 <PortfolioProvider>
                   <TransactionsProvider>
                     <ProjectsProvider>
-                      <UpdatesProvider>
-                        {children}
-                      </UpdatesProvider>
+                      <UpdatesProvider>{children}</UpdatesProvider>
                     </ProjectsProvider>
                   </TransactionsProvider>
                 </PortfolioProvider>
