@@ -711,9 +711,7 @@ const UpdatesPage = () => {
                   variant="ghost"
                   size="icon"
                   onClick={() => setIsModalOpen(false)}
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+                ></Button>
               </div>
             </DialogHeader>
             <div className="p-6">
