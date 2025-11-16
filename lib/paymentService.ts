@@ -56,7 +56,16 @@ export interface PaymentResponse {
     authorization_url?: string;
     access_code?: string;
     reference?: string;
+    // Withdrawal-specific fields
+    status?: string;
+    transfer_code?: string;
+    amount?: number;
+    currency?: string;
+    reason?: string;
+    [key: string]: unknown; // Allow additional fields
   };
+  // Withdrawal-specific fields (can also be at top level)
+  transfer_code?: string;
   methodName?: string;
   payerEmail?: string;
   payerName?: string;
