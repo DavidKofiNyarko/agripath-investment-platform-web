@@ -5,7 +5,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 // import { Badge } from '@/components/ui/badge'; // Unused import
-import { motion, AnimatePresence } from "framer-motion";
 import {
   Bell,
   Search,
@@ -219,47 +218,31 @@ const SupportPage = () => {
 
                   {/* FAQ Items */}
                   <div className="space-y-4">
-                    <AnimatePresence>
-                      {filteredFAQs.map((item, index) => (
-                        <motion.div
-                          key={item.id}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="border border-gray-200 rounded-lg"
+                    {filteredFAQs.map((item) => (
+                      <div
+                        key={item.id}
+                        className="border border-gray-200 rounded-lg"
+                      >
+                        <button
+                          onClick={() => toggleExpanded(item.id)}
+                          className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
                         >
-                          <button
-                            onClick={() => toggleExpanded(item.id)}
-                            className="w-full p-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
-                          >
-                            <span className="font-medium text-gray-900">
-                              {item.question}
-                            </span>
-                            {expandedItems.includes(item.id) ? (
-                              <ChevronUp className="h-5 w-5 text-gray-500" />
-                            ) : (
-                              <ChevronDown className="h-5 w-5 text-gray-500" />
-                            )}
-                          </button>
-                          <AnimatePresence>
-                            {expandedItems.includes(item.id) && (
-                              <motion.div
-                                initial={{ height: 0, opacity: 0 }}
-                                animate={{ height: "auto", opacity: 1 }}
-                                exit={{ height: 0, opacity: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="overflow-hidden"
-                              >
-                                <div className="px-4 pb-4 text-gray-600 leading-relaxed">
-                                  {item.answer}
-                                </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
+                          <span className="font-medium text-gray-900">
+                            {item.question}
+                          </span>
+                          {expandedItems.includes(item.id) ? (
+                            <ChevronUp className="h-5 w-5 text-gray-500" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-gray-500" />
+                          )}
+                        </button>
+                        {expandedItems.includes(item.id) && (
+                          <div className="px-4 pb-4 text-gray-600 leading-relaxed">
+                            {item.answer}
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>

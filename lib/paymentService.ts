@@ -455,6 +455,39 @@ class PaymentService {
       throw error;
     }
   }
+
+  /**
+   * Submit OTP for withdrawal verification
+   */
+  async submitWithdrawalOTP(otpData: {
+    transactionId: string;
+    transferCode: string;
+    otp: string;
+  }): Promise<PaymentResponse> {
+    try {
+      console.log("OTP submission request:", JSON.stringify(otpData, null, 2));
+
+      const response = await fetch(`${this.baseUrl}/finalize-transfer`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(otpData),
+      });
+
+      const responseData = await response.json();
+      console.log("OTP submission response:", responseData);
+
+      if (!response.ok) {
+        throw new Error(responseData.message || "OTP verification failed");
+      }
+
+      return responseData;
+    } catch (error) {
+      console.error("OTP submission error:", error);
+      throw error;
+    }
+  }
   async processInvestmentCardPayment(investmentData: {
     profile_id: string;
     project_id: string;

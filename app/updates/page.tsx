@@ -13,15 +13,16 @@ import {
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import Image from "next/image";
 import {
-  Bell,
   ChevronRight,
   X,
   Play,
   Calendar,
   FolderOpen,
   Search,
+  ArrowLeft,
 } from "lucide-react";
 import DashboardLayout from "@/components/dashboard-layout";
+import UserHeader from "@/components/user-header";
 import { useUpdates } from "@/contexts/UpdatesContext";
 import { useNotifications } from "@/contexts/NotificationContext";
 import Loading from "@/components/ui/loading";
@@ -64,6 +65,7 @@ const UpdatesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [showDetailView, setShowDetailView] = useState(false);
 
   // Handle search with optimization
   const handleSearch = (value: string) => {
@@ -105,15 +107,13 @@ const UpdatesPage = () => {
   if (error) {
     return (
       <DashboardLayout>
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex items-center justify-center min-h-screen p-4">
           <div className="text-center">
-            <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Bell className="h-8 w-8 text-red-600" />
-            </div>
+            <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"></div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
               Error Loading Updates
             </h3>
-            <p className="text-gray-600 mb-4">{error}</p>
+            <p className="text-gray-600 mb-4 text-sm">{error}</p>
             <Button
               onClick={refreshUpdates}
               className="bg-green-600 hover:bg-green-700"
@@ -174,6 +174,7 @@ const UpdatesPage = () => {
 
   const handleUpdateClick = (update: Update) => {
     setSelectedUpdate(update);
+    setShowDetailView(true);
   };
 
   const handleMediaClick = (media: MediaItem) => {
@@ -184,6 +185,7 @@ const UpdatesPage = () => {
   const handleNotificationClick = async (notification: any) => {
     setSelectedNotification(notification);
     setIsNotificationModalOpen(true);
+    setShowDetailView(true);
 
     // Mark as read if it's unread
     if (notification.status === "unread") {
@@ -202,6 +204,13 @@ const UpdatesPage = () => {
     setCurrentPage(1); // Reset to first page when switching tabs
     setSelectedUpdate(null);
     setSelectedNotification(null);
+    setShowDetailView(false);
+  };
+
+  const handleBackToList = () => {
+    setShowDetailView(false);
+    setSelectedUpdate(null);
+    setSelectedNotification(null);
   };
 
   const getCategoryColor = (category: string) => {
@@ -218,106 +227,118 @@ const UpdatesPage = () => {
     <DashboardLayout>
       <div className="min-h-screen bg-gray-50">
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 sm:px-6 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3 sm:gap-0">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">
-                Latest Updates
-              </h1>
-            </div>
-            <div className="flex items-center space-x-2 sm:space-x-4">
-              <div className="text-xs sm:text-sm text-gray-600">
-                <span className="hidden sm:inline">
+        <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
+          <div className="flex flex-col gap-3">
+            {/* Top row with title and bell */}
+            <div className="flex items-center justify-between">
+              {showDetailView ? (
+                <div className="flex items-center gap-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleBackToList}
+                    className="p-1 lg:hidden"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </Button>
+                  <h1 className="text-lg font-bold text-gray-900 truncate">
+                    {selectedNotification ? "Notification" : "Update Details"}
+                  </h1>
+                </div>
+              ) : (
+                <h1 className="text-xl font-bold text-gray-900">
+                  Latest Updates
+                </h1>
+              )}
+              <div className="flex items-center gap-2">
+                <div className="text-xs text-gray-600 hidden sm:block">
                   Thursday, 18 September 2025 • 05:53 PM GMT
-                </span>
-                <span className="sm:hidden">Sep 18, 2025</span>
+                </div>
               </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 sm:h-10 sm:w-10"
-              >
-                <Bell className="h-4 w-4 sm:h-5 sm:w-5" />
-              </Button>
             </div>
-          </div>
 
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <input
-              type="text"
-              placeholder="Search updates... (min 4 chars)"
-              value={searchQuery}
-              onChange={(e) => handleSearch(e.target.value)}
-              onKeyPress={handleSearchKeyPress}
-              className={`w-full pl-10 pr-20 sm:pr-24 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
-                searchQuery.length > 0 && searchQuery.length < 4
-                  ? "border-orange-300 bg-orange-50"
-                  : "border-gray-300"
-              }`}
-            />
-            <div className="absolute right-1 sm:right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
-              {searchQuery.length > 0 && (
+            {/* Search Bar - only show on list view */}
+            {!showDetailView && (
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                <input
+                  type="text"
+                  placeholder="Search updates..."
+                  value={searchQuery}
+                  onChange={(e) => handleSearch(e.target.value)}
+                  onKeyPress={handleSearchKeyPress}
+                  className={`w-full pl-10 pr-20 py-2.5 text-sm border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 ${
+                    searchQuery.length > 0 && searchQuery.length < 4
+                      ? "border-orange-300 bg-orange-50"
+                      : "border-gray-300"
+                  }`}
+                />
+                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex gap-1">
+                  {searchQuery.length > 0 && (
+                    <Button
+                      onClick={handleClearSearch}
+                      className="h-6 w-6 p-0"
+                      variant="ghost"
+                      size="sm"
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  )}
+                  <Button
+                    onClick={handleSearchSubmit}
+                    disabled={searchQuery.length < 4 && searchQuery.length > 0}
+                    className="h-6 px-2 text-xs"
+                    variant="ghost"
+                    size="sm"
+                  >
+                    Go
+                  </Button>
+                </div>
+                {searchQuery.length > 0 && searchQuery.length < 4 && (
+                  <p className="absolute -bottom-5 left-0 text-xs text-orange-600">
+                    Type {4 - searchQuery.length} more character
+                    {4 - searchQuery.length === 1 ? "" : "s"} to search
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Active Search Indicator */}
+            {filters.search && !showDetailView && (
+              <div className="flex items-center gap-2">
+                <Badge
+                  variant="secondary"
+                  className="bg-green-100 text-green-800"
+                >
+                  Search: &quot;{filters.search}&quot;
+                </Badge>
                 <Button
                   onClick={handleClearSearch}
-                  className="h-6 w-6 p-0"
                   variant="ghost"
                   size="sm"
+                  className="h-5 w-5 p-0"
                 >
                   <X className="h-3 w-3" />
                 </Button>
-              )}
-              <Button
-                onClick={handleSearchSubmit}
-                disabled={searchQuery.length < 4 && searchQuery.length > 0}
-                className="h-6 px-1 sm:px-2 text-xs"
-                variant="ghost"
-                size="sm"
-              >
-                <span className="hidden sm:inline">Search</span>
-                <span className="sm:hidden">Go</span>
-              </Button>
-            </div>
-            {searchQuery.length > 0 && searchQuery.length < 4 && (
-              <p className="absolute -bottom-6 left-0 text-xs text-orange-600">
-                Type {4 - searchQuery.length} more character
-                {4 - searchQuery.length === 1 ? "" : "s"} to search
-              </p>
+              </div>
             )}
           </div>
-
-          {/* Active Search Indicator */}
-          {filters.search && (
-            <div className="mt-3 flex items-center gap-2">
-              <Badge
-                variant="secondary"
-                className="bg-green-100 text-green-800"
-              >
-                Search: &quot;{filters.search}&quot;
-              </Badge>
-              <Button
-                onClick={handleClearSearch}
-                variant="ghost"
-                size="sm"
-                className="h-5 w-5 p-0"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          )}
         </div>
 
-        <div className="flex flex-col lg:flex-row h-[calc(100vh-80px)]">
+        <div className="flex h-[calc(100vh-120px)]">
           {/* Left Panel - Updates List */}
-          <div className="w-full lg:w-1/3 border-r border-gray-200 bg-white overflow-y-auto">
+          <div
+            className={`w-full lg:w-1/3 border-r border-gray-200 bg-white overflow-y-auto ${
+              showDetailView ? "hidden lg:block" : "block"
+            }`}
+          >
             {/* Tab Navigation */}
-            <div className="p-3 sm:p-4 border-b border-gray-200">
-              <div className="flex space-x-1 overflow-x-auto">
+            <div className="p-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+              <div className="flex space-x-1">
                 <Button
                   variant={activeTab === "notifications" ? "default" : "ghost"}
                   onClick={() => handleTabChange("notifications")}
-                  className={`px-3 sm:px-4 py-2 text-sm whitespace-nowrap flex-shrink-0 ${
+                  className={`flex-1 py-2.5 text-sm ${
                     activeTab === "notifications"
                       ? "bg-green-600 text-white"
                       : "text-gray-600 hover:text-gray-900"
@@ -328,7 +349,7 @@ const UpdatesPage = () => {
                 <Button
                   variant={activeTab === "new" ? "default" : "ghost"}
                   onClick={() => handleTabChange("new")}
-                  className={`px-3 sm:px-4 py-2 text-sm whitespace-nowrap flex-shrink-0 ${
+                  className={`flex-1 py-2.5 text-sm ${
                     activeTab === "new"
                       ? "bg-green-600 text-white"
                       : "text-gray-600 hover:text-gray-900"
@@ -340,7 +361,7 @@ const UpdatesPage = () => {
             </div>
 
             {/* Content List */}
-            <div className="p-3 sm:p-4 space-y-2 sm:space-y-3">
+            <div className="p-4 space-y-3 pb-20">
               {activeTab === "notifications" ? (
                 notificationsLoading ? (
                   <div className="text-center py-8">
@@ -348,7 +369,6 @@ const UpdatesPage = () => {
                   </div>
                 ) : notifications.length === 0 ? (
                   <div className="text-center py-8">
-                    <Bell className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <p className="text-gray-600">No notifications yet</p>
                   </div>
                 ) : (
@@ -641,9 +661,6 @@ const UpdatesPage = () => {
             ) : (
               <div className="flex items-center justify-center h-full">
                 <div className="text-center">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Bell className="h-8 w-8 text-gray-400" />
-                  </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
                     {activeTab === "notifications"
                       ? "Select a Notification"

@@ -96,6 +96,7 @@ const DashboardPage = () => {
     refreshWallet,
     processWalletTopup,
     processWalletWithdrawal,
+    submitWithdrawalOTP,
   } = useWallet();
   const { metrics, loading: portfolioLoading } = usePortfolio();
   const { projects, loading: projectsLoading } = useProjects();
@@ -137,6 +138,9 @@ const DashboardPage = () => {
     phoneNumber: "",
   });
   const [withdrawResult, setWithdrawResult] = useState<any>(null);
+  const [otpValue, setOtpValue] = useState("");
+  const [isSubmittingOtp, setIsSubmittingOtp] = useState(false);
+  const [otpError, setOtpError] = useState("");
 
   // Amount validation functions
   const formatAmount = (value: string) => {
@@ -1821,6 +1825,108 @@ const DashboardPage = () => {
                               Your withdrawal will be processed once OTP is
                               verified
                             </p>
+                          </div>
+
+                          {/* OTP Input Section */}
+                          <div className="mt-4 space-y-3">
+                            <div>
+                              <Label
+                                htmlFor="otp"
+                                className="text-sm font-medium text-gray-700"
+                              >
+                                Enter OTP Code
+                              </Label>
+                              <Input
+                                id="otp"
+                                type="text"
+                                inputMode="numeric"
+                                maxLength={6}
+                                value={otpValue}
+                                onChange={(e) => {
+                                  const value = e.target.value.replace(
+                                    /\D/g,
+                                    ""
+                                  );
+                                  setOtpValue(value);
+                                  setOtpError("");
+                                }}
+                                placeholder="000000"
+                                className="mt-1 text-center text-2xl font-mono tracking-widest"
+                                disabled={isSubmittingOtp}
+                              />
+                              {otpError && (
+                                <p className="mt-1 text-sm text-red-600">
+                                  {otpError}
+                                </p>
+                              )}
+                            </div>
+                            <Button
+                              onClick={async () => {
+                                if (!otpValue || otpValue.length !== 6) {
+                                  setOtpError(
+                                    "Please enter a valid 6-digit OTP"
+                                  );
+                                  return;
+                                }
+
+                                if (
+                                  !withdrawResult?.transactionId ||
+                                  !withdrawResult?.transferCode
+                                ) {
+                                  setOtpError(
+                                    "Missing transaction details. Please try again."
+                                  );
+                                  return;
+                                }
+
+                                setIsSubmittingOtp(true);
+                                setOtpError("");
+
+                                try {
+                                  const result = await submitWithdrawalOTP({
+                                    transactionId: withdrawResult.transactionId,
+                                    transferCode: withdrawResult.transferCode,
+                                    otp: otpValue,
+                                  });
+
+                                  if (result.success) {
+                                    // Update withdrawResult to show success
+                                    setWithdrawResult({
+                                      ...withdrawResult,
+                                      pending: false,
+                                    });
+                                    setOtpValue("");
+                                  } else {
+                                    setOtpError(
+                                      result.error ||
+                                        "OTP verification failed. Please try again."
+                                    );
+                                  }
+                                } catch (error) {
+                                  setOtpError(
+                                    "An error occurred. Please try again."
+                                  );
+                                  console.error("OTP submission error:", error);
+                                } finally {
+                                  setIsSubmittingOtp(false);
+                                }
+                              }}
+                              disabled={
+                                isSubmittingOtp ||
+                                !otpValue ||
+                                otpValue.length !== 6
+                              }
+                              className="w-full bg-green-600 hover:bg-green-700 text-white"
+                            >
+                              {isSubmittingOtp ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Verifying...
+                                </>
+                              ) : (
+                                "Verify OTP"
+                              )}
+                            </Button>
                           </div>
                         </>
                       ) : (

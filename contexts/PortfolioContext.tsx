@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { createClient } from '@/app/utils/supabase/client';
 import { useUser } from './UserContext';
+import { useProfile } from './ProfileContext';
 import { calculateProjectProgress as calculateStageProgress, mapOldStageToNew, ProjectType, ProjectStage, getProjectEndDate, getProjectTimeProgress } from '@/lib/project-stages';
 
 export interface Project {
@@ -271,6 +272,7 @@ const isValidMetricsData = (data: unknown): data is SupabaseMetricsData => {
 
 export const PortfolioProvider = ({ children }: { children: React.ReactNode }) => {
   const { user } = useUser();
+  const { profile } = useProfile();
   const [projects, setProjects] = useState<Project[]>([]);
   const [metrics, setMetrics] = useState<PortfolioMetrics | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -299,16 +301,21 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
       return;
     }
 
+    // Get profile ID - use profile.id if available, otherwise fall back to user.id
+    // (RLS policy will handle filtering correctly in either case)
+    const profileId = profile?.id || user.id;
+
     setLoading(true);
     setError(null);
 
     try {
       // Fetch portfolio metrics - only include completed investment transactions
       // Payin transactions are pending payments and shouldn't be counted as investments
+      // Note: RLS policy will ensure users only see their own transactions
       const { data: metricsData, error: metricsError } = await supabase
         .from('transactions')
         .select('amount, unit, type, status')
-        .eq('profile_id', user.id)
+        .eq('profile_id', profileId)
         .in('type', ['Payin', 'investment']) // Include BOTH Payin and investment types
         .eq('status', 'Complete');
 
@@ -337,6 +344,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
       // Fetch all projects data - include BOTH Payin and investment transactions
       // Payin with project_id = investment in a project (same as investment type)
       // RLS policy now allows users to see both Active and Completed projects where they have invested
+      // Note: RLS policy will ensure users only see their own transactions
       const { data: projectsData, error: projectsError } = await supabase
         .from('transactions')
         .select(`
@@ -361,7 +369,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             end_date
           )
         `)
-        .eq('profile_id', user.id)
+        .eq('profile_id', profileId)
         .in('type', ['Payin', 'investment']) // Include BOTH Payin and investment types
         .eq('status', 'Complete') // Transaction status must be Complete (not project status)
         .order('created_at', { ascending: false });
@@ -462,6 +470,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
       } : null);
 
       // Fetch recent transactions
+      // Note: RLS policy will ensure users only see their own transactions
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select(`
@@ -479,7 +488,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
           channel,
           projects!inner(project_name)
         `)
-        .eq('profile_id', user.id)
+        .eq('profile_id', profileId)
         .order('created_at', { ascending: false })
         .limit(10);
 
@@ -535,7 +544,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
     } finally {
       setLoading(false);
     }
-  }, [user, supabase]);
+  }, [user, profile, supabase]);
 
   useEffect(() => {
     if (user) {

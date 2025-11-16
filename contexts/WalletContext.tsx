@@ -65,7 +65,25 @@ interface WalletContextType {
     recipient_number?: string;
     network?: string;
     description?: string;
-  }) => Promise<{ success: boolean; error?: string; details?: string }>;
+  }) => Promise<{
+    success: boolean;
+    pending?: boolean;
+    transactionId?: string;
+    transferCode?: string;
+    error?: string;
+    details?: string;
+    message?: string;
+  }>;
+
+  submitWithdrawalOTP: (otpData: {
+    transactionId: string;
+    transferCode: string;
+    otp: string;
+  }) => Promise<{
+    success: boolean;
+    error?: string;
+    message?: string;
+  }>;
 
   // Legacy Payment API Integration Methods (kept for backward compatibility)
   processCardPayment: (cardData: {
@@ -542,16 +560,21 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         if (response.status === "approved") {
           // Refresh wallet balance after successful withdrawal
           await refreshWallet();
-          return { 
+          return {
             success: true,
-            transactionId: response.transaction_id || response.reference
+            transactionId: response.transaction_id || response.reference,
           };
-        } else if (response.status === "Pending") {
+        } else if (
+          response.status === "Pending" ||
+          response.details?.status === "otp"
+        ) {
           // Withdrawal submitted successfully, awaiting OTP verification
           return {
             success: true,
             pending: true,
             transactionId: response.transaction_id || response.reference,
+            transferCode:
+              response.details?.transfer_code || response.transfer_code,
             message:
               "Withdrawal submitted successfully. Please check your phone for OTP verification.",
           };
@@ -583,6 +606,45 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       }
     },
     [user, supabase, refreshWallet]
+  );
+
+  const submitWithdrawalOTP = useCallback(
+    async (otpData: {
+      transactionId: string;
+      transferCode: string;
+      otp: string;
+    }) => {
+      if (!user) {
+        return { success: false, error: "User not found" };
+      }
+
+      try {
+        const response = await paymentService.submitWithdrawalOTP(otpData);
+
+        if (response.status === "approved" || response.status === "success") {
+          // Refresh wallet balance after successful OTP verification
+          await refreshWallet();
+          return {
+            success: true,
+            message: "OTP verified successfully. Withdrawal processed.",
+          };
+        } else {
+          return {
+            success: false,
+            error:
+              response.reason || response.message || "OTP verification failed",
+          };
+        }
+      } catch (error) {
+        console.error("OTP submission error:", error);
+        return {
+          success: false,
+          error:
+            error instanceof Error ? error.message : "OTP verification failed",
+        };
+      }
+    },
+    [user, refreshWallet]
   );
 
   // Legacy Payment API Integration Methods
@@ -728,11 +790,14 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           (payload) => {
             console.log("Wallet updated:", payload);
             const updatedWallet = payload.new as Wallet;
-            
+
             // Update wallet state immediately
             setWallet(updatedWallet);
-            
-            console.log("✅ Wallet balance updated in real-time:", updatedWallet.balance);
+
+            console.log(
+              "✅ Wallet balance updated in real-time:",
+              updatedWallet.balance
+            );
           }
         )
         .subscribe((status) => {
@@ -763,6 +828,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
     createWallet,
     processWalletTopup,
     processWalletWithdrawal,
+    submitWithdrawalOTP,
     processCardPayment,
     processMobileMoneyPayment,
     processPayout,
