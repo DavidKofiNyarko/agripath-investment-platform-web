@@ -54,11 +54,14 @@ import {
 } from "lucide-react";
 import { logoutAllDevices } from "@/lib/authService";
 import NotificationPreferencesComponent from "@/components/notification-preferences";
+import { createClient } from "@/app/utils/supabase/client";
+import { countries } from "@/lib/countries";
+import { Upload } from "lucide-react";
 
 function SettingsPage() {
   const router = useRouter();
   const { user } = useUser();
-  const { profile, updateProfile } = useProfile();
+  const { profile, updateProfile, refreshProfile } = useProfile();
   const [activeTab, setActiveTab] = useState("profile");
   const [activeSubTab, setActiveSubTab] = useState("personal");
   const [isKycModalOpen, setIsKycModalOpen] = useState(false);
@@ -67,6 +70,8 @@ function SettingsPage() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [profileForm, setProfileForm] = useState({
     first_name: "",
     last_name: "",
@@ -74,6 +79,7 @@ function SettingsPage() {
     country: "",
     phone_number: "",
   });
+  const supabase = createClient();
 
   // Populate form with profile data when profile loads
   useEffect(() => {
@@ -97,6 +103,72 @@ function SettingsPage() {
       profileForm.phone_number !== (profile.phone_number || "") ||
       profileForm.country !== (profile.country || "")
     );
+  };
+
+  // Handle profile picture upload
+  const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+    if (file.size > maxSize) {
+      setUploadError("File size must be less than 5MB");
+      return;
+    }
+
+    if (!allowedTypes.includes(file.type)) {
+      setUploadError("Only JPEG, PNG, and WebP files are allowed");
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+    setUploadError(null);
+
+    try {
+      if (!user) {
+        throw new Error("User not authenticated");
+      }
+
+      // Create a unique file path
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+      const filePath = `avatars/${fileName}`;
+
+      // Upload to Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
+        .from("project-images") // Using existing bucket, or create a new 'avatars' bucket
+        .upload(filePath, file, {
+          cacheControl: "3600",
+          upsert: true, // Allow overwriting
+        });
+
+      if (uploadError) {
+        throw new Error(`Upload failed: ${uploadError.message}`);
+      }
+
+      // Get the public URL
+      const {
+        data: { publicUrl },
+      } = supabase.storage.from("project-images").getPublicUrl(uploadData.path);
+
+      // Update profile with new avatar URL
+      await updateProfile({ avatar_url: publicUrl });
+
+      // Refresh profile to show new avatar
+      await refreshProfile();
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      setUploadError(
+        error instanceof Error ? error.message : "Failed to upload profile picture"
+      );
+    } finally {
+      setIsUploadingAvatar(false);
+      // Reset file input
+      event.target.value = "";
+    }
   };
 
   const handleTabChange = (tabId: string) => {
@@ -242,7 +314,7 @@ function SettingsPage() {
                 <CardContent className="space-y-6">
                   {/* Profile Picture Display */}
                   <div className="flex flex-col items-center space-y-4">
-                    <div className="relative">
+                    <div className="relative group">
                       {profile?.avatar_url ||
                       user?.user_metadata?.picture ||
                       user?.user_metadata?.avatar_url ? (
@@ -274,6 +346,27 @@ function SettingsPage() {
                       >
                         <User className="h-12 w-12 text-white" />
                       </div>
+                      {/* Upload Overlay */}
+                      <div className="absolute inset-0 rounded-full bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer">
+                        <label
+                          htmlFor="avatar-upload"
+                          className="cursor-pointer flex items-center justify-center w-full h-full"
+                        >
+                          {isUploadingAvatar ? (
+                            <Loader2 className="h-6 w-6 text-white animate-spin" />
+                          ) : (
+                            <Upload className="h-6 w-6 text-white" />
+                          )}
+                        </label>
+                        <input
+                          id="avatar-upload"
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,image/webp"
+                          onChange={handleAvatarUpload}
+                          className="hidden"
+                          disabled={isUploadingAvatar}
+                        />
+                      </div>
                     </div>
                     <div className="text-center">
                       <h3 className="text-lg font-semibold text-gray-900">
@@ -285,10 +378,52 @@ function SettingsPage() {
                         {profile?.avatar_url ||
                         user?.user_metadata?.picture ||
                         user?.user_metadata?.avatar_url
-                          ? "Profile picture loaded"
+                          ? "Click to change profile picture"
                           : "No profile picture set"}
                       </p>
+                      {uploadError && (
+                        <p className="text-sm text-red-600 mt-1">{uploadError}</p>
+                      )}
                     </div>
+                    {/* Upload Button (Alternative) */}
+                    <label
+                      htmlFor="avatar-upload-button"
+                      className="cursor-pointer"
+                    >
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={isUploadingAvatar}
+                        className="flex items-center space-x-2"
+                      >
+                        {isUploadingAvatar ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Uploading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="h-4 w-4" />
+                            <span>
+                              {profile?.avatar_url ||
+                              user?.user_metadata?.picture ||
+                              user?.user_metadata?.avatar_url
+                                ? "Change Picture"
+                                : "Upload Picture"}
+                            </span>
+                          </>
+                        )}
+                      </Button>
+                      <input
+                        id="avatar-upload-button"
+                        type="file"
+                        accept="image/jpeg,image/jpg,image/png,image/webp"
+                        onChange={handleAvatarUpload}
+                        className="hidden"
+                        disabled={isUploadingAvatar}
+                      />
+                    </label>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -334,6 +469,7 @@ function SettingsPage() {
                     <div className="space-y-2">
                       <Label htmlFor="country">Country</Label>
                       <Select
+                        value={profileForm.country || undefined}
                         onValueChange={(value) =>
                           setProfileForm({ ...profileForm, country: value })
                         }
@@ -341,23 +477,12 @@ function SettingsPage() {
                         <SelectTrigger>
                           <SelectValue placeholder="Select your country" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="ghana">Ghana</SelectItem>
-                          <SelectItem value="nigeria">Nigeria</SelectItem>
-                          <SelectItem value="kenya">Kenya</SelectItem>
-                          <SelectItem value="south-africa">
-                            South Africa
-                          </SelectItem>
-                          <SelectItem value="uganda">Uganda</SelectItem>
-                          <SelectItem value="tanzania">Tanzania</SelectItem>
-                          <SelectItem value="ethiopia">Ethiopia</SelectItem>
-                          <SelectItem value="ivory-coast">
-                            Ivory Coast
-                          </SelectItem>
-                          <SelectItem value="senegal">Senegal</SelectItem>
-                          <SelectItem value="morocco">Morocco</SelectItem>
-                          <SelectItem value="egypt">Egypt</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                        <SelectContent className="max-h-[300px]">
+                          {countries.map((country) => (
+                            <SelectItem key={country.value} value={country.value}>
+                              {country.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>

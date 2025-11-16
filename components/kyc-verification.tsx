@@ -91,15 +91,36 @@ const KycVerification: React.FC<KycVerificationProps> = ({
 
   const validateFile = (file: File): boolean => {
     const maxSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = ["image/jpeg", "image/jpg", "image/png"];
+    // Support all common image formats including iPhone HEIC/HEIF
+    const allowedTypes = [
+      "image/jpeg",
+      "image/jpg",
+      "image/png",
+      "image/webp",
+      "image/heic", // iPhone HEIC format
+      "image/heif", // iPhone HEIF format
+      "image/heic-sequence", // iPhone HEIC sequence
+      "image/heif-sequence", // iPhone HEIF sequence
+    ];
+
+    // Also check by file extension as fallback (some browsers may not detect HEIC correctly)
+    const fileExtension = file.name.split(".").pop()?.toLowerCase();
+    const allowedExtensions = ["jpg", "jpeg", "png", "webp", "heic", "heif"];
 
     if (file.size > maxSize) {
       setError("File size must be less than 5MB");
       return false;
     }
 
-    if (!allowedTypes.includes(file.type)) {
-      setError("Only JPEG and PNG files are allowed");
+    // Check MIME type or file extension
+    const isValidType =
+      allowedTypes.includes(file.type) ||
+      (fileExtension && allowedExtensions.includes(fileExtension));
+
+    if (!isValidType) {
+      setError(
+        "Please upload an image file (JPEG, PNG, WebP, HEIC, or HEIF format)"
+      );
       return false;
     }
 
@@ -343,7 +364,9 @@ const KycVerification: React.FC<KycVerificationProps> = ({
                       className="w-full h-auto rounded-lg border-2 border-green-200 shadow-md"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
-                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                        e.currentTarget.nextElementSibling?.classList.remove(
+                          "hidden"
+                        );
                       }}
                     />
                     <div className="hidden w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
@@ -447,7 +470,9 @@ const KycVerification: React.FC<KycVerificationProps> = ({
                       className="w-full h-auto rounded-lg border-2 border-green-200 shadow-md"
                       onError={(e) => {
                         e.currentTarget.style.display = "none";
-                        e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                        e.currentTarget.nextElementSibling?.classList.remove(
+                          "hidden"
+                        );
                       }}
                     />
                     <div className="hidden w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
@@ -528,7 +553,9 @@ const KycVerification: React.FC<KycVerificationProps> = ({
                   </h4>
                   <ul className="text-xs text-blue-800 space-y-1 list-disc list-inside">
                     <li>Use good lighting - face a window or bright light</li>
-                    <li>Look directly at the camera with a neutral expression</li>
+                    <li>
+                      Look directly at the camera with a neutral expression
+                    </li>
                     <li>Remove glasses, hat, or anything covering your face</li>
                     <li>Ensure your full face is visible and in focus</li>
                     <li>Use a plain background if possible</li>
@@ -575,7 +602,9 @@ const KycVerification: React.FC<KycVerificationProps> = ({
                         className="w-full h-auto max-h-64 mx-auto rounded-lg border-2 border-green-200 shadow-md object-cover"
                         onError={(e) => {
                           e.currentTarget.style.display = "none";
-                          e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                          e.currentTarget.nextElementSibling?.classList.remove(
+                            "hidden"
+                          );
                         }}
                       />
                       <div className="hidden w-32 h-32 mx-auto bg-green-100 rounded-lg flex items-center justify-center">
@@ -667,7 +696,9 @@ const KycVerification: React.FC<KycVerificationProps> = ({
                           className="w-full h-auto rounded-lg border-2 border-green-200 shadow-sm mb-2"
                           onError={(e) => {
                             e.currentTarget.style.display = "none";
-                            e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                            e.currentTarget.nextElementSibling?.classList.remove(
+                              "hidden"
+                            );
                           }}
                         />
                         <div className="hidden w-16 h-16 mx-auto rounded-lg bg-green-100 flex items-center justify-center">
@@ -676,7 +707,9 @@ const KycVerification: React.FC<KycVerificationProps> = ({
                       </div>
                       <div className="flex items-center justify-center gap-2">
                         <Check className="w-4 h-4 text-green-600" />
-                        <p className="text-sm font-medium text-green-600">Uploaded</p>
+                        <p className="text-sm font-medium text-green-600">
+                          Uploaded
+                        </p>
                       </div>
                     </div>
                   ) : (
@@ -700,7 +733,9 @@ const KycVerification: React.FC<KycVerificationProps> = ({
                           className="w-full h-auto rounded-lg border-2 border-green-200 shadow-sm mb-2"
                           onError={(e) => {
                             e.currentTarget.style.display = "none";
-                            e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                            e.currentTarget.nextElementSibling?.classList.remove(
+                              "hidden"
+                            );
                           }}
                         />
                         <div className="hidden w-16 h-16 mx-auto rounded-lg bg-green-100 flex items-center justify-center">
@@ -709,7 +744,9 @@ const KycVerification: React.FC<KycVerificationProps> = ({
                       </div>
                       <div className="flex items-center justify-center gap-2">
                         <Check className="w-4 h-4 text-green-600" />
-                        <p className="text-sm font-medium text-green-600">Uploaded</p>
+                        <p className="text-sm font-medium text-green-600">
+                          Uploaded
+                        </p>
                       </div>
                     </div>
                   ) : (
@@ -733,7 +770,9 @@ const KycVerification: React.FC<KycVerificationProps> = ({
                           className="w-full h-auto max-h-32 mx-auto rounded-lg border-2 border-green-200 shadow-sm mb-2 object-cover"
                           onError={(e) => {
                             e.currentTarget.style.display = "none";
-                            e.currentTarget.nextElementSibling?.classList.remove("hidden");
+                            e.currentTarget.nextElementSibling?.classList.remove(
+                              "hidden"
+                            );
                           }}
                         />
                         <div className="hidden w-16 h-16 mx-auto rounded-lg bg-green-100 flex items-center justify-center">
@@ -742,7 +781,9 @@ const KycVerification: React.FC<KycVerificationProps> = ({
                       </div>
                       <div className="flex items-center justify-center gap-2">
                         <Check className="w-4 h-4 text-green-600" />
-                        <p className="text-sm font-medium text-green-600">Uploaded</p>
+                        <p className="text-sm font-medium text-green-600">
+                          Uploaded
+                        </p>
                       </div>
                     </div>
                   ) : (

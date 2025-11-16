@@ -542,12 +542,16 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         if (response.status === "approved") {
           // Refresh wallet balance after successful withdrawal
           await refreshWallet();
-          return { success: true };
+          return { 
+            success: true,
+            transactionId: response.transaction_id || response.reference
+          };
         } else if (response.status === "Pending") {
           // Withdrawal submitted successfully, awaiting OTP verification
           return {
             success: true,
             pending: true,
+            transactionId: response.transaction_id || response.reference,
             message:
               "Withdrawal submitted successfully. Please check your phone for OTP verification.",
           };
@@ -703,6 +707,53 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     fetchWallet();
   }, [fetchWallet]);
+
+  // Real-time subscription for wallet balance updates
+  useEffect(() => {
+    if (!user || !wallet) return;
+
+    let channel: any = null;
+
+    try {
+      channel = supabase
+        .channel("wallet-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE",
+            schema: "public",
+            table: "wallets",
+            filter: `profile_id=eq.${user.id}`, // Only listen to user's wallet
+          },
+          (payload) => {
+            console.log("Wallet updated:", payload);
+            const updatedWallet = payload.new as Wallet;
+            
+            // Update wallet state immediately
+            setWallet(updatedWallet);
+            
+            console.log("✅ Wallet balance updated in real-time:", updatedWallet.balance);
+          }
+        )
+        .subscribe((status) => {
+          console.log("Real-time wallet subscription status:", status);
+          if (status === "SUBSCRIBED") {
+            console.log("✅ Successfully subscribed to wallet changes");
+          } else if (status === "CHANNEL_ERROR") {
+            console.warn("❌ Real-time wallet subscription failed");
+          }
+        });
+    } catch (error) {
+      console.error("Failed to set up real-time wallet subscription:", error);
+    }
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [user, wallet, supabase]);
 
   const value = {
     wallet,

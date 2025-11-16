@@ -8,6 +8,7 @@ import { ProjectsProvider } from "@/contexts/ProjectsContext";
 import { UpdatesProvider } from "@/contexts/UpdatesContext";
 import { WalletProvider } from "@/contexts/WalletContext";
 import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ToastProvider } from "@/components/ui/toast";
 
 export const metadata: Metadata = {
   title: {
@@ -113,7 +114,11 @@ export default function RootLayout({
                 <PortfolioProvider>
                   <TransactionsProvider>
                     <ProjectsProvider>
-                      <UpdatesProvider>{children}</UpdatesProvider>
+                      <UpdatesProvider>
+                        <ToastProvider>
+                          {children}
+                        </ToastProvider>
+                      </UpdatesProvider>
                     </ProjectsProvider>
                   </TransactionsProvider>
                 </PortfolioProvider>

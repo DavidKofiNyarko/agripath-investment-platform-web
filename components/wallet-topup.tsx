@@ -30,9 +30,7 @@ interface TopupFormData {
   cvv: string;
   card_holder: string;
   user_email: string;
-  // Momo fields
-  subscriber_number: string;
-  network: string;
+  // Momo fields - removed, handled by Paystack
 }
 
 const WalletTopup: React.FC = () => {
@@ -56,8 +54,6 @@ const WalletTopup: React.FC = () => {
     cvv: "",
     card_holder: "",
     user_email: "",
-    subscriber_number: "",
-    network: "",
   });
 
   // Update user_email when user changes
@@ -92,15 +88,8 @@ const WalletTopup: React.FC = () => {
         formData.user_email?.trim()
       );
     } else if (formData.channel === "momo") {
-      // Check if phone number and network are provided
-      if (!formData.subscriber_number?.trim() || !formData.network?.trim()) {
-        return false;
-      }
-
-      // Validate phone number format (Ghana format)
-      const phoneRegex = /^0[2-9][0-9]{8}$/;
-      const cleanPhone = formData.subscriber_number.replace(/\s/g, "");
-      return phoneRegex.test(cleanPhone);
+      // MoMo validation - no fields required, Paystack handles it
+      return true;
     }
 
     return false;
@@ -133,26 +122,8 @@ const WalletTopup: React.FC = () => {
         return;
       }
     } else if (formData.channel === "momo") {
-      // More strict validation for mobile money
-      if (
-        !formData.subscriber_number ||
-        formData.subscriber_number.trim() === ""
-      ) {
-        setError("Mobile number is required for mobile money");
-        return;
-      }
-      if (!formData.network || formData.network.trim() === "") {
-        setError("Network provider is required for mobile money");
-        return;
-      }
-      // Validate phone number format (Ghana format)
-      const phoneRegex = /^0[2-9][0-9]{8}$/;
-      if (!phoneRegex.test(formData.subscriber_number.replace(/\s/g, ""))) {
-        setError(
-          "Please enter a valid Ghana mobile number (e.g., 024 567 8905)"
-        );
-        return;
-      }
+      // MoMo validation - no fields required, Paystack handles it
+      // User will enter phone number and network on Paystack page
     }
 
     if (!formData.amount || parseFloat(formData.amount) <= 0) {
@@ -181,8 +152,7 @@ const WalletTopup: React.FC = () => {
               card_holder: formData.card_holder,
             }
           : {
-              subscriber_number: formData.subscriber_number,
-              network: formData.network,
+              // MoMo fields removed - Paystack handles phone number and network
             }),
       };
 
@@ -204,29 +174,11 @@ const WalletTopup: React.FC = () => {
           cvv: "",
           card_holder: "",
           user_email: user?.email || "",
-          subscriber_number: "",
-          network: "",
         });
       } else if (result.redirect_url) {
-        // For mobile money payments, append phone number to the redirect URL
-        let redirectUrl = result.redirect_url;
-
-        if (formData.channel === "momo" && formData.subscriber_number) {
-          // Format phone number (remove spaces)
-          const phoneNumber = formData.subscriber_number.replace(/\s/g, "");
-
-          // Try multiple parameter names as Paystack may use different ones
-          // Paystack doesn't officially support phone prepopulation, but we'll try common variations
-          const url = new URL(redirectUrl);
-          url.searchParams.set("phone", phoneNumber);
-          url.searchParams.set("mobile", phoneNumber);
-          url.searchParams.set("phone_number", phoneNumber);
-          url.searchParams.set("subscriber_number", phoneNumber);
-          // Also try metadata format
-          url.searchParams.set("metadata[phone]", phoneNumber);
-          redirectUrl = url.toString();
-        }
-
+        // For mobile money payments, redirect directly to Paystack
+        // Paystack will handle phone number and network input
+        const redirectUrl = result.redirect_url;
         // Handle payment verification redirect
         window.open(redirectUrl, "_blank");
         setPending(
@@ -259,26 +211,42 @@ const WalletTopup: React.FC = () => {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Amount */}
-          <div className="space-y-2">
+          <div className="space-y-3">
             <Label
               htmlFor="amount"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-semibold text-gray-800 flex items-center gap-2"
             >
-              Amount (GHS)
+              <span className="text-green-600">GH₵</span>
+              Amount
             </Label>
-            <div className="relative">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-blue-500/10 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
               <Input
                 id="amount"
                 type="number"
                 step="0.01"
-                min="0"
+                min="1"
                 value={formData.amount}
                 onChange={(e) => handleInputChange("amount", e.target.value)}
-                placeholder="Enter amount to add"
+                placeholder="0.00"
                 required
-                className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
+                className="
+                  relative z-10 w-full px-4 py-4 text-lg font-medium text-gray-900 
+                  placeholder:text-gray-400 bg-gray-50/80 border border-gray-200 
+                  rounded-xl shadow-sm transition-all duration-300 ease-in-out
+                  hover:bg-white hover:border-green-300 hover:shadow-md
+                  focus:bg-white focus:border-green-500 focus:ring-4 focus:ring-green-100
+                  focus:outline-none focus-visible:ring-4 focus-visible:ring-green-100
+                "
               />
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500 pointer-events-none">
+                GHS
+              </div>
             </div>
+            <p className="text-xs text-gray-500 flex items-center gap-1">
+              <span className="w-1 h-1 bg-green-500 rounded-full"></span>
+              Minimum amount: GH₵ 1.00
+            </p>
           </div>
 
           {/* Channel Selection */}
@@ -425,96 +393,14 @@ const WalletTopup: React.FC = () => {
             </>
           )}
 
-          {/* Mobile Money Fields */}
+          {/* Mobile Money Info */}
           {formData.channel === "momo" && (
-            <>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="subscriber_number"
-                  className="text-sm font-medium text-gray-700 mb-2 block"
-                >
-                  Mobile Number
-                </Label>
-                <div className="flex rounded-xl bg-gray-50 border-0 overflow-hidden shadow-sm transition-all duration-200 focus-within:bg-white hover:bg-gray-100">
-                  <div className="flex items-center px-3 py-3 bg-transparent border-r border-gray-200">
-                    <span className="text-lg mr-2">🇬🇭</span>
-                    <span className="text-sm font-medium text-gray-700">
-                      +233
-                    </span>
-                  </div>
-                  <Input
-                    id="subscriber_number"
-                    value={formData.subscriber_number}
-                    onChange={(e) =>
-                      handleInputChange("subscriber_number", e.target.value)
-                    }
-                    placeholder="024 567 8905"
-                    required
-                    className="!flex-1 !border-0 !rounded-none !bg-transparent focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !py-3 !px-3 !text-gray-900 placeholder:!text-gray-400"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="network">Network Provider *</Label>
-                <Select
-                  value={formData.network}
-                  onValueChange={(value) => handleInputChange("network", value)}
-                >
-                  <SelectTrigger
-                    className={
-                      !formData.network
-                        ? "border-red-300 focus:border-red-500"
-                        : ""
-                    }
-                  >
-                    <SelectValue placeholder="Select network provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="MTN">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                        <span>MTN</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="VDF">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                        <span>Vodafone</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="ATL">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                        <span>Airtel</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="TGO">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-purple-500 rounded-full"></div>
-                        <span>Tigo</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="ZPY">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                        <span>Zeepay</span>
-                      </div>
-                    </SelectItem>
-                    <SelectItem value="GMY">
-                      <div className="flex items-center space-x-2">
-                        <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                        <span>G-money</span>
-                      </div>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                {!formData.network && (
-                  <p className="text-sm text-red-600">
-                    Please select a network provider
-                  </p>
-                )}
-              </div>
-            </>
+            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-sm text-blue-800">
+                You will be redirected to Paystack to enter your mobile number
+                and network provider.
+              </p>
+            </div>
           )}
 
           {/* Description */}

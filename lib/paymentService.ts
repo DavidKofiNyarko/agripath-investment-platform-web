@@ -39,8 +39,8 @@ export interface CardPaymentRequest {
 export interface MobileMoneyPaymentRequest {
   profile_id: string;
   project_id: string;
-  subscriber_number: string;
-  network: string;
+  subscriber_number?: string; // Optional - Paystack handles it
+  network?: string; // Optional - Paystack handles it
   description: string;
   amount: number;
   unit: number;
@@ -358,14 +358,35 @@ class PaymentService {
     network?: string;
   }): Promise<PaymentResponse> {
     try {
-      console.log("Wallet topup request:", JSON.stringify(topupData, null, 2));
+      // For mobile money, backend requires subscriber_number and network
+      // Set defaults if not provided - user can still change on Paystack
+      const requestData: Record<string, unknown> = { ...topupData };
+
+      if (topupData.channel === "momo") {
+        // Set default network to MTN if not provided (user can change on Paystack)
+        if (!topupData.network || !topupData.network.trim()) {
+          requestData.network = "MTN";
+        }
+        // Set default subscriber_number if not provided (required by backend, user can change on Paystack)
+        if (
+          !topupData.subscriber_number ||
+          !topupData.subscriber_number.trim()
+        ) {
+          requestData.subscriber_number = "0000000000"; // Placeholder, user will enter on Paystack
+        }
+      }
+
+      console.log(
+        "Wallet topup request:",
+        JSON.stringify(requestData, null, 2)
+      );
 
       const response = await fetch(`${this.baseUrl}/wallet/topup`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(topupData),
+        body: JSON.stringify(requestData),
       });
 
       const responseData = await response.json();
@@ -511,24 +532,24 @@ class PaymentService {
     project_id: string;
     amount: number;
     unit: number;
-    subscriber_number: string;
-    network?: string;
+    subscriber_number?: string; // Optional - Paystack handles it
+    network?: string; // Optional - Paystack handles it
     description?: string;
     user_email: string; // Required field based on API testing
   }): Promise<PaymentResponse> {
     try {
-      const network =
-        investmentData.network ||
-        this.getNetworkProvider(investmentData.subscriber_number);
-      const formattedNumber = this.formatMobileNumber(
-        investmentData.subscriber_number
-      );
+      // Build payment request - backend requires subscriber_number and network
+      // User can still change these on Paystack window if needed
+      const network = investmentData.network || "MTN";
+      const formattedNumber = investmentData.subscriber_number
+        ? this.formatMobileNumber(investmentData.subscriber_number)
+        : "";
 
       const paymentRequest: MobileMoneyPaymentRequest = {
         profile_id: investmentData.profile_id,
         project_id: investmentData.project_id,
-        subscriber_number: formattedNumber,
-        network: network,
+        subscriber_number: formattedNumber || "0000000000", // Required by backend, user can change on Paystack
+        network: network, // Required by backend, defaults to MTN
         description: investmentData.description || "Investment payment",
         amount: investmentData.amount,
         unit: investmentData.unit,
@@ -539,7 +560,9 @@ class PaymentService {
         "Momo Payment Request:",
         JSON.stringify(paymentRequest, null, 2)
       );
-      return await this.processMobileMoneyPayment(paymentRequest);
+      return await this.processMobileMoneyPayment(
+        paymentRequest as unknown as MobileMoneyPaymentRequest
+      );
     } catch (error) {
       console.error("Investment mobile money payment error:", error);
       throw error;

@@ -217,6 +217,101 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
     }
   }, [filters.status, user, fetchTransactions]);
 
+  // Real-time subscription for transactions
+  useEffect(() => {
+    if (!user) return;
+
+    let channel: any = null;
+
+    try {
+      channel = supabase
+        .channel("transactions-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "*", // Listen to all changes (INSERT, UPDATE, DELETE)
+            schema: "public",
+            table: "transactions",
+            filter: `profile_id=eq.${user.id}`, // Only listen to user's transactions
+          },
+          (payload) => {
+            console.log("Transactions table changed:", payload);
+
+            // Handle different event types
+            if (payload.eventType === "INSERT") {
+              // New transaction added - refresh to get full data with project name
+              fetchTransactions();
+            } else if (payload.eventType === "UPDATE") {
+              // Transaction updated (e.g., status changed from Pending to Complete)
+              const updatedTransaction = payload.new as TransactionRow;
+              
+              setTransactions((prevTransactions) => {
+                // Check if transaction is in current view (considering filters and pagination)
+                const index = prevTransactions.findIndex(
+                  (t) => t.id === updatedTransaction.id
+                );
+
+                if (index !== -1) {
+                  // Update existing transaction
+                  const formatted = {
+                    id: updatedTransaction.id,
+                    transaction_id: updatedTransaction.transaction_id,
+                    profile_id: updatedTransaction.profile_id,
+                    project_id: updatedTransaction.project_id,
+                    type: updatedTransaction.type as 'Payin' | 'Payout' | 'Refund',
+                    amount: updatedTransaction.amount,
+                    unit: updatedTransaction.unit,
+                    status: updatedTransaction.status as 'Pending' | 'Complete' | 'Failed',
+                    fees: updatedTransaction.fees || 0,
+                    net_amount: updatedTransaction.net_amount,
+                    description: updatedTransaction.description || '',
+                    processed_at: updatedTransaction.processed_at,
+                    created_at: updatedTransaction.created_at,
+                    updated_at: updatedTransaction.updated_at,
+                    channel: updatedTransaction.channel as 'momo' | 'bank' | 'card',
+                    external_id: updatedTransaction.external_id,
+                    network: updatedTransaction.network,
+                    account_number: updatedTransaction.account_number,
+                    project_name: 'Unknown Project', // Will be updated on next full fetch
+                  };
+
+                  const updated = [...prevTransactions];
+                  updated[index] = formatted;
+                  return updated;
+                } else {
+                  // Transaction not in current view, refresh to get updated list
+                  fetchTransactions();
+                  return prevTransactions;
+                }
+              });
+            } else if (payload.eventType === "DELETE") {
+              // Transaction deleted - remove from list
+              setTransactions((prevTransactions) =>
+                prevTransactions.filter((t) => t.id !== payload.old.id)
+              );
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log("Real-time transactions subscription status:", status);
+          if (status === "SUBSCRIBED") {
+            console.log("✅ Successfully subscribed to transactions table changes");
+          } else if (status === "CHANNEL_ERROR") {
+            console.warn("❌ Real-time transactions subscription failed");
+          }
+        });
+    } catch (error) {
+      console.error("Failed to set up real-time transactions subscription:", error);
+    }
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
+  }, [user, supabase, fetchTransactions]);
+
   const refreshTransactions = useCallback(() => fetchTransactions(), [fetchTransactions]);
 
   const value = {

@@ -299,6 +299,146 @@ export const Sidebar = ({ className }: SidebarProps) => {
   );
 };
 
+const MobileSidebarContent = ({ className }: SidebarProps) => {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { signOut } = useUser();
+  const { profile } = useProfile();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await signOut();
+      router.push("/signin");
+    } catch (error) {
+      console.error("Error signing out:", error);
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
+  return (
+    <div
+      className={cn(
+        "flex h-full flex-col bg-white border-r shadow-sm",
+        className
+      )}
+    >
+      {/* Logo */}
+      <div className="flex items-center justify-between px-4 py-4 border-b">
+        <div className="flex items-center gap-2">
+          <Image
+            src="/y-logo.svg"
+            alt="AgriPath Logo"
+            width={100}
+            height={100}
+            className="w-10 h-10"
+          />
+          <span className="text-xl font-bold text-green-600 uppercase tracking-tight">
+            AGRIPATH
+          </span>
+        </div>
+      </div>
+
+      {/* Navigation */}
+      <div className="flex-1 px-2 py-4 overflow-y-auto">
+        {/* Main Menu */}
+        <div className="mb-8">
+          <h2 className="text-sm font-medium text-gray-500 mb-3 px-2">Menu</h2>
+          <nav className="space-y-1">
+            {menuItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              const showKycBadge =
+                item.title === "Settings" && profile?.kyc_status !== "verified";
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-none transition-colors duration-150 relative",
+                    isActive
+                      ? "bg-green-50 text-green-700 border-green-800"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "w-5 h-5 flex-shrink-0",
+                      isActive ? "text-green-600" : "text-gray-500"
+                    )}
+                  />
+                  <span className="truncate">{item.title}</span>
+                  {showKycBadge && (
+                    <div className="ml-auto">
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                    </div>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Secondary Menu */}
+        <div className="mb-8">
+          <h2 className="text-sm font-medium text-gray-500 mb-3 px-2">
+            Secondary
+          </h2>
+          <nav className="space-y-1">
+            {secondaryItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-none transition-colors duration-150",
+                    isActive
+                      ? "bg-green-50 text-green-700"
+                      : "text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "w-5 h-5 flex-shrink-0",
+                      isActive ? "text-green-600" : "text-gray-500"
+                    )}
+                  />
+                  <span className="truncate">{item.title}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+
+        {/* Logout */}
+        <div className="mt-auto">
+          <Button
+            variant="ghost"
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors duration-150 text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-50"
+          >
+            {isLoggingOut ? (
+              <div className="w-5 h-5 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+            )}
+            <span className="truncate">
+              {isLoggingOut ? "Signing out..." : "Logout"}
+            </span>
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 export const MobileSidebar = () => {
   const [open, setOpen] = useState(false);
 
@@ -312,11 +452,7 @@ export const MobileSidebar = () => {
       </SheetTrigger>
       <SheetContent side="left" className="p-0 w-64">
         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
-        <SidebarContext.Provider
-          value={{ isCollapsed: false, setIsCollapsed: () => {} }}
-        >
-          <SidebarContent />
-        </SidebarContext.Provider>
+        <MobileSidebarContent />
       </SheetContent>
     </Sheet>
   );

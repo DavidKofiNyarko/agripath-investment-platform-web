@@ -48,6 +48,7 @@ import {
   Info,
   X,
   Buildings,
+  Clock,
 } from "@phosphor-icons/react";
 import PinValidationModal from "@/components/pin-validation-modal";
 import Loading from "@/components/ui/loading";
@@ -261,8 +262,7 @@ const DashboardPage = () => {
         const result = await processWalletTopup({
           amount: topUpAmount,
           channel: "momo",
-          subscriber_number: paymentDetails.phoneNumber,
-          network: paymentDetails.networkProvider,
+          // subscriber_number and network removed - Paystack handles it
           user_email: user?.email || "test@example.com",
           description: "Dashboard topup via mobile money",
         });
@@ -271,25 +271,9 @@ const DashboardPage = () => {
             setCurrentStep("success");
           }, 1000);
         } else if (result.redirect_url) {
-          // For mobile money payments, append phone number to the redirect URL
-          let redirectUrl = result.redirect_url;
-
-          if (paymentDetails.phoneNumber) {
-            // Format phone number (remove spaces)
-            const phoneNumber = paymentDetails.phoneNumber.replace(/\s/g, "");
-
-            // Try multiple parameter names as Paystack may use different ones
-            // Paystack doesn't officially support phone prepopulation, but we'll try common variations
-            const url = new URL(redirectUrl);
-            url.searchParams.set("phone", phoneNumber);
-            url.searchParams.set("mobile", phoneNumber);
-            url.searchParams.set("phone_number", phoneNumber);
-            url.searchParams.set("subscriber_number", phoneNumber);
-            // Also try metadata format
-            url.searchParams.set("metadata[phone]", phoneNumber);
-            redirectUrl = url.toString();
-          }
-
+          // For mobile money payments, redirect directly to Paystack
+          // Paystack will handle phone number and network input
+          const redirectUrl = result.redirect_url;
           window.open(redirectUrl, "_blank");
           setRedirectUrl(redirectUrl);
           // Store the transaction_id from the result (this is the internal transaction_id from backend)
@@ -407,10 +391,17 @@ const DashboardPage = () => {
       }
 
       if (!reference) {
-        throw new Error("No payment reference available. Please try again or contact support.");
+        throw new Error(
+          "No payment reference available. Please try again or contact support."
+        );
       }
 
-      console.log("Verifying payment - stored transactionId:", transactionId, "extracted reference:", reference);
+      console.log(
+        "Verifying payment - stored transactionId:",
+        transactionId,
+        "extracted reference:",
+        reference
+      );
 
       // CRITICAL: Always prioritize the stored transactionId (internal transaction_id from backend)
       // The stored transactionId is the internal transaction_id (e.g., "txn258981932")
@@ -423,11 +414,13 @@ const DashboardPage = () => {
       // First, find the transaction in our database to get the internal transaction_id
       // The backend verification API REQUIRES our internal transaction_id format (like "txn225862451")
       let internalTransactionId = null;
-      
+
       // Always verify the transaction exists in the database, even if reference starts with "txn"
       const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
-      
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
       if (!user) {
         setCurrentStep("error");
         setIsVerifyingPayment(false);
@@ -436,8 +429,11 @@ const DashboardPage = () => {
 
       // If reference already starts with "txn", verify it exists in the database
       if (reference.startsWith("txn")) {
-        console.log("Reference is already internal transaction_id, verifying it exists:", reference);
-        
+        console.log(
+          "Reference is already internal transaction_id, verifying it exists:",
+          reference
+        );
+
         const { data: transactions, error: verifyError } = await supabase
           .from("transactions")
           .select("transaction_id, external_id, status, type")
@@ -446,7 +442,10 @@ const DashboardPage = () => {
           .limit(1);
 
         if (verifyError || !transactions || transactions.length === 0) {
-          console.error("Transaction not found with transaction_id:", reference);
+          console.error(
+            "Transaction not found with transaction_id:",
+            reference
+          );
           // Check for recent pending transactions
           const { data: recentTransactions } = await supabase
             .from("transactions")
@@ -455,13 +454,16 @@ const DashboardPage = () => {
             .eq("status", "Pending")
             .order("created_at", { ascending: false })
             .limit(5);
-          
+
           console.log("Recent pending transactions:", recentTransactions);
-          
+
           if (recentTransactions && recentTransactions.length > 0) {
             // Use the most recent pending transaction
             internalTransactionId = recentTransactions[0].transaction_id;
-            console.log("Using most recent pending transaction:", internalTransactionId);
+            console.log(
+              "Using most recent pending transaction:",
+              internalTransactionId
+            );
           } else {
             setCurrentStep("error");
             setIsVerifyingPayment(false);
@@ -469,12 +471,22 @@ const DashboardPage = () => {
           }
         } else {
           internalTransactionId = transactions[0].transaction_id;
-          console.log("Found transaction with internal ID:", internalTransactionId, "Status:", transactions[0].status);
+          console.log(
+            "Found transaction with internal ID:",
+            internalTransactionId,
+            "Status:",
+            transactions[0].status
+          );
         }
       } else {
         // Otherwise, find the transaction using the Paystack reference
         try {
-          console.log("Searching for transaction with Paystack reference:", reference, "for user:", user.id);
+          console.log(
+            "Searching for transaction with Paystack reference:",
+            reference,
+            "for user:",
+            user.id
+          );
 
           // Find transaction by external_id (Paystack reference) first
           let { data: transactions, error: findError } = await supabase
@@ -485,24 +497,36 @@ const DashboardPage = () => {
             .order("created_at", { ascending: false })
             .limit(1);
 
-          console.log("Search by external_id result:", { transactions, findError });
+          console.log("Search by external_id result:", {
+            transactions,
+            findError,
+          });
 
-          let transaction = transactions && transactions.length > 0 ? transactions[0] : null;
+          let transaction =
+            transactions && transactions.length > 0 ? transactions[0] : null;
 
           // If not found by external_id, try transaction_id
           if (findError || !transaction) {
             console.log("Not found by external_id, trying transaction_id...");
-            const { data: transactionsByTxnId, error: findError2 } = await supabase
-              .from("transactions")
-              .select("transaction_id, external_id, status, type")
-              .eq("transaction_id", reference)
-              .eq("profile_id", user.id)
-              .order("created_at", { ascending: false })
-              .limit(1);
+            const { data: transactionsByTxnId, error: findError2 } =
+              await supabase
+                .from("transactions")
+                .select("transaction_id, external_id, status, type")
+                .eq("transaction_id", reference)
+                .eq("profile_id", user.id)
+                .order("created_at", { ascending: false })
+                .limit(1);
 
-            console.log("Search by transaction_id result:", { transactionsByTxnId, findError2 });
+            console.log("Search by transaction_id result:", {
+              transactionsByTxnId,
+              findError2,
+            });
 
-            if (findError2 || !transactionsByTxnId || transactionsByTxnId.length === 0) {
+            if (
+              findError2 ||
+              !transactionsByTxnId ||
+              transactionsByTxnId.length === 0
+            ) {
               // Check if there are any recent pending transactions for this user
               const { data: recentTransactions } = await supabase
                 .from("transactions")
@@ -511,15 +535,22 @@ const DashboardPage = () => {
                 .eq("status", "Pending")
                 .order("created_at", { ascending: false })
                 .limit(5);
-              
+
               console.log("Recent pending transactions:", recentTransactions);
-              throw new Error(`Transaction not found in database. Reference: ${reference}. Please wait a moment and try again, or contact support.`);
+              throw new Error(
+                `Transaction not found in database. Reference: ${reference}. Please wait a moment and try again, or contact support.`
+              );
             }
             transaction = transactionsByTxnId[0];
           }
 
           internalTransactionId = transaction.transaction_id;
-          console.log("Found transaction with internal ID:", internalTransactionId, "Status:", transaction.status);
+          console.log(
+            "Found transaction with internal ID:",
+            internalTransactionId,
+            "Status:",
+            transaction.status
+          );
         } catch (findError) {
           console.error("Error finding transaction:", findError);
           setCurrentStep("error");
@@ -535,7 +566,10 @@ const DashboardPage = () => {
         return;
       }
 
-      console.log("Verifying payment with internal transaction_id:", internalTransactionId);
+      console.log(
+        "Verifying payment with internal transaction_id:",
+        internalTransactionId
+      );
 
       // Call the backend verification API directly
       // MUST use internal transaction_id - backend does not accept Paystack references
@@ -660,7 +694,7 @@ const DashboardPage = () => {
                       >
                         GH&#8373;
                       </span>
-                      <span>
+                      <span className="text-4xl sm:text-5xl  font-anthropic-serif tracking-tight">
                         {" "}
                         {wallet?.balance?.toLocaleString() || "0.00"}
                       </span>
@@ -852,6 +886,7 @@ const DashboardPage = () => {
                       width={400}
                       height={200}
                       className="w-full h-full object-cover"
+                      loading="lazy"
                     />
                     <div className="px-2 py-1 sm:py-1.5 right-2 top-2 absolute bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
                       <div className="px-1 flex justify-start items-start gap-2.5">
@@ -1304,84 +1339,13 @@ const DashboardPage = () => {
                                   transition={{ duration: 0.2 }}
                                   className="overflow-hidden border-t border-green-200"
                                 >
-                                  <div className="p-6 space-y-8">
-                                    <div>
-                                      <Label className="text-sm font-medium text-gray-700">
-                                        Select Network Provider
-                                      </Label>
-                                      <Select
-                                        onValueChange={(value) =>
-                                          setPaymentDetails({
-                                            ...paymentDetails,
-                                            networkProvider: value,
-                                          })
-                                        }
-                                      >
-                                        <SelectTrigger className="mt-1 border-0 outline-none focus:ring-0 focus:border-0">
-                                          <SelectValue placeholder="Eg. MTN" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                          <SelectItem value="MTN">
-                                            MTN
-                                          </SelectItem>
-                                          <SelectItem value="VOD">
-                                            Vodafone
-                                          </SelectItem>
-                                          <SelectItem value="ATL">
-                                            AirtelTigo
-                                          </SelectItem>
-                                        </SelectContent>
-                                      </Select>
-                                      {!paymentDetails.networkProvider && (
-                                        <p className="text-sm text-red-600 mt-1">
-                                          Please select a network provider
-                                        </p>
-                                      )}
-                                    </div>
-
-                                    <div>
-                                      <Label
-                                        htmlFor="phoneNumber"
-                                        className="text-sm font-medium text-gray-700 mb-2 block"
-                                      >
-                                        Phone number
-                                      </Label>
-                                      <div className="flex rounded-lg border border-gray-300 outline-none overflow-hidden focus-within:ring-0 focus-within:border-gray-400 transition-all duration-200">
-                                        <div className="flex items-center px-3 sm:px-4 py-3 sm:py-3 bg-gray-50 border-r border-gray-300 min-w-[80px] sm:min-w-[90px]">
-                                          <span className="text-base sm:text-lg mr-2">
-                                            🇬🇭
-                                          </span>
-                                          <span className="text-sm sm:text-base font-medium text-gray-700">
-                                            +233
-                                          </span>
-                                        </div>
-                                        <Input
-                                          id="phoneNumber"
-                                          placeholder="Eg. 55 567 8905"
-                                          value={paymentDetails.phoneNumber}
-                                          onChange={(e) =>
-                                            setPaymentDetails({
-                                              ...paymentDetails,
-                                              phoneNumber: e.target.value,
-                                            })
-                                          }
-                                          className="flex-1 border-0 outline-none rounded-none focus:ring-0 focus:border-0 py-3 sm:py-6 px-3 sm:px-4 text-gray-900 placeholder-gray-500 text-sm sm:text-base"
-                                        />
-                                      </div>
-                                    </div>
-
-                                    <div className="flex items-center justify-between">
-                                      <Label
-                                        htmlFor="saveMobile"
-                                        className="text-sm text-gray-600"
-                                      >
-                                        Save this payment method
-                                      </Label>
-                                      <Switch
-                                        id="saveMobile"
-                                        checked={savePaymentMethod}
-                                        onCheckedChange={setSavePaymentMethod}
-                                      />
+                                  <div className="p-6">
+                                    <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                                      <p className="text-sm text-blue-800">
+                                        You will be redirected to Paystack to
+                                        enter your mobile number and network
+                                        provider.
+                                      </p>
                                     </div>
                                   </div>
                                 </motion.div>
@@ -1724,12 +1688,7 @@ const DashboardPage = () => {
                   <Button
                     className="flex h-[50px] px-8 justify-center items-center gap-1.5 flex-1 rounded-xl bg-green-700 hover:bg-green-800 text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     onClick={handleTopUp}
-                    disabled={
-                      !paymentMethod ||
-                      (paymentMethod === "mobile" &&
-                        !paymentDetails.networkProvider) ||
-                      !!amountError
-                    }
+                    disabled={!paymentMethod || !!amountError}
                   >
                     Top up
                   </Button>
@@ -1763,7 +1722,7 @@ const DashboardPage = () => {
 
             {/* Content */}
             <div className="flex-1 p-4 sm:p-6 space-y-6 overflow-y-auto">
-              {/* Success Screen */}
+              {/* Success/Pending Screen */}
               {withdrawStep === "success" && (
                 <div className="flex flex-col items-center justify-center h-full space-y-6 text-center">
                   <motion.div
@@ -1776,57 +1735,109 @@ const DashboardPage = () => {
                     }}
                     className="relative"
                   >
-                    <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-                      <CheckCircle className="h-10 w-10 text-green-600" />
-                    </div>
-                    {/* Confetti animation */}
-                    <div className="absolute inset-0 pointer-events-none">
-                      {[...Array(20)].map((_, i) => (
+                    {withdrawResult?.pending ? (
+                      // Pending OTP State - Use Clock Icon with Amber Colors
+                      <div className="w-20 h-20 bg-amber-100 rounded-full flex items-center justify-center relative">
+                        <Clock className="h-10 w-10 text-amber-600" />
+                        {/* Pulsing animation for pending state */}
                         <motion.div
-                          key={i}
-                          className="absolute w-2 h-2 rounded-full"
-                          style={{
-                            backgroundColor: [
-                              "#ff6b6b",
-                              "#4ecdc4",
-                              "#45b7d1",
-                              "#96ceb4",
-                              "#feca57",
-                            ][i % 5],
-                            left: "50%",
-                            top: "50%",
-                          }}
-                          initial={{
-                            x: 0,
-                            y: 0,
-                            scale: 0,
-                          }}
+                          className="absolute inset-0 rounded-full border-2 border-amber-300"
                           animate={{
-                            x: (Math.random() - 0.5) * 200,
-                            y: (Math.random() - 0.5) * 200,
-                            scale: [0, 1, 0],
+                            scale: [1, 1.2, 1],
+                            opacity: [0.5, 0, 0.5],
                           }}
                           transition={{
                             duration: 2,
-                            delay: i * 0.1,
+                            repeat: Infinity,
                           }}
                         />
-                      ))}
-                    </div>
+                      </div>
+                    ) : (
+                      // Success State - Use CheckCircle with Green Colors and Confetti
+                      <>
+                        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
+                          <CheckCircle className="h-10 w-10 text-green-600" />
+                        </div>
+                        {/* Confetti animation - only for actual success */}
+                        <div className="absolute inset-0 pointer-events-none">
+                          {[...Array(20)].map((_, i) => (
+                            <motion.div
+                              key={i}
+                              className="absolute w-2 h-2 rounded-full"
+                              style={{
+                                backgroundColor: [
+                                  "#ff6b6b",
+                                  "#4ecdc4",
+                                  "#45b7d1",
+                                  "#96ceb4",
+                                  "#feca57",
+                                ][i % 5],
+                                left: "50%",
+                                top: "50%",
+                              }}
+                              initial={{
+                                x: 0,
+                                y: 0,
+                                scale: 0,
+                              }}
+                              animate={{
+                                x: (Math.random() - 0.5) * 200,
+                                y: (Math.random() - 0.5) * 200,
+                                scale: [0, 1, 0],
+                              }}
+                              transition={{
+                                duration: 2,
+                                delay: i * 0.1,
+                              }}
+                            />
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </motion.div>
-                  <div className="space-y-2">
+                  <div className="space-y-3 max-w-md">
                     <h3 className="text-2xl font-bold text-gray-900">
-                      Withdrawal Successful!
+                      {withdrawResult?.pending
+                        ? "Awaiting OTP Verification"
+                        : "Withdrawal Successful!"}
                     </h3>
-                    <p className="text-gray-600">
-                      Your withdrawal request has been submitted successfully.
-                      {withdrawResult?.pending &&
-                        " Please check your phone for OTP verification."}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Transaction ID:{" "}
-                      {withdrawResult?.transactionId || "Processing..."}
-                    </p>
+                    <div className="space-y-2">
+                      {withdrawResult?.pending ? (
+                        <>
+                          <p className="text-gray-700 font-medium">
+                            Step 1 of 2: Request Submitted ✓
+                          </p>
+                          <p className="text-gray-600">
+                            Your withdrawal request has been submitted. Please
+                            check your phone for the OTP code to complete the
+                            transaction.
+                          </p>
+                          <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
+                            <p className="text-sm text-amber-800 font-medium flex items-center justify-center gap-2">
+                              <Phone className="h-4 w-4" />
+                              Check your phone for OTP
+                            </p>
+                            <p className="text-xs text-amber-700 mt-1">
+                              Your withdrawal will be processed once OTP is
+                              verified
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-gray-600">
+                          Your withdrawal request has been processed
+                          successfully.
+                        </p>
+                      )}
+                    </div>
+                    {withdrawResult?.transactionId && (
+                      <p className="text-sm text-gray-500 pt-2">
+                        Transaction ID:{" "}
+                        <span className="font-mono bg-gray-100 px-2 py-1 rounded">
+                          {withdrawResult.transactionId}
+                        </span>
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

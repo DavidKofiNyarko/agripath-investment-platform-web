@@ -7,7 +7,7 @@ import { Bell, X } from "lucide-react";
 import { useUser } from "@/contexts/UserContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useNotifications } from "@/contexts/NotificationContext";
-import LogoSVG from "./logo-svg";
+import Image from "next/image";
 
 interface UserHeaderProps {
   title?: string;
@@ -141,11 +141,11 @@ const UserHeader: React.FC<UserHeaderProps> = ({
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <h1 className="text-base sm:text-xl font-semibold text-gray-900 truncate">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 truncate font-anthropic-serif">
             {title || `Hi, ${getUserName()} 👋`}
           </h1>
           {showDate && (
-            <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
+            <p className="text-xs sm:text-sm text-gray-600 hidden sm:block font-anthropic-serif">
               {getGreeting()}
             </p>
           )}

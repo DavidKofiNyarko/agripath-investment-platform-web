@@ -9,6 +9,8 @@ import { useProjects, Project } from "@/contexts/ProjectsContext";
 import { useUser } from "@/contexts/UserContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useWallet } from "@/contexts/WalletContext";
+import { useTransactions } from "@/contexts/TransactionsContext";
+import { useToast } from "@/components/ui/toast";
 import KycModal from "@/components/kyc-modal";
 import PinValidationModal from "@/components/pin-validation-modal";
 import CustomAlert from "@/components/custom-alert";
@@ -102,6 +104,8 @@ const InvestmentsPage = () => {
   const { user } = useUser();
   const { profile } = useProfile();
   const { wallet } = useWallet();
+  const { refreshTransactions } = useTransactions();
+  const { showToast } = useToast();
   const router = useRouter();
   const supabase = createClient();
   const {
@@ -210,17 +214,14 @@ const InvestmentsPage = () => {
     });
   };
 
-  // Check if transaction already exists (backend may have created it)
-  // IMPORTANT: Backend API already creates transaction and deducts units
-  // We should NOT create duplicate transactions to avoid double deduction
-  const checkOrCreateInvestmentTransaction = async (
+  // Check if backend transaction exists (backend creates all transactions)
+  // IMPORTANT: Backend API creates all transactions - frontend should never create them
+  const checkBackendTransaction = async (
     backendTransactionId: string | undefined,
-    projectId: string,
-    quantity: number,
-    totalAmount: number
+    projectId: string
   ) => {
     try {
-      // If backend provided a transaction_id, check if it already exists
+      // If backend provided a transaction_id, verify it exists
       if (backendTransactionId) {
         const { data: existingTransaction, error: checkError } = await supabase
           .from("transactions")
@@ -231,72 +232,49 @@ const InvestmentsPage = () => {
           .limit(1);
 
         if (checkError && checkError.code !== "PGRST116") {
-          console.error("Error checking existing transaction:", checkError);
+          console.error("Error checking backend transaction:", checkError);
         }
 
-        // If transaction already exists, backend already handled everything
+        // If transaction exists, backend successfully created it
         if (existingTransaction && existingTransaction.length > 0) {
-          console.log(
-            "Transaction already exists (created by backend):",
+          console.log("Backend transaction verified:", backendTransactionId);
+          return {
+            success: true,
+            transactionId: backendTransactionId,
+            exists: true,
+          };
+        } else {
+          // Transaction not found - might still be processing
+          console.warn(
+            "Backend transaction not found yet:",
             backendTransactionId,
-            "- Skipping duplicate creation to avoid double unit deduction"
+            "- May still be processing"
           );
-          return { success: true, transactionId: backendTransactionId, alreadyExists: true };
+          return {
+            success: true,
+            transactionId: backendTransactionId,
+            exists: false,
+          };
         }
       }
 
-      // Only create transaction if backend didn't create it
-      // NOTE: This should rarely happen - backend typically creates the transaction
+      // No transaction ID provided - backend should have created one
       console.warn(
-        "Backend did not create transaction, creating frontend transaction record",
-        "This may cause double unit deduction if backend also deducts units"
+        "No backend transaction ID provided - backend should create transaction"
       );
-
-      const transactionId = `TXN${Date.now()}${Math.floor(
-        Math.random() * 1000
-      )}`;
-
-      const { error: transactionError } = await supabase
-        .from("transactions")
-        .insert({
-          transaction_id: transactionId,
-          profile_id: profile?.id,
-          project_id: projectId,
-          type: "investment",
-          amount: totalAmount,
-          unit: quantity,
-          status: "Complete",
-          fees: 0.0,
-          net_amount: totalAmount,
-          description: `Investment in project ${projectId}`,
-          channel:
-            selectedPaymentMethod === "mobile"
-              ? "momo"
-              : selectedPaymentMethod === "card"
-              ? "card"
-              : selectedPaymentMethod === "agripath"
-              ? "wallet"
-              : "momo",
-          account_number:
-            paymentDetails.mobileNumber ||
-            paymentDetails.cardNumber ||
-            "Agripath Wallet",
-        });
-
-      if (transactionError) {
-        console.error("Transaction insertion failed:", transactionError);
-        throw new Error(
-          `Transaction recording failed: ${transactionError.message}`
-        );
-      }
-
-      console.log(
-        "Investment transaction created successfully - database triggers will update project units"
-      );
-      return { success: true, transactionId, alreadyExists: false };
+      return {
+        success: true,
+        transactionId: undefined,
+        exists: false,
+      };
     } catch (error) {
-      console.error("Failed to create investment transaction:", error);
-      throw error;
+      console.error("Failed to check backend transaction:", error);
+      // Don't throw - just log the error, backend transaction might still exist
+      return {
+        success: true,
+        transactionId: backendTransactionId,
+        exists: false,
+      };
     }
   };
 
@@ -721,16 +699,13 @@ const InvestmentsPage = () => {
 
       const apiBaseUrl = getApiBaseDomain();
 
-      const response = await fetch(
-        `${apiBaseUrl}/api/payments/wallet/invest`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(investmentData),
-        }
-      );
+      const response = await fetch(`${apiBaseUrl}/api/payments/wallet/invest`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(investmentData),
+      });
 
       // Handle response - check if there's a response body
       let responseData = null;
@@ -766,11 +741,11 @@ const InvestmentsPage = () => {
       // If response is successful (201 Created or 200 OK), treat as success
       if (response.ok) {
         console.log("Wallet investment successful - 201 Created");
-        
+
         // Try to get transaction_id from response
         // If not in response body, we'll need to query the database later
         const transactionId = responseData?.transaction_id || undefined;
-        
+
         return {
           status: "success",
           code: "000",
@@ -795,14 +770,8 @@ const InvestmentsPage = () => {
 
     // Validate payment details based on selected method
     if (selectedPaymentMethod === "mobile") {
-      if (!paymentDetails.mobileNumber || !paymentDetails.provider) {
-        showAlert(
-          "Missing Information",
-          "Please fill in all mobile money details",
-          "warning"
-        );
-        return;
-      }
+      // MoMo validation removed - Paystack handles phone number and network
+      // No validation needed, user will enter details on Paystack
     } else if (selectedPaymentMethod === "card") {
       if (
         !paymentDetails.cardName ||
@@ -866,14 +835,14 @@ const InvestmentsPage = () => {
 
       if (selectedPaymentMethod === "mobile") {
         // Mobile Money Payment using our payment service
+        // Phone number and network removed - Paystack handles it
         paymentResult =
           await paymentService.processInvestmentMobileMoneyPayment({
             profile_id: profile?.id || "", // Use profile ID (required by backend)
             project_id: projectId,
             amount: totalAmount,
             unit: quantity,
-            subscriber_number: paymentDetails.mobileNumber,
-            network: paymentDetails.provider,
+            // subscriber_number and network removed - Paystack handles it
             description: `Investment in ${selectedInvestment.name}`,
             user_email: user?.email || "user@example.com",
           });
@@ -909,35 +878,32 @@ const InvestmentsPage = () => {
       console.log("Payment result:", paymentResult);
 
       // Handle payment response
-      // Check if payment requires verification (has redirect_url)
-      if ((paymentResult as any).redirect_url) {
-        // For mobile money payments, append phone number to the redirect URL
-        let redirectUrl = (paymentResult as any).redirect_url;
+      // Check if payment requires verification (has redirect_url) OR status is Pending
+      // Pending status is expected for Paystack redirects - not an error!
+      const hasRedirectUrl = (paymentResult as any).redirect_url;
+      const isPendingStatus =
+        paymentResult.status?.toLowerCase() === "pending" ||
+        (paymentResult as any).status?.toLowerCase() === "pending";
 
-        if (selectedPaymentMethod === "mobile" && paymentDetails.mobileNumber) {
-          // Format phone number (remove spaces)
-          const phoneNumber = paymentDetails.mobileNumber.replace(/\s/g, "");
+      if (hasRedirectUrl || isPendingStatus) {
+        // For mobile money payments, redirect directly to Paystack
+        // Paystack will handle phone number and network input
+        const redirectUrl = (paymentResult as any).redirect_url;
 
-          // Try multiple parameter names as Paystack may use different ones
-          // Paystack doesn't officially support phone prepopulation, but we'll try common variations
-          const url = new URL(redirectUrl);
-          url.searchParams.set("phone", phoneNumber);
-          url.searchParams.set("mobile", phoneNumber);
-          url.searchParams.set("phone_number", phoneNumber);
-          url.searchParams.set("subscriber_number", phoneNumber);
-          // Also try metadata format
-          url.searchParams.set("metadata[phone]", phoneNumber);
-          redirectUrl = url.toString();
+        // Extract transaction_id from payment result
+        const paymentTransactionId = (paymentResult as any).transaction_id;
+
+        if (redirectUrl) {
+          // Payment requires verification - open popup and show verification screen
+          window.open(redirectUrl, "_blank");
         }
 
-        // Payment requires verification - open popup and show verification screen
-        window.open(redirectUrl, "_blank");
-
         // Store redirect URL and transaction_id for verification
-        setRedirectUrl(redirectUrl);
-        setTransactionId(transactionId);
+        setRedirectUrl(redirectUrl || "");
+        setTransactionId(paymentTransactionId || "");
 
-        // Show verification required screen instead of success
+        // Show verification required screen instead of error
+        // Pending status is normal for Paystack redirects
         setIsProcessing(false);
         setCurrentStep("verification");
         return;
@@ -957,43 +923,52 @@ const InvestmentsPage = () => {
         // Check if backend already created transaction (to avoid double unit deduction)
         // Backend API creates transaction and deducts units, so we should check first
         let backendTransactionId = (paymentResult as any).transaction_id;
-        
+
         // If wallet investment didn't return transaction_id, try to find it in the database
         // by looking for the most recent investment transaction for this project
         if (!backendTransactionId || backendTransactionId === "created") {
-          console.log("No transaction_id from backend, querying database for recent transaction...");
+          console.log(
+            "No transaction_id from backend, querying database for recent transaction..."
+          );
           try {
-            const { data: recentTransactions, error: queryError } = await supabase
-              .from("transactions")
-              .select("transaction_id")
-              .eq("profile_id", profile?.id)
-              .eq("project_id", projectId)
-              .eq("type", "investment")
-              .eq("amount", totalAmount)
-              .eq("unit", quantity)
-              .order("created_at", { ascending: false })
-              .limit(1);
-            
-            if (!queryError && recentTransactions && recentTransactions.length > 0) {
+            const { data: recentTransactions, error: queryError } =
+              await supabase
+                .from("transactions")
+                .select("transaction_id")
+                .eq("profile_id", profile?.id)
+                .eq("project_id", projectId)
+                .eq("type", "investment")
+                .eq("amount", totalAmount)
+                .eq("unit", quantity)
+                .order("created_at", { ascending: false })
+                .limit(1);
+
+            if (
+              !queryError &&
+              recentTransactions &&
+              recentTransactions.length > 0
+            ) {
               backendTransactionId = recentTransactions[0].transaction_id;
-              console.log("Found transaction in database:", backendTransactionId);
+              console.log(
+                "Found transaction in database:",
+                backendTransactionId
+              );
             }
           } catch (error) {
             console.warn("Error querying for transaction:", error);
           }
         }
-        
-        const updateResult = await checkOrCreateInvestmentTransaction(
+
+        // Verify backend transaction exists (backend creates all transactions)
+        const transactionCheck = await checkBackendTransaction(
           backendTransactionId,
-          projectId,
-          quantity,
-          totalAmount
+          projectId
         );
 
-        if (updateResult.success) {
+        if (transactionCheck.success) {
           console.log(
             "Investment completed successfully with transaction ID:",
-            updateResult.transactionId
+            transactionCheck.transactionId || "pending backend creation"
           );
 
           // Store investment details for success screen before resetting form
@@ -1027,19 +1002,17 @@ const InvestmentsPage = () => {
           window.open((paymentResult as any).redirect_url, "_blank");
         }
 
-        // Check if backend already created transaction (to avoid double unit deduction)
+        // Verify backend transaction exists (backend creates all transactions)
         const backendTransactionId = (paymentResult as any).transaction_id;
-        const updateResult = await checkOrCreateInvestmentTransaction(
+        const transactionCheck = await checkBackendTransaction(
           backendTransactionId,
-          projectId,
-          quantity,
-          totalAmount
+          projectId
         );
 
-        if (updateResult.success) {
+        if (transactionCheck.success) {
           console.log(
             "3D Secure investment completed successfully with transaction ID:",
-            updateResult.transactionId
+            transactionCheck.transactionId || "pending backend creation"
           );
 
           // Store investment details for success screen before resetting form
@@ -1130,53 +1103,161 @@ const InvestmentsPage = () => {
         throw new Error("Could not extract transaction reference");
       }
 
+      console.log(
+        "Verification - Using reference:",
+        reference,
+        "Stored transactionId:",
+        transactionId
+      );
+
       // First, find the transaction in our database to get the internal transaction_id
       // The backend verification API REQUIRES our internal transaction_id format (like "txn225862451")
       let internalTransactionId = null;
-      
-      // If reference already starts with "txn", it's already the internal ID
+
+      // If reference already starts with "txn", verify it exists first
       if (reference.startsWith("txn")) {
-        internalTransactionId = reference;
-      } else {
+        // Verify the transaction exists in database
+        try {
+          const supabase = createClient();
+          const { data: verifyTxn, error: verifyError } = await supabase
+            .from("transactions")
+            .select("transaction_id")
+            .eq("transaction_id", reference)
+            .limit(1);
+
+          if (!verifyError && verifyTxn && verifyTxn.length > 0) {
+            internalTransactionId = reference;
+            console.log(
+              "Transaction ID verified in database:",
+              internalTransactionId
+            );
+          } else {
+            console.warn(
+              "Transaction ID not found, will search by other methods"
+            );
+            // Fall through to search by other methods
+          }
+        } catch (verifyErr) {
+          console.warn("Error verifying transaction ID:", verifyErr);
+          // Fall through to search by other methods
+        }
+      }
+
+      // If we don't have internalTransactionId yet, search for it
+      if (!internalTransactionId) {
         // Otherwise, find the transaction using the Paystack reference
         try {
           const supabase = createClient();
-          const { data: { user } } = await supabase.auth.getUser();
-          
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+
           if (!user) {
             throw new Error("User not authenticated");
           }
 
           // Find transaction by external_id (Paystack reference) first
-          let { data: transactions, error: findError } = await supabase
+          const { data: transactions, error: findError } = await supabase
             .from("transactions")
-            .select("transaction_id, external_id")
+            .select("transaction_id, external_id, profile_id")
             .eq("external_id", reference)
-            .eq("profile_id", user.id)
             .limit(1);
 
-          let transaction = transactions && transactions.length > 0 ? transactions[0] : null;
+          let transaction =
+            transactions && transactions.length > 0 ? transactions[0] : null;
 
           // If not found by external_id, try transaction_id
           if (findError || !transaction) {
-            const { data: transactionsByTxnId, error: findError2 } = await supabase
-              .from("transactions")
-              .select("transaction_id, external_id")
-              .eq("transaction_id", reference)
-              .eq("profile_id", user.id)
-              .limit(1);
+            // Try finding by transaction_id (without profile_id filter since it's unique)
+            const { data: transactionsByTxnId, error: findError2 } =
+              await supabase
+                .from("transactions")
+                .select("transaction_id, external_id, profile_id")
+                .eq("transaction_id", reference)
+                .limit(1);
 
-            if (findError2 || !transactionsByTxnId || transactionsByTxnId.length === 0) {
-              throw new Error("Transaction not found in database");
+            if (
+              findError2 ||
+              !transactionsByTxnId ||
+              transactionsByTxnId.length === 0
+            ) {
+              // Last attempt: find by profile_id and recent transactions
+              // This handles cases where profile_id might not match exactly
+              // Also try finding most recent pending transaction for this user as fallback
+              const { data: recentTransactions, error: recentError } =
+                await supabase
+                  .from("transactions")
+                  .select("transaction_id, external_id, profile_id")
+                  .eq("profile_id", user.id)
+                  .or(
+                    `external_id.eq.${reference},transaction_id.eq.${reference}`
+                  )
+                  .order("created_at", { ascending: false })
+                  .limit(5);
+
+              if (
+                recentError ||
+                !recentTransactions ||
+                recentTransactions.length === 0
+              ) {
+                // Final fallback: Get most recent pending transaction for this user/project
+                // This helps if the reference doesn't match but we know a payment was just made
+                console.log(
+                  "Trying final fallback: most recent pending transaction"
+                );
+                const { data: pendingTxn, error: pendingError } = await supabase
+                  .from("transactions")
+                  .select("transaction_id, external_id, profile_id")
+                  .eq("profile_id", user.id)
+                  .eq("status", "Pending")
+                  .eq("type", "Payin")
+                  .order("created_at", { ascending: false })
+                  .limit(1);
+
+                if (!pendingError && pendingTxn && pendingTxn.length > 0) {
+                  console.log(
+                    "Found most recent pending transaction:",
+                    pendingTxn[0]
+                  );
+                  transaction = pendingTxn[0];
+                } else {
+                  console.error("Transaction lookup attempts:", {
+                    byExternalId: { error: findError, found: !!transaction },
+                    byTransactionId: {
+                      error: findError2,
+                      found: !!transactionsByTxnId?.[0],
+                    },
+                    byProfileAndRef: {
+                      error: recentError,
+                      found: recentTransactions?.length || 0,
+                    },
+                    byPendingFallback: {
+                      error: pendingError,
+                      found: pendingTxn?.length || 0,
+                    },
+                    reference,
+                    userId: user.id,
+                  });
+                  throw new Error("Transaction not found in database");
+                }
+              } else {
+                transaction = recentTransactions[0];
+              }
+            } else {
+              transaction = transactionsByTxnId[0];
             }
-            transaction = transactionsByTxnId[0];
           }
 
           internalTransactionId = transaction.transaction_id;
-          console.log("Found transaction with internal ID:", internalTransactionId);
+          console.log(
+            "Found transaction with internal ID:",
+            internalTransactionId
+          );
         } catch (findError) {
           console.error("Error finding transaction:", findError);
-          throw new Error("Unable to find transaction. Please contact support.");
+          throw new Error(
+            "Unable to find transaction. Please contact support."
+          );
         }
       }
 
@@ -1184,7 +1265,10 @@ const InvestmentsPage = () => {
         throw new Error("Invalid transaction ID format");
       }
 
-      console.log("Verifying payment with internal transaction_id:", internalTransactionId);
+      console.log(
+        "Verifying payment with internal transaction_id:",
+        internalTransactionId
+      );
 
       // Call the backend verification API directly
       // MUST use internal transaction_id - backend does not accept Paystack references
@@ -1200,33 +1284,128 @@ const InvestmentsPage = () => {
         }
       );
 
-      const result = await response.json();
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error("Verification API error:", {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorData,
+        });
+        throw new Error(
+          errorData.message ||
+            `Verification failed: ${response.status} ${response.statusText}`
+        );
+      }
 
-      if (result.status === "success") {
+      const result = await response.json();
+      console.log("Verification API response:", result);
+
+      if (result.status === "success" || result.success === true) {
+        // Payment verified successfully - update transaction status if still pending
+        // Backend might not have updated it automatically
+        try {
+          const supabase = createClient();
+          const {
+            data: { user },
+          } = await supabase.auth.getUser();
+
+          if (user && internalTransactionId && profile) {
+            // Update transaction status to Complete if it's still Pending
+            // Use profile.id (not user.id) to match the transaction's profile_id
+            const { data: updateData, error: updateError } = await supabase
+              .from("transactions")
+              .update({
+                status: "Complete",
+                updated_at: new Date().toISOString(),
+              })
+              .eq("transaction_id", internalTransactionId)
+              .eq("profile_id", profile.id) // Use profile.id for RLS
+              .eq("status", "Pending") // Only update if still pending
+              .select(); // Return updated data to verify
+
+            if (updateError) {
+              console.error(
+                "Failed to update transaction status:",
+                updateError
+              );
+              console.error("Update error details:", {
+                code: updateError.code,
+                message: updateError.message,
+                details: updateError.details,
+                hint: updateError.hint,
+                transactionId: internalTransactionId,
+                profileId: profile.id,
+              });
+            } else if (updateData && updateData.length > 0) {
+              console.log(
+                "Transaction status updated to Complete:",
+                updateData
+              );
+              // Refresh transactions list to show updated status
+              try {
+                await refreshTransactions();
+                showToast("Transaction completed successfully!", "success");
+              } catch (refreshErr) {
+                console.warn("Failed to refresh transactions:", refreshErr);
+              }
+            } else {
+              console.warn(
+                "Update query succeeded but no rows were updated. Transaction may already be Complete or doesn't exist."
+              );
+            }
+          } else {
+            console.warn(
+              "Cannot update transaction: missing user, transactionId, or profile"
+            );
+          }
+        } catch (updateErr) {
+          console.warn("Error updating transaction status:", updateErr);
+          // Don't fail the verification if update fails
+        }
+
         // Payment verified successfully
         setCurrentStep("success");
 
-        // Check if backend already created transaction (to avoid double unit deduction)
+        // Verify backend transaction exists (backend creates all transactions)
         // Backend verification API should have already created the transaction
-        const backendTransactionId = result.transaction_id || internalTransactionId;
-        const updateResult = await checkOrCreateInvestmentTransaction(
+        const backendTransactionId =
+          result.transaction_id || internalTransactionId;
+        const transactionCheck = await checkBackendTransaction(
           backendTransactionId,
-          selectedInvestment?.id || "",
-          quantity,
-          selectedInvestment?.price ? selectedInvestment.price * quantity : 0
+          selectedInvestment?.id || ""
         );
 
-        if (updateResult.success) {
+        if (transactionCheck.success) {
+          console.log(
+            "Payment verified - backend transaction:",
+            transactionCheck.transactionId || "pending"
+          );
           // Refresh projects to update available units
           refreshProjects();
         }
       } else {
-        // Payment verification failed
-        setCurrentStep("error");
+        // Payment verification failed or still pending
+        console.warn("Payment verification result:", result);
+        const errorMessage =
+          result.message ||
+          result.reason ||
+          "Payment verification did not succeed. The payment may still be processing.";
+        throw new Error(errorMessage);
       }
     } catch (error) {
       console.error("Payment verification error:", error);
-      setCurrentStep("error");
+
+      // Don't show error modal - just log and allow user to retry
+      // The transaction might still be processing or backend might update it later
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Payment verification failed. Please try again or contact support.";
+
+      console.warn("Verification error (not showing modal):", errorMessage);
+
+      // Don't set error step - allow user to try again
+      // setCurrentStep("error");
     } finally {
       setIsVerifyingPayment(false);
     }
@@ -1464,9 +1643,13 @@ const InvestmentsPage = () => {
                 <Card className="overflow-hidden cursor-pointer group h-full hover:shadow-lg transition-shadow duration-200">
                   <div className="relative">
                     <img
-                      src={project.cover_image_url}
+                      src={
+                        project.cover_image_url ||
+                        "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop"
+                      }
                       alt={project.project_name}
                       className="w-full h-48 object-cover"
+                      loading="lazy"
                     />
                     <div className="absolute top-3 left-3">
                       <div className="px-2 py-1.5 bg-blue-600 rounded-xl inline-flex justify-center items-center gap-1">
@@ -2239,7 +2422,7 @@ const InvestmentsPage = () => {
                               Pay with MoMo
                             </p>
                           </div>
-                          <div className="flex gap-2">
+                          {/* <div className="flex gap-2">
                             <img
                               src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjI0IiBoZWlnaHQ9IjI0IiByeD0iNCIgZmlsbD0iI0ZGQ0MwMCIvPgo8dGV4dCB4PSIxMiIgeT0iMTYiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSI4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0iIzAwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSI+TVROPC90ZXh0Pgo8L3N2Zz4K"
                               alt="MTN"
@@ -2251,7 +2434,7 @@ const InvestmentsPage = () => {
                             <div className="w-6 h-6 bg-orange-500 rounded text-white text-xs flex items-center justify-center font-bold">
                               A
                             </div>
-                          </div>
+                          </div> */}
                         </div>
 
                         {/* Bank Card */}
@@ -2280,71 +2463,11 @@ const InvestmentsPage = () => {
                         </div>
                       </RadioGroup>
                       {selectedPaymentMethod === "mobile" && (
-                        <div className="p-4 bg-green-50 rounded-lg border border-green-200 space-y-4">
-                          <div>
-                            <Label className="text-sm font-medium">
-                              Select services provider
-                            </Label>
-                            <Select
-                              value={paymentDetails.provider}
-                              onValueChange={(value) =>
-                                setPaymentDetails({
-                                  ...paymentDetails,
-                                  provider: value,
-                                })
-                              }
-                            >
-                              <SelectTrigger className="mt-1">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="MTN">MTN</SelectItem>
-                                <SelectItem value="Vodafone">
-                                  Vodafone
-                                </SelectItem>
-                                <SelectItem value="AirtelTigo">
-                                  AirtelTigo
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div>
-                            <Label className="text-sm font-medium">
-                              Phone number
-                            </Label>
-                            <div className="flex mt-1">
-                              <div className="flex items-center px-3  border border-r-0 rounded-l-md bg-green-100">
-                                <span className="text-sm">+233</span>
-                              </div>
-                              <Input
-                                placeholder="Eg. 55 567 8905"
-                                value={paymentDetails.mobileNumber}
-                                onChange={(e) =>
-                                  setPaymentDetails({
-                                    ...paymentDetails,
-                                    mobileNumber: e.target.value,
-                                  })
-                                }
-                                className="rounded-l-none px-3 py-2 "
-                              />
-                            </div>
-                          </div>
-
-                          <div className="flex items-center justify-between p-3 bg-green-100 rounded">
-                            <span className="text-sm font-medium">
-                              Should we save this MoMo number?
-                            </span>
-                            <Switch
-                              checked={paymentDetails.savePayment}
-                              onCheckedChange={(checked) =>
-                                setPaymentDetails({
-                                  ...paymentDetails,
-                                  savePayment: checked,
-                                })
-                              }
-                            />
-                          </div>
+                        <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-sm text-blue-800">
+                            You will be redirected to Paystack to enter your
+                            mobile number and network provider.
+                          </p>
                         </div>
                       )}
 

@@ -41,8 +41,8 @@ const DashboardContent = ({ children, className }: DashboardLayoutProps) => {
             <div className="flex items-center gap-2">
               <div className="w-10 h-10">
                 <Image
-                  src="/s-logo.png"
-                  alt="Farm House"
+                  src="/y-logo.svg"
+                  alt="AgriPath Logo"
                   width={10}
                   height={10}
                   className="w-10 h-10 "

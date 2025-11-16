@@ -37,25 +37,29 @@ const SignInPage = () => {
     }));
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleOAuthSignIn = async (provider: "google" | "apple" | "github") => {
     try {
       setIsLoading(true);
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider,
         options: {
           redirectTo: `${window.location.origin}/dashboard`,
-          queryParams: {
+          queryParams: provider === "google" ? {
             access_type: "offline",
             prompt: "consent",
-          },
+          } : undefined,
+          // Customize OAuth branding
+          skipBrowserRedirect: false,
         },
       });
 
       if (error) {
-        console.error("Error signing in with Google:", error);
+        console.error(`Error signing in with ${provider}:`, error);
+        alert(`Error signing in with ${provider}: ${error.message}`);
       }
     } catch (error) {
-      console.error("Error signing in with Google:", error);
+      console.error(`Error signing in with ${provider}:`, error);
+      alert(`Error signing in with ${provider}. Please try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -118,10 +122,10 @@ const SignInPage = () => {
 
           {/* Form Container - Dark Card */}
           <div className="bg-[#191919f3] rounded-2xl p-6 space-y-5">
-            {/* Google Sign In Button - Dark with border */}
+            {/* Google Sign In Button */}
             <button
               type="button"
-              onClick={handleGoogleSignIn}
+              onClick={() => handleOAuthSignIn("google")}
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 py-3.5 px-4 rounded-xl hover:bg-white/5 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
             >
@@ -288,7 +292,7 @@ const SignInPage = () => {
             {/* Google Sign In Button */}
             <button
               type="button"
-              onClick={handleGoogleSignIn}
+              onClick={() => handleOAuthSignIn("google")}
               disabled={isLoading}
               className="w-full flex items-center justify-center gap-3 bg-white text-gray-900 py-3.5 px-4 rounded-xl hover:bg-gray-50 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed font-medium shadow-sm hover:shadow-md"
             >

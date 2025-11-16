@@ -269,15 +269,91 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
     }
   }, [profile?.id]);
 
-  // Poll for new notifications every 30 seconds
+  // Real-time subscription for notifications (replaces polling)
   useEffect(() => {
     if (!profile?.id) return;
 
-    const interval = setInterval(() => {
-      fetchNotifications();
-    }, 30000);
+    const supabase = createClient();
+    let channel: any = null;
 
-    return () => clearInterval(interval);
+    try {
+      channel = supabase
+        .channel("notifications-changes")
+        .on(
+          "postgres_changes",
+          {
+            event: "*", // Listen to INSERT and UPDATE
+            schema: "public",
+            table: "users_notifications",
+            filter: `user_id=eq.${profile.id}`, // Only listen to user's notifications
+          },
+          (payload) => {
+            console.log("Notifications table changed:", payload);
+
+            if (payload.eventType === "INSERT") {
+              // New notification added - fetch to get full data
+              fetchNotifications();
+            } else if (payload.eventType === "UPDATE") {
+              // Notification updated (e.g., marked as read)
+              const updatedNotification = payload.new as any;
+              
+              setNotifications((prevNotifications) => {
+                const index = prevNotifications.findIndex(
+                  (n) => n.id === updatedNotification.id
+                );
+
+                if (index !== -1) {
+                  // Update existing notification
+                  const updated = [...prevNotifications];
+                  updated[index] = {
+                    id: updatedNotification.id,
+                    title: updatedNotification.title,
+                    body: updatedNotification.body,
+                    type: updatedNotification.type,
+                    status: updatedNotification.status,
+                    created_at: updatedNotification.created_at,
+                    read_at: updatedNotification.read_at,
+                    clicked_at: updatedNotification.clicked_at,
+                  };
+                  return updated;
+                } else {
+                  // New notification not in current list, fetch to get it
+                  fetchNotifications();
+                  return prevNotifications;
+                }
+              });
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log("Real-time notifications subscription status:", status);
+          if (status === "SUBSCRIBED") {
+            console.log("✅ Successfully subscribed to notifications changes");
+            console.log("🔄 Replaced polling with real-time updates");
+          } else if (status === "CHANNEL_ERROR") {
+            console.warn("❌ Real-time notifications subscription failed, falling back to polling");
+            // Fallback to polling if realtime fails
+            const interval = setInterval(() => {
+              fetchNotifications();
+            }, 30000);
+            return () => clearInterval(interval);
+          }
+        });
+    } catch (error) {
+      console.error("Failed to set up real-time notifications subscription:", error);
+      // Fallback to polling on error
+      const interval = setInterval(() => {
+        fetchNotifications();
+      }, 30000);
+      return () => clearInterval(interval);
+    }
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, [profile?.id]);
 
   const value: NotificationContextType = {
