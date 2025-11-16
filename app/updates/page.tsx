@@ -225,12 +225,17 @@ const UpdatesPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="min-h-screen bg-gray-50">
+      <div className="px-4 py-4">
+        <UserHeader title="Latest Updates" />
+      </div>
+      <div className="min-h-screen ">
+        {/* User Header */}
+
         {/* Header */}
-        <div className="bg-white border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
+        <div className=" border-b border-gray-200 px-4 py-4 sticky top-0 z-10">
           <div className="flex flex-col gap-3">
             {/* Top row with title and bell */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between rounded-lg">
               {showDetailView ? (
                 <div className="flex items-center gap-3">
                   <Button
@@ -250,11 +255,6 @@ const UpdatesPage = () => {
                   Latest Updates
                 </h1>
               )}
-              <div className="flex items-center gap-2">
-                <div className="text-xs text-gray-600 hidden sm:block">
-                  Thursday, 18 September 2025 • 05:53 PM GMT
-                </div>
-              </div>
             </div>
 
             {/* Search Bar - only show on list view */}
@@ -624,7 +624,7 @@ const UpdatesPage = () => {
                 </div>
 
                 {/* Media Section */}
-                {selectedUpdate.media && selectedUpdate.media.length > 0 && (
+                {selectedUpdate.media && selectedUpdate.media.length > 0 ? (
                   <div className="mt-6 sm:mt-8">
                     <h3 className="text-base sm:text-lg font-semibold text-green-600 mb-4">
                       Media
@@ -633,16 +633,16 @@ const UpdatesPage = () => {
                       {selectedUpdate.media.map((media) => (
                         <div
                           key={media.id}
-                          className="cursor-pointer rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-150"
+                          className="cursor-pointer rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-150 bg-gray-100"
                           onClick={() => handleMediaClick(media)}
                         >
-                          <div className="aspect-square relative">
+                          <div className="aspect-square relative bg-gray-100">
                             <Image
                               src={media.image}
                               alt={media.title}
-                              width={300}
-                              height={300}
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 640px) 100vw, 50vw"
                             />
                             <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
                               <div className="opacity-0 hover:opacity-100 transition-opacity duration-200">
@@ -656,7 +656,26 @@ const UpdatesPage = () => {
                       ))}
                     </div>
                   </div>
-                )}
+                ) : selectedUpdate.image &&
+                  selectedUpdate.image !==
+                    "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop" ? (
+                  <div className="mt-6 sm:mt-8">
+                    <h3 className="text-base sm:text-lg font-semibold text-green-600 mb-4">
+                      Media
+                    </h3>
+                    <div className="rounded-lg overflow-hidden shadow-sm bg-gray-100">
+                      <div className="aspect-video relative">
+                        <Image
+                          src={selectedUpdate.image}
+                          alt={selectedUpdate.title}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 768px) 100vw, 80vw"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="flex items-center justify-center h-full">
@@ -700,36 +719,38 @@ const UpdatesPage = () => {
             <div className="p-6">
               {selectedMedia && (
                 <div className="space-y-4">
-                  <div className="aspect-video rounded-lg overflow-hidden">
+                  <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 relative">
                     <Image
                       src={selectedMedia.image}
                       alt={selectedMedia.title}
-                      width={800}
-                      height={450}
-                      className="w-full h-full object-cover"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
                     />
                   </div>
-                  <div className="flex space-x-2">
-                    {selectedUpdate?.media.map((media) => (
-                      <button
-                        key={media.id}
-                        onClick={() => setSelectedMedia(media)}
-                        className={`w-16 h-16 rounded-lg overflow-hidden ${
-                          selectedMedia.id === media.id
-                            ? "ring-2 ring-green-500"
-                            : "hover:opacity-80"
-                        }`}
-                      >
-                        <Image
-                          src={media.image}
-                          alt={media.title}
-                          width={64}
-                          height={64}
-                          className="w-full h-full object-cover"
-                        />
-                      </button>
-                    ))}
-                  </div>
+                  {selectedUpdate?.media && selectedUpdate.media.length > 1 && (
+                    <div className="flex space-x-2 overflow-x-auto pb-2">
+                      {selectedUpdate.media.map((media) => (
+                        <button
+                          key={media.id}
+                          onClick={() => setSelectedMedia(media)}
+                          className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 ${
+                            selectedMedia.id === media.id
+                              ? "ring-2 ring-green-500"
+                              : "hover:opacity-80"
+                          }`}
+                        >
+                          <Image
+                            src={media.image}
+                            alt={media.title}
+                            width={64}
+                            height={64}
+                            className="w-full h-full object-cover"
+                          />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
