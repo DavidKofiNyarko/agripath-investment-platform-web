@@ -16,7 +16,10 @@ import { useUser } from "@/contexts/UserContext";
 import { useProfile } from "@/contexts/ProfileContext";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useWallet } from "@/contexts/WalletContext";
-import { ArrowDownLeft, Loader2 } from "lucide-react";
+import { ArrowDownLeft, Loader2, CreditCard, Lock, Calendar, Info } from "lucide-react";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Switch } from "@/components/ui/switch";
+import { motion } from "framer-motion";
 import KycRequiredModal from "@/components/kyc-required-modal";
 
 interface TopupFormData {
@@ -249,157 +252,252 @@ const WalletTopup: React.FC = () => {
             </p>
           </div>
 
-          {/* Channel Selection */}
-          <div className="space-y-2">
-            <Label htmlFor="channel">Payment Method</Label>
-            <Select
+          {/* Payment Method Selection */}
+          <div className="space-y-4">
+            <Label className="text-sm font-medium text-gray-700">
+              Payment Method
+            </Label>
+            <RadioGroup
               value={formData.channel}
               onValueChange={(value: "card" | "momo") =>
                 handleInputChange("channel", value)
               }
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Select payment method" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="card">Card Payment</SelectItem>
-                <SelectItem value="momo">Mobile Money</SelectItem>
-              </SelectContent>
-            </Select>
+              {/* Bank Card Option */}
+              <div
+                className={`w-full rounded-xl border transition-all duration-200 ${
+                  formData.channel === "card"
+                    ? "border-green-500 bg-green-50/30"
+                    : "border-gray-200"
+                }`}
+              >
+                {/* Header Row */}
+                <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6 w-full">
+                  <RadioGroupItem
+                    value="card"
+                    id="card"
+                    className="w-6 h-6 sm:w-7 sm:h-7"
+                  />
+                  <Label
+                    htmlFor="card"
+                    className="flex-1 cursor-pointer"
+                  >
+                    <span className="text-base sm:text-lg font-medium">
+                      Bank Card
+                    </span>
+                  </Label>
+                  <CreditCard className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
+                </div>
+
+                {/* Expanded Form Fields */}
+                {formData.channel === "card" && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden border-t border-green-200"
+                  >
+                    <div className="p-6 space-y-8">
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Cardholder Name
+                        </Label>
+                        <Input
+                          id="card_holder"
+                          value={formData.card_holder}
+                          onChange={(e) =>
+                            handleInputChange("card_holder", e.target.value)
+                          }
+                          placeholder="Amanda"
+                          className="mt-1 border-0 outline-none focus:ring-0 focus:border-0 transition-all duration-200"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-sm font-medium text-gray-700">
+                          Card number
+                        </Label>
+                        <div className="relative mt-1">
+                          <Input
+                            id="pan"
+                            placeholder="0000 0000 0000 0000"
+                            value={formData.pan}
+                            onChange={(e) => handleInputChange("pan", e.target.value)}
+                            maxLength={19}
+                            inputMode="numeric"
+                            className="pr-20 border-0 outline-none focus:ring-0 focus:border-0 transition-all duration-200"
+                          />
+                          <div className="absolute right-3 top-1/2 transform -translate-y-1/2 flex items-center space-x-2">
+                            <Lock className="h-4 w-4 text-gray-400" />
+                            <div className="w-8 h-5 bg-red-500 rounded flex items-center justify-center">
+                              <span className="text-white text-xs font-bold">
+                                MC
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700">
+                            Expiry Date
+                          </Label>
+                          <div className="relative mt-1">
+                            <div className="flex gap-2">
+                              <Select
+                                value={formData.exp_month}
+                                onValueChange={(value) =>
+                                  handleInputChange("exp_month", value)
+                                }
+                              >
+                                <SelectTrigger className="flex-1 border-0 outline-none focus:ring-0 focus:border-0">
+                                  <SelectValue placeholder="MM" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: 12 }, (_, i) => (
+                                    <SelectItem
+                                      key={i + 1}
+                                      value={String(i + 1).padStart(2, "0")}
+                                    >
+                                      {String(i + 1).padStart(2, "0")}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <Select
+                                value={formData.exp_year}
+                                onValueChange={(value) =>
+                                  handleInputChange("exp_year", value)
+                                }
+                              >
+                                <SelectTrigger className="flex-1 border-0 outline-none focus:ring-0 focus:border-0">
+                                  <SelectValue placeholder="YY" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {Array.from({ length: 10 }, (_, i) => {
+                                    const year = new Date().getFullYear() + i;
+                                    return (
+                                      <SelectItem
+                                        key={year}
+                                        value={String(year).slice(-2)}
+                                      >
+                                        {String(year).slice(-2)}
+                                      </SelectItem>
+                                    );
+                                  })}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <Calendar className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400 pointer-events-none" />
+                          </div>
+                        </div>
+
+                        <div>
+                          <Label className="text-sm font-medium text-gray-700">
+                            CVC/CVV
+                          </Label>
+                          <div className="relative mt-1">
+                            <Input
+                              id="cvv"
+                              type="password"
+                              placeholder="000"
+                              value={formData.cvv}
+                              onChange={(e) => handleInputChange("cvv", e.target.value)}
+                              maxLength={4}
+                              inputMode="numeric"
+                              className="pr-8 text-sm sm:text-base border-0 outline-none focus:ring-0 focus:border-0 transition-all duration-200"
+                            />
+                            <Info className="absolute right-2 sm:right-3 top-1/2 transform -translate-y-1/2 h-3 w-3 sm:h-4 sm:w-4 text-gray-400 pointer-events-none" />
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <Label
+                          htmlFor="saveCard"
+                          className="text-sm text-gray-600"
+                        >
+                          Save this payment method
+                        </Label>
+                        <Switch
+                          id="saveCard"
+                          checked={savePaymentMethod}
+                          onCheckedChange={setSavePaymentMethod}
+                        />
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+
+              {/* Mobile Money Option */}
+              <div
+                className={`w-full rounded-xl border transition-all duration-200 ${
+                  formData.channel === "momo"
+                    ? "border-green-500 bg-green-50/30"
+                    : "border-gray-200"
+                }`}
+              >
+                <div className="flex h-[100px] sm:h-[110px] p-6 sm:p-8 items-center gap-4 sm:gap-6 w-full">
+                  <RadioGroupItem
+                    value="momo"
+                    id="momo"
+                    className="w-6 h-6 sm:w-7 sm:h-7"
+                  />
+                  <Label
+                    htmlFor="momo"
+                    className="flex-1 cursor-pointer"
+                  >
+                    <span className="text-base sm:text-lg font-medium">
+                      Mobile Money
+                    </span>
+                  </Label>
+                  <ArrowDownLeft className="h-6 w-6 sm:h-7 sm:w-7 text-green-600" />
+                </div>
+                {formData.channel === "momo" && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden border-t border-green-200"
+                  >
+                    <div className="p-6">
+                      <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <p className="text-sm text-blue-800">
+                          You will be redirected to Paystack to enter your mobile
+                          number and network provider.
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            </RadioGroup>
           </div>
 
-          {/* Card Payment Fields */}
+          {/* Email Field - Only show for card payments */}
           {formData.channel === "card" && (
-            <>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="pan"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Card Number
-                </Label>
-                <Input
-                  id="pan"
-                  value={formData.pan}
-                  onChange={(e) => handleInputChange("pan", e.target.value)}
-                  placeholder="5314455096498197"
-                  required
-                  className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="exp_month">Expiry Month</Label>
-                  <Select
-                    value={formData.exp_month}
-                    onValueChange={(value) =>
-                      handleInputChange("exp_month", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="MM" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 12 }, (_, i) => (
-                        <SelectItem
-                          key={i + 1}
-                          value={String(i + 1).padStart(2, "0")}
-                        >
-                          {String(i + 1).padStart(2, "0")}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="exp_year">Expiry Year</Label>
-                  <Select
-                    value={formData.exp_year}
-                    onValueChange={(value) =>
-                      handleInputChange("exp_year", value)
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="YY" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 10 }, (_, i) => {
-                        const year = new Date().getFullYear() + i;
-                        return (
-                          <SelectItem key={year} value={String(year).slice(-2)}>
-                            {String(year).slice(-2)}
-                          </SelectItem>
-                        );
-                      })}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="cvv"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  CVV
-                </Label>
-                <Input
-                  id="cvv"
-                  type="password"
-                  value={formData.cvv}
-                  onChange={(e) => handleInputChange("cvv", e.target.value)}
-                  placeholder="553"
-                  maxLength={4}
-                  required
-                  className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="card_holder"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Card Holder Name
-                </Label>
-                <Input
-                  id="card_holder"
-                  value={formData.card_holder}
-                  onChange={(e) =>
-                    handleInputChange("card_holder", e.target.value)
-                  }
-                  placeholder="David"
-                  required
-                  className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label
-                  htmlFor="user_email"
-                  className="text-sm font-medium text-gray-700"
-                >
-                  Email
-                </Label>
-                <Input
-                  id="user_email"
-                  type="email"
-                  value={formData.user_email}
-                  onChange={(e) =>
-                    handleInputChange("user_email", e.target.value)
-                  }
-                  placeholder="david@test.com"
-                  required
-                  className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
-                />
-              </div>
-            </>
-          )}
-
-          {/* Mobile Money Info */}
-          {formData.channel === "momo" && (
-            <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-              <p className="text-sm text-blue-800">
-                You will be redirected to Paystack to enter your mobile number
-                and network provider.
-              </p>
+            <div className="space-y-2">
+              <Label
+                htmlFor="user_email"
+                className="text-sm font-medium text-gray-700"
+              >
+                Email
+              </Label>
+              <Input
+                id="user_email"
+                type="email"
+                value={formData.user_email}
+                onChange={(e) =>
+                  handleInputChange("user_email", e.target.value)
+                }
+                placeholder="david@test.com"
+                required
+                className="!w-full !px-4 !py-3 !bg-gray-50 !border-0 !rounded-xl !text-gray-900 placeholder:!text-gray-400 focus:!bg-white focus:!ring-0 focus:!border-0 focus:!outline-none focus-visible:!ring-0 focus-visible:!border-0 focus-visible:!outline-none !transition-all !duration-200 !shadow-sm hover:!bg-gray-100"
+              />
             </div>
           )}
 
