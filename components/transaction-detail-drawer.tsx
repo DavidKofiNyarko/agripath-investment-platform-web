@@ -202,7 +202,8 @@ export function TransactionDetailDrawer({
 
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // First try to fetch from transactions table
+      let { data, error } = await supabase
         .from("transactions")
         .select(
           `
@@ -225,7 +226,68 @@ export function TransactionDetailDrawer({
         .eq("id", transactionId)
         .single();
 
-      if (error) throw error;
+      // If not found in transactions, try payouts table
+      if (error || !data) {
+        const { data: payoutData, error: payoutError } = await supabase
+          .from("payouts")
+          .select(
+            `
+            *,
+            projects:project_id(
+              project_name,
+              farm_location,
+              total_units,
+              unit_price,
+              status
+            ),
+            profile:profile_id(
+              first_name,
+              last_name,
+              email,
+              phone_number
+            )
+          `
+          )
+          .eq("id", transactionId)
+          .single();
+
+        // If payout query also fails, throw the error
+        if (payoutError || !payoutData) {
+          throw payoutError || new Error("Transaction not found in transactions or payouts");
+        }
+
+        // Convert payout to transaction format
+        data = {
+          id: payoutData.id,
+          transaction_id: payoutData.payout_id,
+          profile_id: payoutData.profile_id || "",
+          project_id: payoutData.project_id || "",
+          type: "Payout",
+          amount: payoutData.amount,
+          unit: 0,
+          status: payoutData.status || "Pending",
+          fees: 0,
+          net_amount: payoutData.calculated_amount || payoutData.amount,
+          description: payoutData.description || "",
+          processed_at: payoutData.processed_at,
+          created_at: payoutData.created_at,
+          updated_at: payoutData.updated_at,
+          channel: (payoutData.payment_method?.toLowerCase() || "momo") as string,
+          external_id: payoutData.external_ref,
+          network: payoutData.account_issuer,
+          account_number: payoutData.account_bank || "",
+          projects: Array.isArray(payoutData.projects)
+            ? payoutData.projects[0]
+            : payoutData.projects,
+          profile: Array.isArray(payoutData.profile)
+            ? payoutData.profile[0]
+            : payoutData.profile,
+        };
+      }
+
+      if (!data) {
+        throw new Error("Transaction not found");
+      }
 
       setTransaction({
         ...data,
