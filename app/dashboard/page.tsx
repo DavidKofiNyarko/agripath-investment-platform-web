@@ -934,9 +934,9 @@ const DashboardPage = () => {
                       {/* ROI and Duration side by side: ROI on left, Duration on right */}
                       <div className="py-2">
                         <div className="flex flex-row justify-between items-start gap-4">
-                          <div className="flex-1 flex flex-col justify-start items-start gap-2">
+                          <div className="flex-1 flex flex-row items-center gap-2">
                             <div className="text-left text-neutral-800 text-xs font-semibold">
-                              Return (ROI)
+                              Return:
                             </div>
                             <div className="text-left text-orange-500 text-sm font-bold leading-none tracking-tight">
                               {project.expected_return_rate}-

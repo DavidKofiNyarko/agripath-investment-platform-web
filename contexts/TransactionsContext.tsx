@@ -225,7 +225,7 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
 
     try {
       channel = supabase
-        .channel("transactions-changes")
+        .channel(`transactions-changes-${user.id}`)
         .on(
           "postgres_changes",
           {
@@ -296,8 +296,9 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
           console.log("Real-time transactions subscription status:", status);
           if (status === "SUBSCRIBED") {
             console.log("✅ Successfully subscribed to transactions table changes");
-          } else if (status === "CHANNEL_ERROR") {
-            console.warn("❌ Real-time transactions subscription failed");
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            console.warn(`❌ Real-time transactions subscription failed (${status})`);
+            console.warn("💡 Make sure realtime is enabled for the 'transactions' table in Supabase");
           }
         });
     } catch (error) {

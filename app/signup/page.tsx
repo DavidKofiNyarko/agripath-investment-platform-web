@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/contexts/UserContext";
 import Image from "next/image";
 import Loading from "@/components/ui/loading";
+import { countries } from "@/lib/countries";
 
 const SignupPage = () => {
   const { user } = useUser();
@@ -21,8 +22,103 @@ const SignupPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [phoneError, setPhoneError] = useState("");
   const supabase = createClient();
   const router = useRouter();
+
+  // Country code mapping
+  const getCountryCode = (country: string): { code: string; flag: string } => {
+    // Normalize country name (handle hyphens and spaces)
+    const countryLower = country.toLowerCase().replace(/-/g, " ");
+    const countryMap: Record<string, { code: string; flag: string }> = {
+      "ghana": { code: "+233", flag: "🇬🇭" },
+      "nigeria": { code: "+234", flag: "🇳🇬" },
+      "kenya": { code: "+254", flag: "🇰🇪" },
+      "uganda": { code: "+256", flag: "🇺🇬" },
+      "south africa": { code: "+27", flag: "🇿🇦" },
+      "south-africa": { code: "+27", flag: "🇿🇦" },
+      "tanzania": { code: "+255", flag: "🇹🇿" },
+      "ethiopia": { code: "+251", flag: "🇪🇹" },
+      "egypt": { code: "+20", flag: "🇪🇬" },
+      "morocco": { code: "+212", flag: "🇲🇦" },
+      "algeria": { code: "+213", flag: "🇩🇿" },
+      "tunisia": { code: "+216", flag: "🇹🇳" },
+      "libya": { code: "+218", flag: "🇱🇾" },
+      "sudan": { code: "+249", flag: "🇸🇩" },
+      "cameroon": { code: "+237", flag: "🇨🇲" },
+      "ivory coast": { code: "+225", flag: "🇨🇮" },
+      "ivory-coast": { code: "+225", flag: "🇨🇮" },
+      "senegal": { code: "+221", flag: "🇸🇳" },
+      "zimbabwe": { code: "+263", flag: "🇿🇼" },
+      "zambia": { code: "+260", flag: "🇿🇲" },
+      "mozambique": { code: "+258", flag: "🇲🇿" },
+      "madagascar": { code: "+261", flag: "🇲🇬" },
+      "angola": { code: "+244", flag: "🇦🇴" },
+      "mali": { code: "+223", flag: "🇲🇱" },
+      "burkina faso": { code: "+226", flag: "🇧🇫" },
+      "burkina-faso": { code: "+226", flag: "🇧🇫" },
+      "niger": { code: "+227", flag: "🇳🇪" },
+      "rwanda": { code: "+250", flag: "🇷🇼" },
+      "benin": { code: "+229", flag: "🇧🇯" },
+      "guinea": { code: "+224", flag: "🇬🇳" },
+      "burundi": { code: "+257", flag: "🇧🇮" },
+      "togo": { code: "+228", flag: "🇹🇬" },
+      "sierra leone": { code: "+232", flag: "🇸🇱" },
+      "sierra-leone": { code: "+232", flag: "🇸🇱" },
+      "liberia": { code: "+231", flag: "🇱🇷" },
+      "chad": { code: "+235", flag: "🇹🇩" },
+      "central african republic": { code: "+236", flag: "🇨🇫" },
+      "central-african-republic": { code: "+236", flag: "🇨🇫" },
+      "mauritania": { code: "+222", flag: "🇲🇷" },
+      "eritrea": { code: "+291", flag: "🇪🇷" },
+      "gambia": { code: "+220", flag: "🇬🇲" },
+      "botswana": { code: "+267", flag: "🇧🇼" },
+      "namibia": { code: "+264", flag: "🇳🇦" },
+      "gabon": { code: "+241", flag: "🇬🇦" },
+      "lesotho": { code: "+266", flag: "🇱🇸" },
+      "guinea-bissau": { code: "+245", flag: "🇬🇼" },
+      "guinea bissau": { code: "+245", flag: "🇬🇼" },
+      "equatorial guinea": { code: "+240", flag: "🇬🇶" },
+      "equatorial-guinea": { code: "+240", flag: "🇬🇶" },
+      "mauritius": { code: "+230", flag: "🇲🇺" },
+      "eswatini": { code: "+268", flag: "🇸🇿" },
+      "djibouti": { code: "+253", flag: "🇩🇯" },
+      "comoros": { code: "+269", flag: "🇰🇲" },
+      "cape verde": { code: "+238", flag: "🇨🇻" },
+      "cabo verde": { code: "+238", flag: "🇨🇻" },
+      "sao tome and principe": { code: "+239", flag: "🇸🇹" },
+      "sao-tome-and-principe": { code: "+239", flag: "🇸🇹" },
+      "seychelles": { code: "+248", flag: "🇸🇨" },
+    };
+
+    return countryMap[countryLower] || { code: "+1", flag: "🌍" };
+  };
+
+  // Get current country code
+  const currentCountryCode = formData.country ? getCountryCode(formData.country) : { code: "+233", flag: "🇬🇭" };
+
+  // Phone number validation by country
+  const validatePhoneNumber = (phone: string, country: string): boolean => {
+    const cleanedPhone = phone.replace(/\s/g, "");
+    
+    switch (country.toLowerCase()) {
+      case "ghana":
+        // Ghana: 0[2-9][0-9]{8} (10 digits starting with 0, second digit 2-9)
+        return /^0[2-9][0-9]{8}$/.test(cleanedPhone);
+      case "nigeria":
+        // Nigeria: 0[7-9][0-9]{9} (11 digits starting with 0, second digit 7-9)
+        return /^0[7-9][0-9]{9}$/.test(cleanedPhone);
+      case "kenya":
+        // Kenya: 0[7][0-9]{8} (10 digits starting with 07)
+        return /^0[7][0-9]{8}$/.test(cleanedPhone);
+      case "uganda":
+        // Uganda: 0[7][0-9]{8} (10 digits starting with 07)
+        return /^0[7][0-9]{8}$/.test(cleanedPhone);
+      default:
+        // Default: at least 9 digits
+        return /^[0-9]{9,15}$/.test(cleanedPhone);
+    }
+  };
 
   React.useEffect(() => {
     if (user) {
@@ -38,10 +134,28 @@ const SignupPage = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFormData((prev) => {
+      const newData = {
+        ...prev,
+        [name]: value,
+      };
+      
+      // Validate phone number when it changes
+      if (name === "phoneNumber" || name === "country") {
+        if (newData.phoneNumber && newData.country) {
+          const isValid = validatePhoneNumber(newData.phoneNumber, newData.country);
+          if (newData.phoneNumber.trim() && !isValid) {
+            setPhoneError("Please enter a valid phone number for the selected country");
+          } else {
+            setPhoneError("");
+          }
+        } else {
+          setPhoneError("");
+        }
+      }
+      
+      return newData;
+    });
   };
 
   const handleOAuthSignUp = async (provider: "google" | "apple" | "github") => {
@@ -98,6 +212,19 @@ const SignupPage = () => {
 
     if (!passwordsMatch) {
       alert("Passwords do not match");
+      return;
+    }
+
+    // Validate phone number
+    if (formData.phoneNumber && formData.country) {
+      const isValid = validatePhoneNumber(formData.phoneNumber, formData.country);
+      if (!isValid) {
+        setPhoneError("Please enter a valid phone number for the selected country");
+        return;
+      }
+    }
+
+    if (phoneError) {
       return;
     }
 
@@ -249,47 +376,41 @@ const SignupPage = () => {
                 <option value="" className="bg-[#1A1A1A] lg:bg-[#091506f3]">
                   Select Country
                 </option>
-                <option
-                  value="ghana"
-                  className="bg-[#1A1A1A] lg:bg-[#091506f3]"
-                >
-                  🇬🇭 Ghana
-                </option>
-                <option
-                  value="nigeria"
-                  className="bg-[#1A1A1A] lg:bg-[#091506f3]"
-                >
-                  🇳🇬 Nigeria
-                </option>
-                <option
-                  value="kenya"
-                  className="bg-[#1A1A1A] lg:bg-[#091506f3]"
-                >
-                  🇰🇪 Kenya
-                </option>
-                <option
-                  value="uganda"
-                  className="bg-[#1A1A1A] lg:bg-[#091506f3]"
-                >
-                  🇺🇬 Uganda
-                </option>
+                {countries.map((country) => (
+                  <option
+                    key={country.value}
+                    value={country.value}
+                    className="bg-[#1A1A1A] lg:bg-[#091506f3]"
+                  >
+                    {country.label}
+                  </option>
+                ))}
               </select>
 
               {/* Phone Number */}
-              <div className="flex">
-                <div className="flex items-center px-3 border border-r-0 border-white/10 rounded-l-xl bg-[#1A1A1A] text-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all duration-200 lg:bg-white/5 lg:backdrop-blur-sm lg:placeholder:text-white/40 lg:focus:ring-white/30 lg:focus:border-white/30 lg:hover:border-white/15">
-                  <span className="text-sm">🇬🇭</span>
-                  <span className="ml-1 text-sm">+233</span>
+              <div>
+                <div className="flex">
+                  <div className="flex items-center px-3 border border-r-0 border-white/10 rounded-l-xl bg-[#1A1A1A] text-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all duration-200 lg:bg-white/5 lg:backdrop-blur-sm lg:placeholder:text-white/40 lg:focus:ring-white/30 lg:focus:border-white/30 lg:hover:border-white/15">
+                    <span className="text-sm">{currentCountryCode.flag}</span>
+                    <span className="ml-1 text-sm">{currentCountryCode.code}</span>
+                  </div>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    placeholder="000 000 000"
+                    className={`flex-1 px-4 py-3.5 bg-[#1A1A1A] border rounded-r-xl text-white placeholder:text-white focus:outline-none focus:ring-2 transition-all duration-200 lg:bg-white/5 lg:backdrop-blur-sm lg:placeholder:text-white/40 lg:focus:ring-white/30 lg:focus:border-white/30 lg:hover:border-white/15 ${
+                      phoneError
+                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                        : "border-white/10 focus:ring-white/20 focus:border-white/20"
+                    }`}
+                    required
+                  />
                 </div>
-                <input
-                  type="tel"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleInputChange}
-                  placeholder="000 000 000"
-                  className="flex-1 px-4 py-3.5 bg-[#1A1A1A] border border-white/10 rounded-r-xl text-white placeholder:text-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all duration-200 lg:bg-white/5 lg:backdrop-blur-sm lg:placeholder:text-white/40 lg:focus:ring-white/30 lg:focus:border-white/30 lg:hover:border-white/15"
-                  required
-                />
+                {phoneError && (
+                  <p className="mt-1 text-xs text-red-400">{phoneError}</p>
+                )}
               </div>
 
               {/* Password */}
@@ -576,35 +697,41 @@ const SignupPage = () => {
                 <option value="" className="bg-[#091506f3]">
                   Select Country
                 </option>
-                <option value="ghana" className="bg-[#091506f3]">
-                  🇬🇭 Ghana
-                </option>
-                <option value="nigeria" className="bg-[#091506f3]">
-                  🇳🇬 Nigeria
-                </option>
-                <option value="kenya" className="bg-[#091506f3]">
-                  🇰🇪 Kenya
-                </option>
-                <option value="uganda" className="bg-[#091506f3]">
-                  🇺🇬 Uganda
-                </option>
+                {countries.map((country) => (
+                  <option
+                    key={country.value}
+                    value={country.value}
+                    className="bg-[#091506f3]"
+                  >
+                    {country.label}
+                  </option>
+                ))}
               </select>
 
               {/* Phone Number */}
-              <div className="flex">
-                <div className="flex items-center px-3 border border-r-0 border-white/10 rounded-l-xl bg-white/5 backdrop-blur-sm text-white/80">
-                  <span className="text-sm">🇬🇭</span>
-                  <span className="ml-1 text-sm">+233</span>
+              <div>
+                <div className="flex">
+                  <div className="flex items-center px-3 border border-r-0 border-white/10 rounded-l-xl bg-white/5 backdrop-blur-sm text-white/80">
+                    <span className="text-sm">{currentCountryCode.flag}</span>
+                    <span className="ml-1 text-sm">{currentCountryCode.code}</span>
+                  </div>
+                  <input
+                    type="tel"
+                    name="phoneNumber"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                    placeholder="000 000 000"
+                    className={`flex-1 px-4 py-3.5 bg-white/5 backdrop-blur-sm border rounded-r-xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 transition-all duration-200 hover:border-white/15 ${
+                      phoneError
+                        ? "border-red-500 focus:ring-red-500 focus:border-red-500"
+                        : "border-white/10 focus:ring-white/30 focus:border-white/30"
+                    }`}
+                    required
+                  />
                 </div>
-                <input
-                  type="tel"
-                  name="phoneNumber"
-                  value={formData.phoneNumber}
-                  onChange={handleInputChange}
-                  placeholder="000 000 000"
-                  className="flex-1 px-4 py-3.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-r-xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/30 transition-all duration-200 hover:border-white/15"
-                  required
-                />
+                {phoneError && (
+                  <p className="mt-1 text-xs text-red-400">{phoneError}</p>
+                )}
               </div>
 
               {/* Password */}

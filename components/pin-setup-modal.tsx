@@ -268,7 +268,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({
             <Label className="text-center block text-sm font-medium text-gray-700 mb-4">
               Enter your 4-digit PIN
             </Label>
-            <div className="flex justify-center space-x-3">
+            <div className="flex justify-center items-center gap-2 sm:gap-3">
               {pin.map((digit, index) => (
                 <Input
                   key={index}
@@ -281,7 +281,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({
                   value={digit}
                   onChange={(e) => handlePinChange(index, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
-                  className="w-12 h-12 text-center text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500"
+                  className="w-12 h-12 sm:w-14 sm:h-14 text-center text-lg sm:text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500 rounded-lg"
                   maxLength={1}
                   disabled={isLoading}
                 />
@@ -293,7 +293,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({
             <Label className="text-center block text-sm font-medium text-gray-700 mb-4">
               Confirm your 4-digit PIN
             </Label>
-            <div className="flex justify-center space-x-3">
+            <div className="flex justify-center items-center gap-2 sm:gap-3">
               {confirmPin.map((digit, index) => (
                 <Input
                   key={index}
@@ -306,7 +306,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({
                   value={digit}
                   onChange={(e) => handlePinChange(index, e.target.value, true)}
                   onKeyDown={(e) => handleKeyDown(index, e, true)}
-                  className="w-12 h-12 text-center text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500"
+                  className="w-12 h-12 sm:w-14 sm:h-14 text-center text-lg sm:text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500 rounded-lg"
                   maxLength={1}
                   disabled={isLoading}
                 />

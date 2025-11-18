@@ -9,6 +9,7 @@ import {
   SheetDescription,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { createClient } from "@/app/utils/supabase/client";
 import {
   Calendar,
@@ -184,6 +185,232 @@ const formatHumanReadableDate = (dateString: string) => {
     }),
     relative: relativeTime,
   };
+};
+
+const generateReceipt = (transaction: TransactionDetail) => {
+  const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  const date = new Date(transaction.created_at).toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+  const receiptHTML = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Transaction Receipt - Agripath</title>
+      <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+          padding: 20px; 
+          background: #f8f9fa;
+        }
+        .receipt { 
+          max-width: 400px; 
+          margin: 0 auto; 
+          background: white; 
+          border-radius: 12px; 
+          box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+          overflow: hidden;
+        }
+        .header { 
+          background: linear-gradient(135deg, #16a34a, #15803d); 
+          color: white; 
+          padding: 24px; 
+          text-align: center; 
+        }
+        .logo { 
+          font-size: 24px; 
+          font-weight: bold; 
+          margin-bottom: 8px;
+        }
+        .subtitle { 
+          font-size: 14px; 
+          opacity: 0.9; 
+        }
+        .content { 
+          padding: 24px; 
+        }
+        .section { 
+          margin-bottom: 20px; 
+        }
+        .section-title { 
+          font-size: 16px; 
+          font-weight: 600; 
+          color: #374151; 
+          margin-bottom: 12px; 
+          border-bottom: 2px solid #e5e7eb; 
+          padding-bottom: 8px;
+        }
+        .detail-row { 
+          display: flex; 
+          justify-content: space-between; 
+          margin-bottom: 8px; 
+          font-size: 14px;
+        }
+        .label { 
+          color: #6b7280; 
+        }
+        .value { 
+          font-weight: 500; 
+          color: #111827; 
+        }
+        .total { 
+          background: #f3f4f6; 
+          padding: 16px; 
+          border-radius: 8px; 
+          margin-top: 16px;
+        }
+        .total-amount { 
+          font-size: 20px; 
+          font-weight: bold; 
+          color: #16a34a; 
+          text-align: center;
+        }
+        .footer { 
+          background: #f9fafb; 
+          padding: 16px; 
+          text-align: center; 
+          font-size: 12px; 
+          color: #6b7280;
+        }
+        @media print {
+          body { padding: 0; background: white; }
+          .receipt { box-shadow: none; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="receipt">
+        <div class="header">
+          <div class="logo">🌱 Agripath</div>
+          <div class="subtitle">Transaction Receipt</div>
+        </div>
+        
+        <div class="content">
+          <div class="section">
+            <div class="section-title">Transaction Details</div>
+            <div class="detail-row">
+              <span class="label">Transaction ID:</span>
+              <span class="value">${transaction.transaction_id}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Type:</span>
+              <span class="value">${getTypeLabel(transaction.type)}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Date & Time:</span>
+              <span class="value">${date}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Status:</span>
+              <span class="value">${transaction.status}</span>
+            </div>
+          </div>
+
+          ${transaction.profile ? `
+          <div class="section">
+            <div class="section-title">Investor Details</div>
+            <div class="detail-row">
+              <span class="label">Name:</span>
+              <span class="value">${transaction.profile.first_name} ${transaction.profile.last_name}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Email:</span>
+              <span class="value">${transaction.profile.email}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Phone:</span>
+              <span class="value">${transaction.profile.phone_number}</span>
+            </div>
+          </div>
+          ` : ''}
+
+          ${transaction.project ? `
+          <div class="section">
+            <div class="section-title">Project Details</div>
+            <div class="detail-row">
+              <span class="label">Project:</span>
+              <span class="value">${transaction.project.project_name}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Location:</span>
+              <span class="value">${transaction.project.farm_location}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Units:</span>
+              <span class="value">${transaction.unit}</span>
+            </div>
+          </div>
+          ` : ''}
+
+          <div class="section">
+            <div class="section-title">Financial Details</div>
+            <div class="detail-row">
+              <span class="label">Amount:</span>
+              <span class="value">GHS ${transaction.amount.toLocaleString()}</span>
+            </div>
+            ${transaction.fees > 0 ? `
+            <div class="detail-row">
+              <span class="label">Fees:</span>
+              <span class="value">GHS ${transaction.fees.toLocaleString()}</span>
+            </div>
+            ` : ''}
+            <div class="detail-row">
+              <span class="label">Net Amount:</span>
+              <span class="value">GHS ${transaction.net_amount.toLocaleString()}</span>
+            </div>
+            <div class="detail-row">
+              <span class="label">Channel:</span>
+              <span class="value">${transaction.channel}</span>
+            </div>
+          </div>
+
+          <div class="total">
+            <div class="total-amount">
+              GHS ${transaction.net_amount.toLocaleString()}
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>Thank you for using Agripath!</p>
+          <p>This receipt confirms your transaction.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  if (isMobile) {
+    // For mobile, open in new window for better compatibility
+    const printWindow = window.open("", "_blank");
+    if (printWindow) {
+      printWindow.document.write(receiptHTML);
+      printWindow.document.close();
+      // Give time for content to load, then trigger print/save
+      setTimeout(() => {
+        printWindow.print();
+      }, 250);
+    }
+  } else {
+    // For desktop, download the file
+    const blob = new Blob([receiptHTML], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `agripath-receipt-${transaction.transaction_id}.html`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
 };
 
 export function TransactionDetailDrawer({
@@ -578,6 +805,20 @@ export function TransactionDetailDrawer({
               )}
             </div>
           </div>
+
+          {/* Download Receipt Button */}
+          {transaction && (
+            <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
+              <Button
+                onClick={() => generateReceipt(transaction)}
+                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                variant="default"
+              >
+                <Receipt className="h-4 w-4 mr-2" />
+                Download Receipt
+              </Button>
+            </div>
+          )}
         </div>
       </SheetContent>
     </Sheet>

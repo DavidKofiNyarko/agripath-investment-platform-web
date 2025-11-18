@@ -330,7 +330,7 @@ export const ProjectsProvider = ({
 
     try {
       channel = supabase
-        .channel("projects-changes")
+        .channel("projects-changes-global")
         .on(
           "postgres_changes",
           {
@@ -374,14 +374,10 @@ export const ProjectsProvider = ({
           if (status === "SUBSCRIBED") {
             console.log("✅ Successfully subscribed to projects table changes");
             console.log("Real-time is now active for projects table");
-          } else if (status === "CHANNEL_ERROR") {
-            console.warn(
-              "❌ Real-time subscription failed. This might be because real-time is not enabled for the projects table."
-            );
-          } else if (status === "TIMED_OUT") {
-            console.warn("⏰ Real-time subscription timed out");
-          } else if (status === "CLOSED") {
-            console.warn("🔒 Real-time subscription closed");
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            console.warn(`❌ Real-time subscription failed (${status})`);
+            console.warn("💡 Make sure realtime is enabled for the 'projects' table in Supabase");
+            console.warn("💡 Run: ALTER PUBLICATION supabase_realtime ADD TABLE projects;");
           }
         });
     } catch (error) {

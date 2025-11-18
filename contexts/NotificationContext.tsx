@@ -154,67 +154,82 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
   const markAsRead = async (notificationId: string) => {
     try {
-      // Update local state immediately for better UX
+      if (!profile?.id) {
+        console.error("Cannot mark as read: no profile ID");
+        return;
+      }
+
+      const supabase = createClient();
+      const now = new Date().toISOString();
+      
+      // First, get the notification to get its type
+      const { data: notification, error: notificationError } = await supabase
+        .from("notifications")
+        .select("type")
+        .eq("id", notificationId)
+        .single();
+
+      if (notificationError || !notification) {
+        console.error("Failed to fetch notification:", notificationError);
+        return;
+      }
+
+      // Check if the record exists
+      const { data: existing, error: checkError } = await supabase
+        .from("users_notifications")
+        .select("id")
+        .eq("notifications_id", notificationId)
+        .eq("user_id", profile.id)
+        .maybeSingle();
+
+      let error;
+      
+      if (existing && !checkError) {
+        // Update existing record
+        const { error: updateError } = await supabase
+          .from("users_notifications")
+          .update({
+            read_at: now,
+            updated_at: now,
+          })
+          .eq("notifications_id", notificationId)
+          .eq("user_id", profile.id);
+        error = updateError;
+      } else {
+        // Insert new record with required type field
+        const { error: insertError } = await supabase
+          .from("users_notifications")
+          .insert({
+            notifications_id: notificationId,
+            user_id: profile.id,
+            type: notification.type || "Email",
+            read_at: now,
+            updated_at: now,
+          });
+        error = insertError;
+      }
+
+      if (error) {
+        console.error("Failed to mark notification as read:", error);
+        // Don't update local state if database update failed
+        return;
+      }
+
+      // Update local state after successful database update
       setNotifications((prev) =>
         prev.map((n) =>
           n.id === notificationId
             ? {
                 ...n,
                 status: "read" as const,
-                read_at: new Date().toISOString(),
+                read_at: now,
               }
             : n
         )
       );
 
-      // Update or create entry in users_notifications table
-      if (profile?.id) {
-        const supabase = createClient();
-        const now = new Date().toISOString();
-        
-        // First, check if entry exists
-        const { data: existing } = await supabase
-          .from("users_notifications")
-          .select("id")
-          .eq("notifications_id", notificationId)
-          .eq("user_id", profile.id)
-          .single();
-
-        if (existing) {
-          // Update existing entry
-          const { error } = await supabase
-            .from("users_notifications")
-            .update({
-              read_at: now,
-              updated_at: now,
-            })
-            .eq("notifications_id", notificationId)
-            .eq("user_id", profile.id);
-
-          if (error) {
-            console.error(
-              "Failed to mark notification as read in database:",
-              error
-            );
-          }
-        } else {
-          // Create new entry
-          const { error } = await supabase
-            .from("users_notifications")
-            .insert({
-              notifications_id: notificationId,
-              user_id: profile.id,
-              read_at: now,
-            });
-
-          if (error) {
-            console.error(
-              "Failed to create notification read entry:",
-              error
-            );
-          }
-        }
-      }
+      // Update unread count
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (err) {
       console.error("Error marking notification as read:", err);
     }
@@ -222,59 +237,86 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
   const markAllAsRead = async () => {
     try {
-      // Update local state immediately
+      if (!profile?.id) {
+        console.error("Cannot mark all as read: no profile ID");
+        return;
+      }
+
+      const unreadNotifications = notifications.filter(
+        (n) => n.status === "unread"
+      );
+
+      if (unreadNotifications.length === 0) {
+        return;
+      }
+
+      const supabase = createClient();
+      const now = new Date().toISOString();
+      const notificationIds = unreadNotifications.map((n) => n.id);
+
+      // First, fetch all notification types in one query
+      const { data: notifications, error: notificationsError } = await supabase
+        .from("notifications")
+        .select("id, type")
+        .in("id", notificationIds);
+
+      if (notificationsError) {
+        console.error("Failed to fetch notification types:", notificationsError);
+        return;
+      }
+
+      // Create a map of notification_id -> type
+      const notificationTypeMap = new Map(
+        (notifications || []).map((n) => [n.id, n.type || "Email"])
+      );
+
+      // Process each notification individually to handle insert/update
+      for (const notificationId of notificationIds) {
+        // Check if record exists
+        const { data: existing, error: checkError } = await supabase
+          .from("users_notifications")
+          .select("id")
+          .eq("notifications_id", notificationId)
+          .eq("user_id", profile.id)
+          .maybeSingle();
+
+        const notificationType = notificationTypeMap.get(notificationId) || "Email";
+
+        if (existing && !checkError) {
+          // Update existing record
+          await supabase
+            .from("users_notifications")
+            .update({
+              read_at: now,
+              updated_at: now,
+            })
+            .eq("notifications_id", notificationId)
+            .eq("user_id", profile.id);
+        } else {
+          // Insert new record with required type field
+          await supabase
+            .from("users_notifications")
+            .insert({
+              notifications_id: notificationId,
+              user_id: profile.id,
+              type: notificationType,
+              read_at: now,
+              updated_at: now,
+            });
+        }
+      }
+
+      // Update local state after successful database update
       setNotifications((prev) =>
         prev.map((n) => ({
           ...n,
           status: "read" as const,
-          read_at: new Date().toISOString(),
+          read_at: n.read_at || now,
         }))
       );
 
-      // Mark all unread notifications as read in database
-      if (profile?.id) {
-        const unreadNotifications = notifications.filter(
-          (n) => n.status === "unread"
-        );
-
-        if (unreadNotifications.length > 0) {
-          const supabase = createClient();
-          const now = new Date().toISOString();
-          const notificationIds = unreadNotifications.map((n) => n.id);
-
-          // For each unread notification, upsert into users_notifications
-          for (const notificationId of notificationIds) {
-            // Check if entry exists
-            const { data: existing } = await supabase
-              .from("users_notifications")
-              .select("id")
-              .eq("notifications_id", notificationId)
-              .eq("user_id", profile.id)
-              .single();
-
-            if (existing) {
-              // Update existing
-              await supabase
-                .from("users_notifications")
-                .update({
-                  read_at: now,
-                  updated_at: now,
-                })
-                .eq("notifications_id", notificationId)
-                .eq("user_id", profile.id);
-            } else {
-              // Create new
-              await supabase
-                .from("users_notifications")
-                .insert({
-                  notifications_id: notificationId,
-                  user_id: profile.id,
-                  read_at: now,
-                });
-            }
-          }
-        }
-      }
+      // Reset unread count
+      setUnreadCount(0);
     } catch (err) {
       console.error("Error marking all notifications as read:", err);
     }
@@ -347,11 +389,12 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
     const supabase = createClient();
     let channel: any = null;
+    let fallbackInterval: NodeJS.Timeout | null = null;
 
     try {
       // Listen to notifications table for new published notifications
       channel = supabase
-        .channel("notifications-changes")
+        .channel(`notifications-changes-${profile.id}`)
         .on(
           "postgres_changes",
           {
@@ -399,31 +442,39 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           if (status === "SUBSCRIBED") {
             console.log("✅ Successfully subscribed to notifications changes");
             console.log("🔄 Replaced polling with real-time updates");
-          } else if (status === "CHANNEL_ERROR") {
-            console.warn("❌ Real-time notifications subscription failed, falling back to polling");
+            // Clear any existing fallback interval
+            if (fallbackInterval) {
+              clearInterval(fallbackInterval);
+              fallbackInterval = null;
+            }
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            console.warn(`❌ Real-time notifications subscription failed (${status}), falling back to polling`);
             // Fallback to polling if realtime fails
-            const interval = setInterval(() => {
-              fetchNotifications();
-            }, 30000);
-            return () => clearInterval(interval);
+            if (!fallbackInterval) {
+              fallbackInterval = setInterval(() => {
+                fetchNotifications();
+              }, 30000);
+            }
           }
         });
     } catch (error) {
       console.error("Failed to set up real-time notifications subscription:", error);
       // Fallback to polling on error
-      const interval = setInterval(() => {
+      fallbackInterval = setInterval(() => {
         fetchNotifications();
       }, 30000);
-      return () => clearInterval(interval);
     }
 
     // Cleanup subscription on unmount
     return () => {
+      if (fallbackInterval) {
+        clearInterval(fallbackInterval);
+      }
       if (channel) {
         supabase.removeChannel(channel);
       }
     };
-  }, [profile?.id]);
+  }, [profile?.id, fetchNotifications]);
 
   const value: NotificationContextType = {
     notifications,

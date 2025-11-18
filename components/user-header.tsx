@@ -95,7 +95,9 @@ const UserHeader: React.FC<UserHeaderProps> = ({
   };
 
   const handleNotificationClick = async (notificationId: string) => {
-    // Navigate to updates page and mark as read
+    // Mark as read first
+    await markAsRead(notificationId);
+    // Navigate to updates page
     navigateToUpdates(notificationId);
     setIsNotificationOpen(false);
   };

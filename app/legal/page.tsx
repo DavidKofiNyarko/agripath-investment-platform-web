@@ -531,8 +531,8 @@ const LegalContent = () => {
                 dangerouslySetInnerHTML={{ __html: currentContent.content }}
               />
 
-              {/* Contact Support */}
-              <div className="mt-12 pt-8 border-t border-gray-200">
+              {/* Contact Support - Hidden for now */}
+              {/* <div className="mt-12 pt-8 border-t border-gray-200">
                 <div className="text-center">
                   <p className="text-gray-600 mb-4">
                     {activeTab === "terms" &&
@@ -551,7 +551,7 @@ const LegalContent = () => {
                     — Our team is here to guide you.
                   </p>
                 </div>
-              </div>
+              </div> */}
             </motion.div>
           </div>
         </div>

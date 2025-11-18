@@ -314,14 +314,37 @@ const InvestmentsPage = () => {
     setPaymentDetails({ ...paymentDetails, cardName: value });
   };
 
-  // Handle search with optimization
+  // Handle search with debouncing to prevent refresh on every entry
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+  
   const handleSearch = (value: string) => {
     setSearchQuery(value);
-    // Only trigger search if value is empty, has 4+ characters, or user hits enter
-    if (value.length === 0 || value.length >= 4) {
+    
+    // Clear existing timeout
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    // Only trigger search if value is empty or after 500ms delay
+    if (value.length === 0) {
       setFilters({ ...filters, search: value });
+    } else {
+      // Debounce search - wait 500ms after user stops typing
+      const timeout = setTimeout(() => {
+        setFilters({ ...filters, search: value });
+      }, 500);
+      setSearchTimeout(timeout);
     }
   };
+  
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [searchTimeout]);
 
   // Handle search button click or enter key
   const handleSearchSubmit = () => {
@@ -517,8 +540,10 @@ const InvestmentsPage = () => {
       <html>
       <head>
         <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Investment Receipt - Agripath</title>
         <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
           body { 
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
             margin: 0; 
@@ -594,6 +619,10 @@ const InvestmentsPage = () => {
             font-size: 12px; 
             color: #6b7280;
           }
+          @media print {
+            body { padding: 0; background: white; }
+            .receipt { box-shadow: none; }
+          }
         </style>
       </head>
       <body>
@@ -659,16 +688,32 @@ const InvestmentsPage = () => {
       </html>
     `;
 
-    // Create and download the receipt
-    const blob = new Blob([receiptHTML], { type: "text/html" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `agripath-investment-receipt-${receiptData.transactionId}.html`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    // Create and download the receipt - mobile-friendly
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    
+    if (isMobile) {
+      // For mobile, open in new window for better compatibility
+      const printWindow = window.open("", "_blank");
+      if (printWindow) {
+        printWindow.document.write(receiptHTML);
+        printWindow.document.close();
+        // Give time for content to load, then trigger print/save
+        setTimeout(() => {
+          printWindow.print();
+        }, 250);
+      }
+    } else {
+      // For desktop, download the file
+      const blob = new Blob([receiptHTML], { type: "text/html" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `agripath-investment-receipt-${receiptData.transactionId}.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    }
   };
 
   const handleInvestNow = () => {

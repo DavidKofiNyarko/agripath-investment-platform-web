@@ -778,7 +778,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
     try {
       channel = supabase
-        .channel("wallet-changes")
+        .channel(`wallet-changes-${user.id}`)
         .on(
           "postgres_changes",
           {
@@ -804,8 +804,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           console.log("Real-time wallet subscription status:", status);
           if (status === "SUBSCRIBED") {
             console.log("✅ Successfully subscribed to wallet changes");
-          } else if (status === "CHANNEL_ERROR") {
-            console.warn("❌ Real-time wallet subscription failed");
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            console.warn(`❌ Real-time wallet subscription failed (${status})`);
+            console.warn("💡 Make sure realtime is enabled for the 'wallets' table in Supabase");
           }
         });
     } catch (error) {

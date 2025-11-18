@@ -32,7 +32,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
   onClose,
   onSuccess,
 }) => {
-  const { profile, updateProfile } = useProfile();
+  const { profile, updateUserPin, verifyUserPin } = useProfile();
   const [currentStep, setCurrentStep] = useState<
     "current" | "new" | "confirm" | "success"
   >("current");
@@ -131,35 +131,40 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
     setIsLoading(true);
     setError("");
 
-    // Simulate API call delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Validate current PIN
-    if (profile?.pin === pinValue) {
-      setError("");
-      setIsLoading(false);
-      setCurrentStep("new");
-      setTimeout(() => {
-        pinRefs.current[0]?.focus();
-      }, 100);
-    } else {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      setIsLoading(false);
-
-      if (newAttempts >= maxAttempts) {
-        setError("Too many incorrect attempts. Please try again later.");
+    try {
+      // Validate current PIN using verifyUserPin which handles hashing
+      const isValid = await verifyUserPin(pinValue);
+      
+      if (isValid) {
+        setError("");
+        setIsLoading(false);
+        setCurrentStep("new");
         setTimeout(() => {
-          onClose();
-        }, 2000);
+          pinRefs.current[0]?.focus();
+        }, 100);
       } else {
-        setError(
-          `Incorrect PIN. ${maxAttempts - newAttempts} attempts remaining.`
-        );
-        triggerShake();
-        setCurrentPin(["", "", "", ""]);
-        pinRefs.current[0]?.focus();
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        setIsLoading(false);
+
+        if (newAttempts >= maxAttempts) {
+          setError("Too many incorrect attempts. Please try again later.");
+          setTimeout(() => {
+            onClose();
+          }, 2000);
+        } else {
+          setError(
+            `Incorrect PIN. ${maxAttempts - newAttempts} attempts remaining.`
+          );
+          triggerShake();
+          setCurrentPin(["", "", "", ""]);
+          pinRefs.current[0]?.focus();
+        }
       }
+    } catch (error) {
+      console.error("Error validating PIN:", error);
+      setIsLoading(false);
+      setError("Failed to validate PIN. Please try again.");
     }
   };
 
@@ -205,8 +210,8 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
     setError("");
 
     try {
-      // Update PIN in profile
-      await updateProfile({ pin: newPinValue });
+      // Update PIN using updateUserPin which handles hashing
+      await updateUserPin(newPinValue);
 
       setIsLoading(false);
       setCurrentStep("success");
@@ -406,7 +411,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
               <label className="text-center block text-sm font-medium text-gray-700 mb-4">
                 Enter your 4-digit PIN
               </label>
-              <div className="flex justify-center space-x-3">
+              <div className="flex justify-center items-center gap-2 sm:gap-3">
                 {getCurrentPinArray().map((digit, index) => (
                   <Input
                     key={index}
@@ -421,7 +426,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
                       handlePinChange(index, e.target.value, currentStep)
                     }
                     onKeyDown={(e) => handleKeyDown(index, e)}
-                    className="w-12 h-12 text-center text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500"
+                    className="w-12 h-12 sm:w-14 sm:h-14 text-center text-lg sm:text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500 rounded-lg"
                     maxLength={1}
                     disabled={isLoading}
                   />
