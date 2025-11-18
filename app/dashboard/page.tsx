@@ -1189,10 +1189,18 @@ const DashboardPage = () => {
                   className="flex items-start gap-2 sm:gap-3 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <Image
-                    src={
-                      update.image_url ||
-                      `https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=60&h=60&fit=crop`
-                    }
+                    src={(() => {
+                      if (
+                        Array.isArray(update.image_url) &&
+                        update.image_url.length > 0
+                      ) {
+                        return update.image_url[0];
+                      }
+                      if (typeof update.image_url === "string") {
+                        return update.image_url;
+                      }
+                      return `https://images.unsplash.com/photo-1574943320219-553eb213f72d?w=60&h=60&fit=crop`;
+                    })()}
                     alt={update.title}
                     width={60}
                     height={60}
