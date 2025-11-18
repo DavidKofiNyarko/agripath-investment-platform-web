@@ -10,7 +10,7 @@ import UserHeader from "@/components/user-header";
 import { usePortfolio } from "@/contexts/PortfolioContext";
 import { useProjects } from "@/contexts/ProjectsContext";
 import { useUpdates } from "@/contexts/UpdatesContext";
-import { useTransactions } from "@/contexts/TransactionsContext";
+import { Transaction, useTransactions } from "@/contexts/TransactionsContext";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -53,6 +53,7 @@ import {
 import PinValidationModal from "@/components/pin-validation-modal";
 import Loading from "@/components/ui/loading";
 import ProfileSetupFlow from "@/components/profile-setup-flow";
+import { PostgrestError, PostgrestSingleResponse } from "@supabase/supabase-js";
 
 // --- ViewMoreButton custom component ---
 const ViewMoreButton = ({
@@ -64,12 +65,11 @@ const ViewMoreButton = ({
   onClick?: () => void;
   label?: string;
   className?: string;
-  [x: string]: any;
-}) => {
+} & Record<string, unknown>) => {
   return (
     <div
       onClick={onClick}
-      className={`px-3 py-2 bg-white rounded-lg outline outline-[0.50px] outline-offset-[-0.50px] outline-AG=Green inline-flex justify-center items-center gap-2.5 cursor-pointer select-none active:opacity-90 ${className}`}
+      className={`px-3 py-2 bg-white rounded-lg outline-[0.50px] outline-offset-[-0.50px] outline-AG=Green inline-flex justify-center items-center gap-2.5 cursor-pointer select-none active:opacity-90 ${className}`}
       {...props}
       tabIndex={0}
       role="button"
@@ -137,7 +137,15 @@ const DashboardPage = () => {
     networkProvider: "",
     phoneNumber: "",
   });
-  const [withdrawResult, setWithdrawResult] = useState<any>(null);
+  interface WithdrawResult {
+    pending?: boolean;
+    transactionId?: string;
+    transferCode?: string;
+    success?: boolean;
+  }
+  const [withdrawResult, setWithdrawResult] = useState<WithdrawResult | null>(
+    null
+  );
   const [otpValue, setOtpValue] = useState("");
   const [isSubmittingOtp, setIsSubmittingOtp] = useState(false);
   const [otpError, setOtpError] = useState("");
@@ -256,7 +264,9 @@ const DashboardPage = () => {
         } else if (result.redirect_url) {
           window.open(result.redirect_url, "_blank");
           setRedirectUrl(result.redirect_url);
-          setTransactionId((result as any).transaction_id || "");
+          setTransactionId(
+            ("transaction_id" in result ? result.transaction_id : "") || ""
+          );
           // Don't set success - payment is pending verification
           setCurrentStep("loading");
         } else {
@@ -521,6 +531,10 @@ const DashboardPage = () => {
                 .order("created_at", { ascending: false })
                 .limit(1);
 
+            if (findError2) {
+              throw new Error(findError2.message);
+            }
+
             console.log("Search by transaction_id result:", {
               transactionsByTxnId,
               findError2,
@@ -545,7 +559,7 @@ const DashboardPage = () => {
                 `Transaction not found in database. Reference: ${reference}. Please wait a moment and try again, or contact support.`
               );
             }
-            transaction = transactionsByTxnId[0];
+            transaction = transactionsByTxnId[0] as Transaction;
           }
 
           internalTransactionId = transaction.transaction_id;
