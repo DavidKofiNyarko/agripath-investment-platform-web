@@ -81,43 +81,65 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
     setError(null);
 
     try {
-      // Fetch real notifications from users_notifications table
       const supabase = createClient();
-      const { data: notifications, error } = await supabase
-        .from("users_notifications")
-        .select(
-          `
-          id,
-          title,
-          body,
-          type,
-          status,
-          created_at,
-          read_at
-        `
-        )
-        .eq("user_id", profile.id)
+      
+      // Fetch published notifications
+      const { data: notifications, error: notificationsError } = await supabase
+        .from("notifications")
+        .select("id, title, body, type, status, created_at, published_at")
         .eq("status", "Published")
-        .order("created_at", { ascending: false })
+        .order("published_at", { ascending: false })
         .limit(50);
 
-      if (error) {
-        console.error("Error fetching notifications:", error);
+      if (notificationsError) {
+        console.error("Error fetching notifications:", notificationsError);
         setError("Failed to fetch notifications");
         return;
       }
 
+      if (!notifications || notifications.length === 0) {
+        setNotifications([]);
+        return;
+      }
+
+      // Fetch user's read status for these notifications
+      const notificationIds = notifications.map((n) => n.id);
+      const { data: userNotifications, error: userNotificationsError } = await supabase
+        .from("users_notifications")
+        .select("notifications_id, read_at, clicked_at")
+        .eq("user_id", profile.id)
+        .in("notifications_id", notificationIds);
+
+      if (userNotificationsError) {
+        console.error("Error fetching user notifications:", userNotificationsError);
+        // Continue anyway, just won't have read status
+      }
+
+      // Create a map of notification_id -> read status
+      const readStatusMap = new Map(
+        (userNotifications || []).map((un) => [
+          un.notifications_id,
+          { read_at: un.read_at, clicked_at: un.clicked_at },
+        ])
+      );
+
       // Transform the data to match our Notification interface
-      const transformedNotifications: Notification[] =
-        notifications?.map((notification) => ({
-          id: notification.id,
-          title: notification.title,
-          body: notification.body,
-          type: notification.type as "Email" | "SMS",
-          status: notification.read_at ? "read" : "unread",
-          created_at: notification.created_at,
-          read_at: notification.read_at,
-        })) || [];
+      const transformedNotifications: Notification[] = notifications.map(
+        (notification) => {
+          const userNotification = readStatusMap.get(notification.id);
+          
+          return {
+            id: notification.id,
+            title: notification.title,
+            body: notification.body,
+            type: (notification.type || "Email") as "Email" | "SMS",
+            status: userNotification?.read_at ? "read" : "unread",
+            created_at: notification.published_at || notification.created_at,
+            read_at: userNotification?.read_at,
+            clicked_at: userNotification?.clicked_at,
+          };
+        }
+      );
 
       setNotifications(transformedNotifications);
     } catch (err) {
@@ -145,23 +167,52 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
         )
       );
 
-      // Update in database using Supabase
+      // Update or create entry in users_notifications table
       if (profile?.id) {
         const supabase = createClient();
-        const { error } = await supabase
+        const now = new Date().toISOString();
+        
+        // First, check if entry exists
+        const { data: existing } = await supabase
           .from("users_notifications")
-          .update({
-            read_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", notificationId)
-          .eq("user_id", profile.id);
+          .select("id")
+          .eq("notifications_id", notificationId)
+          .eq("user_id", profile.id)
+          .single();
 
-        if (error) {
-          console.error(
-            "Failed to mark notification as read in database:",
-            error
-          );
+        if (existing) {
+          // Update existing entry
+          const { error } = await supabase
+            .from("users_notifications")
+            .update({
+              read_at: now,
+              updated_at: now,
+            })
+            .eq("notifications_id", notificationId)
+            .eq("user_id", profile.id);
+
+          if (error) {
+            console.error(
+              "Failed to mark notification as read in database:",
+              error
+            );
+          }
+        } else {
+          // Create new entry
+          const { error } = await supabase
+            .from("users_notifications")
+            .insert({
+              notifications_id: notificationId,
+              user_id: profile.id,
+              read_at: now,
+            });
+
+          if (error) {
+            console.error(
+              "Failed to create notification read entry:",
+              error
+            );
+          }
         }
       }
     } catch (err) {
@@ -180,7 +231,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
         }))
       );
 
-      // Update all unread notifications in database using Supabase
+      // Mark all unread notifications as read in database
       if (profile?.id) {
         const unreadNotifications = notifications.filter(
           (n) => n.status === "unread"
@@ -188,18 +239,39 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
         if (unreadNotifications.length > 0) {
           const supabase = createClient();
-          const { error } = await supabase
-            .from("users_notifications")
-            .update({
-              read_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            })
-            .eq("user_id", profile.id)
-            .eq("status", "Published")
-            .is("read_at", null);
+          const now = new Date().toISOString();
+          const notificationIds = unreadNotifications.map((n) => n.id);
 
-          if (error) {
-            console.error("Failed to mark all notifications as read:", error);
+          // For each unread notification, upsert into users_notifications
+          for (const notificationId of notificationIds) {
+            // Check if entry exists
+            const { data: existing } = await supabase
+              .from("users_notifications")
+              .select("id")
+              .eq("notifications_id", notificationId)
+              .eq("user_id", profile.id)
+              .single();
+
+            if (existing) {
+              // Update existing
+              await supabase
+                .from("users_notifications")
+                .update({
+                  read_at: now,
+                  updated_at: now,
+                })
+                .eq("notifications_id", notificationId)
+                .eq("user_id", profile.id);
+            } else {
+              // Create new
+              await supabase
+                .from("users_notifications")
+                .insert({
+                  notifications_id: notificationId,
+                  user_id: profile.id,
+                  read_at: now,
+                });
+            }
           }
         }
       }
@@ -277,52 +349,49 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
     let channel: any = null;
 
     try {
+      // Listen to notifications table for new published notifications
       channel = supabase
         .channel("notifications-changes")
         .on(
           "postgres_changes",
           {
-            event: "*", // Listen to INSERT and UPDATE
+            event: "INSERT", // Listen to new notifications
             schema: "public",
-            table: "users_notifications",
-            filter: `user_id=eq.${profile.id}`, // Only listen to user's notifications
+            table: "notifications",
+            filter: `status=eq.Published`, // Only published notifications
           },
           (payload) => {
-            console.log("Notifications table changed:", payload);
-
-            if (payload.eventType === "INSERT") {
-              // New notification added - fetch to get full data
-              fetchNotifications();
-            } else if (payload.eventType === "UPDATE") {
-              // Notification updated (e.g., marked as read)
-              const updatedNotification = payload.new as any;
-              
-              setNotifications((prevNotifications) => {
-                const index = prevNotifications.findIndex(
-                  (n) => n.id === updatedNotification.id
-                );
-
-                if (index !== -1) {
-                  // Update existing notification
-                  const updated = [...prevNotifications];
-                  updated[index] = {
-                    id: updatedNotification.id,
-                    title: updatedNotification.title,
-                    body: updatedNotification.body,
-                    type: updatedNotification.type,
-                    status: updatedNotification.status,
-                    created_at: updatedNotification.created_at,
-                    read_at: updatedNotification.read_at,
-                    clicked_at: updatedNotification.clicked_at,
-                  };
-                  return updated;
-                } else {
-                  // New notification not in current list, fetch to get it
-                  fetchNotifications();
-                  return prevNotifications;
-                }
-              });
-            }
+            console.log("New notification published:", payload);
+            // Fetch notifications to get the new one
+            fetchNotifications();
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "UPDATE", // Listen to updates (e.g., status changes)
+            schema: "public",
+            table: "notifications",
+            filter: `status=eq.Published`, // Only published notifications
+          },
+          (payload) => {
+            console.log("Notification updated:", payload);
+            // Fetch notifications to get updated data
+            fetchNotifications();
+          }
+        )
+        .on(
+          "postgres_changes",
+          {
+            event: "*", // Listen to read status changes
+            schema: "public",
+            table: "users_notifications",
+            filter: `user_id=eq.${profile.id}`, // Only user's read status
+          },
+          (payload) => {
+            console.log("Notification read status changed:", payload);
+            // Refresh to update read status
+            fetchNotifications();
           }
         )
         .subscribe((status) => {
