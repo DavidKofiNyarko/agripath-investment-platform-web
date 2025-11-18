@@ -203,7 +203,7 @@ export function TransactionDetailDrawer({
     setLoading(true);
     try {
       // First try to fetch from transactions table
-      let { data, error } = await supabase
+      const { data, error } = await supabase
         .from("transactions")
         .select(
           `
@@ -227,6 +227,7 @@ export function TransactionDetailDrawer({
         .single();
 
       // If not found in transactions, try payouts table
+      let transactionData = data;
       if (error || !data) {
         const { data: payoutData, error: payoutError } = await supabase
           .from("payouts")
@@ -253,11 +254,14 @@ export function TransactionDetailDrawer({
 
         // If payout query also fails, throw the error
         if (payoutError || !payoutData) {
-          throw payoutError || new Error("Transaction not found in transactions or payouts");
+          throw (
+            payoutError ||
+            new Error("Transaction not found in transactions or payouts")
+          );
         }
 
         // Convert payout to transaction format
-        data = {
+        transactionData = {
           id: payoutData.id,
           transaction_id: payoutData.payout_id,
           profile_id: payoutData.profile_id || "",
@@ -272,7 +276,8 @@ export function TransactionDetailDrawer({
           processed_at: payoutData.processed_at,
           created_at: payoutData.created_at,
           updated_at: payoutData.updated_at,
-          channel: (payoutData.payment_method?.toLowerCase() || "momo") as string,
+          channel: (payoutData.payment_method?.toLowerCase() ||
+            "momo") as string,
           external_id: payoutData.external_ref,
           network: payoutData.account_issuer,
           account_number: payoutData.account_bank || "",
@@ -285,16 +290,18 @@ export function TransactionDetailDrawer({
         };
       }
 
-      if (!data) {
+      if (!transactionData) {
         throw new Error("Transaction not found");
       }
 
       setTransaction({
-        ...data,
-        project: Array.isArray(data.projects)
-          ? data.projects[0]
-          : data.projects,
-        profile: Array.isArray(data.profile) ? data.profile[0] : data.profile,
+        ...transactionData,
+        project: Array.isArray(transactionData.projects)
+          ? transactionData.projects[0]
+          : transactionData.projects,
+        profile: Array.isArray(transactionData.profile)
+          ? transactionData.profile[0]
+          : transactionData.profile,
       });
     } catch (error) {
       console.error("Error fetching transaction detail:", error);
@@ -405,8 +412,8 @@ export function TransactionDetailDrawer({
             </div>
           </div>
 
-          {/* Payment Information Card */}
-          <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
+          {/* Payment Information Card - Commented out for now */}
+          {/* <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
               <Wallet className="h-4 w-4 text-blue-600" />
               Payment Information
@@ -460,7 +467,7 @@ export function TransactionDetailDrawer({
                 </div>
               )}
             </div>
-          </div>
+          </div> */}
 
           {/* Project Information Card */}
           {transaction.project && (
@@ -531,111 +538,42 @@ export function TransactionDetailDrawer({
             </div>
           )}
 
-          {/* Investor Information Card */}
-          {transaction.profile && (
-            <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <UserCheck className="h-4 w-4 text-orange-600" />
-                Investor Information
-              </h3>
-
-              <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
-                  <span className="text-gray-600 text-sm sm:text-base font-medium">
-                    Name
-                  </span>
-                  <span className="font-semibold text-gray-900 text-sm sm:text-base break-words sm:break-normal">
-                    {transaction.profile.first_name}{" "}
-                    {transaction.profile.last_name}
-                  </span>
-                </div>
-
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
-                  <span className="text-gray-600 text-sm sm:text-base font-medium flex items-center gap-2">
-                    <Mail className="h-4 w-4" />
-                    Email
-                  </span>
-                  <span className="font-semibold text-gray-900 text-xs sm:text-sm break-all sm:break-normal">
-                    {transaction.profile.email}
-                  </span>
-                </div>
-
-                {transaction.profile.phone_number && (
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
-                    <span className="text-gray-600 text-sm sm:text-base font-medium flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Phone
-                    </span>
-                    <span className="font-semibold text-gray-900 text-sm sm:text-base break-all sm:break-normal">
-                      {transaction.profile.phone_number}
-                    </span>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Transaction Timeline Card */}
-          <div className="bg-gradient-to-br from-blue-50/30 to-indigo-50/30 border border-blue-100/50 rounded-lg p-6 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-6">
+          {/* Transaction Timeline - Simplified */}
+          <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
+            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-gray-600" />
               Transaction Timeline
             </h3>
 
-            <div className="space-y-6">
-              <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/50">
-                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
-                      Transaction Created
-                    </h4>
-                    <p className="text-xs sm:text-sm text-gray-600">
-                      When this transaction was initiated
-                    </p>
-                  </div>
-                  <div className="text-left sm:text-right">
-                    <div className="font-semibold text-gray-900 text-xs sm:text-sm leading-tight">
-                      {formatHumanReadableDate(transaction.created_at).fullDate}
-                    </div>
-                    <div className="text-xs sm:text-sm text-gray-600 mt-1">
-                      at {formatHumanReadableDate(transaction.created_at).time}
-                    </div>
-                    <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-700 mt-2">
-                      {formatHumanReadableDate(transaction.created_at).relative}
-                    </div>
-                  </div>
-                </div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between py-2">
+                <span className="text-gray-600 text-sm">Created</span>
+                <span className="font-medium text-gray-900 text-sm">
+                  {new Date(transaction.created_at).toLocaleString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
               </div>
 
               {transaction.processed_at && (
-                <div className="bg-white/60 backdrop-blur-sm rounded-lg p-4 border border-white/50">
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-0">
-                    <div className="flex-1">
-                      <h4 className="font-semibold text-gray-900 text-sm sm:text-base">
-                        Transaction Processed
-                      </h4>
-                      <p className="text-xs sm:text-sm text-gray-600">
-                        When this transaction was completed
-                      </p>
-                    </div>
-                    <div className="text-left sm:text-right">
-                      <div className="font-semibold text-gray-900 text-xs sm:text-sm leading-tight">
-                        {
-                          formatHumanReadableDate(transaction.processed_at)
-                            .fullDate
-                        }
-                      </div>
-                      <div className="text-xs sm:text-sm text-gray-600 mt-1">
-                        at{" "}
-                        {formatHumanReadableDate(transaction.processed_at).time}
-                      </div>
-                      <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700 mt-2">
-                        {
-                          formatHumanReadableDate(transaction.processed_at)
-                            .relative
-                        }
-                      </div>
-                    </div>
-                  </div>
+                <div className="flex items-center justify-between py-2 border-t border-gray-100">
+                  <span className="text-gray-600 text-sm">Processed</span>
+                  <span className="font-medium text-gray-900 text-sm">
+                    {new Date(transaction.processed_at).toLocaleString(
+                      "en-US",
+                      {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      }
+                    )}
+                  </span>
                 </div>
               )}
             </div>
