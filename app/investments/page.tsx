@@ -52,6 +52,7 @@ import {
   Check,
   AlertTriangle,
   Loader2,
+  ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -66,6 +67,7 @@ interface Investment {
   totalUnits: number;
   description: string;
   status?: string;
+  riskLevel?: "Low" | "Medium" | "High" | null;
 }
 
 // Animation variants
@@ -315,16 +317,18 @@ const InvestmentsPage = () => {
   };
 
   // Handle search with debouncing to prevent refresh on every entry
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
-  
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
+    null
+  );
+
   const handleSearch = (value: string) => {
     setSearchQuery(value);
-    
+
     // Clear existing timeout
     if (searchTimeout) {
       clearTimeout(searchTimeout);
     }
-    
+
     // Only trigger search if value is empty or after 500ms delay
     if (value.length === 0) {
       setFilters({ ...filters, search: value });
@@ -336,7 +340,7 @@ const InvestmentsPage = () => {
       setSearchTimeout(timeout);
     }
   };
-  
+
   // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
@@ -428,6 +432,7 @@ const InvestmentsPage = () => {
       ),
       description: project.description || "No description available",
       status: project.status,
+      riskLevel: project.risk_level || null,
     };
     setSelectedInvestment(investment);
     setQuantity(1);
@@ -690,7 +695,7 @@ const InvestmentsPage = () => {
 
     // Create and download the receipt - mobile-friendly
     const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    
+
     if (isMobile) {
       // For mobile, open in new window for better compatibility
       const printWindow = window.open("", "_blank");
@@ -1988,8 +1993,27 @@ const InvestmentsPage = () => {
                             )}
                           </Button>
                           {showAbout && (
-                            <div className="self-stretch justify-start text-zinc-900 text-sm font-normal  leading-tight mt-3">
-                              {selectedInvestment.description}
+                            <div className="self-stretch justify-start text-zinc-900 text-sm font-normal leading-tight mt-3 space-y-3">
+                              {selectedInvestment.riskLevel && (
+                                <div className="flex items-center gap-2 mb-2">
+                                  <span className="text-zinc-600 font-medium">
+                                    Risk Level:
+                                  </span>
+                                  <span
+                                    className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                                      selectedInvestment.riskLevel === "Low"
+                                        ? "bg-green-100 text-green-700"
+                                        : selectedInvestment.riskLevel ===
+                                          "Medium"
+                                        ? "bg-yellow-100 text-yellow-700"
+                                        : "bg-red-100 text-red-700"
+                                    }`}
+                                  >
+                                    {selectedInvestment.riskLevel}
+                                  </span>
+                                </div>
+                              )}
+                              <div>{selectedInvestment.description}</div>
                             </div>
                           )}
                         </div>
@@ -2090,7 +2114,7 @@ const InvestmentsPage = () => {
                           size="sm"
                           onClick={() => setCurrentStep("details")}
                         >
-                          <X className="h-4 w-4" />
+                          <ArrowLeft className="h-4 w-4" />
                         </Button>
                       </div>
 
@@ -2338,7 +2362,7 @@ const InvestmentsPage = () => {
                           size="sm"
                           onClick={() => setCurrentStep("review")}
                         >
-                          <X className="h-4 w-4" />
+                          <ArrowLeft className="h-4 w-4" />
                         </Button>
                       </div>
 
@@ -2390,7 +2414,7 @@ const InvestmentsPage = () => {
                         onValueChange={handlePaymentMethodSelect}
                       >
                         {/* AgriPath Account */}
-                        <div
+                        {/* <div
                           className={`flex items-center space-x-3 p-4 border rounded-lg transition-all duration-200 ${
                             selectedPaymentMethod === "agripath"
                               ? "border-green-500 bg-green-50"
@@ -2448,7 +2472,7 @@ const InvestmentsPage = () => {
                               height={40}
                             />
                           </div>
-                        </div>
+                        </div> */}
 
                         {/* Mobile Money */}
                         <div

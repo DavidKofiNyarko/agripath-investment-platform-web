@@ -44,6 +44,7 @@ export interface Project {
   min_investment_amount: number;
   max_investment_amount: number;
   payout_type: "MONTHLY" | "QUARTERLY" | "ANNUAL" | "END_OF_PROJECT";
+  risk_level?: "Low" | "Medium" | "High" | null;
 }
 
 interface ProjectRow {
@@ -75,6 +76,7 @@ interface ProjectRow {
   min_investment_amount: number | null;
   max_investment_amount: number | null;
   payout_type: string | null;
+  risk_level: string | null;
 }
 
 interface ProjectFilters {
@@ -280,6 +282,8 @@ export const ProjectsProvider = ({
               | "QUARTERLY"
               | "ANNUAL"
               | "END_OF_PROJECT") || "END_OF_PROJECT",
+          risk_level:
+            (item.risk_level as "Low" | "Medium" | "High" | null) || null,
         })) || [];
 
       console.log(

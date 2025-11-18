@@ -5,6 +5,8 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useCallback,
+  useRef,
   ReactNode,
 } from "react";
 import { useRouter } from "next/navigation";
@@ -73,10 +75,28 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
   const router = useRouter();
 
   const unreadCount = notifications.filter((n) => n.status === "unread").length;
+  
+  // Use ref to track if fetch is in progress to prevent duplicate calls
+  const isFetchingRef = useRef(false);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastFetchedProfileIdRef = useRef<string | null>(null);
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     if (!profile?.id) return;
+    
+    // Prevent duplicate concurrent calls
+    if (isFetchingRef.current) {
+      console.log("⏭️ Fetch already in progress, skipping...");
+      return;
+    }
 
+    // Clear any pending debounced fetch
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+      fetchTimeoutRef.current = null;
+    }
+
+    isFetchingRef.current = true;
     setIsLoading(true);
     setError(null);
 
@@ -149,8 +169,10 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
       );
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  };
+  }, [profile?.id]);
+  
 
   const markAsRead = async (notificationId: string) => {
     try {
@@ -376,20 +398,20 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
     router.push("/updates");
   };
 
-  // Fetch notifications when profile is available
+  // Fetch notifications when profile is available (only once per profile)
   useEffect(() => {
-    if (profile?.id) {
+    if (profile?.id && lastFetchedProfileIdRef.current !== profile.id && !isFetchingRef.current) {
+      lastFetchedProfileIdRef.current = profile.id;
       fetchNotifications();
     }
-  }, [profile?.id]);
+  }, [profile?.id, fetchNotifications]);
 
-  // Real-time subscription for notifications (replaces polling)
+  // Real-time subscription for notifications - update state directly from payload (no API calls)
   useEffect(() => {
     if (!profile?.id) return;
 
     const supabase = createClient();
     let channel: any = null;
-    let fallbackInterval: NodeJS.Timeout | null = null;
 
     try {
       // Listen to notifications table for new published notifications
@@ -405,8 +427,22 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           },
           (payload) => {
             console.log("New notification published:", payload);
-            // Fetch notifications to get the new one
-            fetchNotifications();
+            const newNotification = payload.new;
+            
+            // Add new notification directly to state (no API call needed)
+            if (newNotification) {
+              setNotifications((prev) => [
+                {
+                  id: newNotification.id,
+                  title: newNotification.title,
+                  body: newNotification.body,
+                  type: (newNotification.type || "Email") as "Email" | "SMS",
+                  status: "unread" as const,
+                  created_at: newNotification.published_at || newNotification.created_at,
+                },
+                ...prev,
+              ]);
+            }
           }
         )
         .on(
@@ -419,8 +455,24 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           },
           (payload) => {
             console.log("Notification updated:", payload);
-            // Fetch notifications to get updated data
-            fetchNotifications();
+            const updatedNotification = payload.new;
+            
+            // Update notification in state directly (no API call needed)
+            if (updatedNotification) {
+              setNotifications((prev) =>
+                prev.map((n) =>
+                  n.id === updatedNotification.id
+                    ? {
+                        ...n,
+                        title: updatedNotification.title || n.title,
+                        body: updatedNotification.body || n.body,
+                        type: (updatedNotification.type || n.type) as "Email" | "SMS",
+                        created_at: updatedNotification.published_at || updatedNotification.created_at || n.created_at,
+                      }
+                    : n
+                )
+              );
+            }
           }
         )
         .on(
@@ -433,48 +485,49 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           },
           (payload) => {
             console.log("Notification read status changed:", payload);
-            // Refresh to update read status
-            fetchNotifications();
+            const userNotification = payload.new || payload.old;
+            
+            // Update read status directly in state (no API call needed)
+            if (userNotification?.notifications_id) {
+              setNotifications((prev) =>
+                prev.map((n) =>
+                  n.id === userNotification.notifications_id
+                    ? {
+                        ...n,
+                        status: userNotification.read_at ? ("read" as const) : ("unread" as const),
+                        read_at: userNotification.read_at || n.read_at,
+                        clicked_at: userNotification.clicked_at || n.clicked_at,
+                      }
+                    : n
+                )
+              );
+            }
           }
         )
         .subscribe((status) => {
           console.log("Real-time notifications subscription status:", status);
           if (status === "SUBSCRIBED") {
             console.log("✅ Successfully subscribed to notifications changes");
-            console.log("🔄 Replaced polling with real-time updates");
-            // Clear any existing fallback interval
-            if (fallbackInterval) {
-              clearInterval(fallbackInterval);
-              fallbackInterval = null;
-            }
+            console.log("🔄 Using real-time updates (no API calls on events)");
           } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-            console.warn(`❌ Real-time notifications subscription failed (${status}), falling back to polling`);
-            // Fallback to polling if realtime fails
-            if (!fallbackInterval) {
-              fallbackInterval = setInterval(() => {
-                fetchNotifications();
-              }, 30000);
-            }
+            console.warn(`❌ Real-time notifications subscription failed (${status})`);
+            console.warn("💡 Make sure realtime is enabled for 'notifications' and 'users_notifications' tables in Supabase");
           }
         });
     } catch (error) {
       console.error("Failed to set up real-time notifications subscription:", error);
-      // Fallback to polling on error
-      fallbackInterval = setInterval(() => {
-        fetchNotifications();
-      }, 30000);
     }
 
     // Cleanup subscription on unmount
     return () => {
-      if (fallbackInterval) {
-        clearInterval(fallbackInterval);
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
       }
       if (channel) {
         supabase.removeChannel(channel);
       }
     };
-  }, [profile?.id, fetchNotifications]);
+  }, [profile?.id]);
 
   const value: NotificationContextType = {
     notifications,
