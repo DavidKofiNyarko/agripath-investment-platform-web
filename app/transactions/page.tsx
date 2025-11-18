@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/components/dashboard-layout";
 import UserHeader from "@/components/user-header";
 import { Transaction, useTransactions } from "@/contexts/TransactionsContext";
+import { createClient } from "@/app/utils/supabase/client";
+import { useUser } from "@/contexts/UserContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -57,7 +59,7 @@ const transactionTypes = [
   {
     id: "payouts",
     label: "Payouts",
-    dbType: "Payout",
+    dbType: null, // Payouts come from payouts table, not transactions
     active: false,
     disabled: false,
   },
@@ -94,7 +96,28 @@ const getStatusBadge = (status: string) => {
   }
 };
 
+interface Payout {
+  id: string;
+  payout_id: string;
+  profile_id: string;
+  project_id: string | null;
+  amount: number;
+  status: string;
+  payment_method: string | null;
+  processed_at: string | null;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+  calculated_amount: number | null;
+  payout_type: string | null;
+  account_issuer: string | null;
+  account_bank: string | null;
+  external_ref: string | null;
+  payout_category: string | null;
+}
+
 const TransactionsPage = () => {
+  const { user } = useUser();
   const {
     transactions,
     loading,
@@ -111,6 +134,9 @@ const TransactionsPage = () => {
     string | null
   >(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [payouts, setPayouts] = useState<Payout[]>([]);
+  const [payoutsLoading, setPayoutsLoading] = useState(false);
+  const supabase = createClient();
 
   const handleViewTransaction = (transactionId: string) => {
     setSelectedTransactionId(transactionId);
@@ -122,10 +148,76 @@ const TransactionsPage = () => {
     setSelectedTransactionId(null);
   };
 
+  // Fetch payouts from payouts table
+  const fetchPayouts = useCallback(async () => {
+    if (!user?.id) return;
+    
+    setPayoutsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("payouts")
+        .select("*")
+        .eq("profile_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching payouts:", error);
+        return;
+      }
+
+      setPayouts(data || []);
+    } catch (error) {
+      console.error("Error fetching payouts:", error);
+    } finally {
+      setPayoutsLoading(false);
+    }
+  }, [user?.id, supabase]);
+
+  // Fetch payouts when payouts tab is active
+  useEffect(() => {
+    if (activeTab === "payouts" && user?.id) {
+      fetchPayouts();
+    }
+  }, [activeTab, user?.id, fetchPayouts]);
+
+  // Convert payouts to transaction-like format for display
+  const convertPayoutsToTransactions = (payouts: Payout[]): Transaction[] => {
+    return payouts.map((payout) => ({
+      id: payout.id,
+      transaction_id: payout.payout_id,
+      profile_id: payout.profile_id,
+      project_id: payout.project_id || "",
+      type: "Payout" as const,
+      amount: payout.amount,
+      unit: 0,
+      status: (payout.status || "Pending") as "Pending" | "Complete" | "Failed",
+      fees: 0,
+      net_amount: payout.calculated_amount || payout.amount,
+      description: payout.description || "",
+      processed_at: payout.processed_at,
+      created_at: payout.created_at,
+      updated_at: payout.updated_at,
+      channel: (payout.payment_method?.toLowerCase() || "momo") as "momo" | "bank" | "card" | "wallet",
+      external_id: payout.external_ref,
+      network: payout.account_issuer,
+      account_number: payout.account_bank || "",
+      project_name: undefined,
+    }));
+  };
+
   // Filter transactions by active tab
   const getFilteredTransactions = () => {
     const activeType = transactionTypes.find((t) => t.id === activeTab);
-    if (!activeType || !activeType.dbType) {
+    if (!activeType) {
+      return [];
+    }
+
+    // If payouts tab, return converted payouts
+    if (activeTab === "payouts") {
+      return convertPayoutsToTransactions(payouts);
+    }
+
+    if (!activeType.dbType) {
       return [];
     }
 
@@ -134,7 +226,7 @@ const TransactionsPage = () => {
       return transactions.filter((t) => activeType.dbType.includes(t.type));
     }
 
-    // Handle single type (topups, payouts)
+    // Handle single type (topups)
     return transactions.filter((t) => t.type === activeType.dbType);
   };
 
@@ -239,7 +331,8 @@ const TransactionsPage = () => {
   };
 
   // Loading state
-  if (loading) {
+  const isLoading = activeTab === "payouts" ? payoutsLoading : loading;
+  if (isLoading) {
     return (
       <DashboardLayout>
         <Loading size="lg" className="min-h-screen" />
