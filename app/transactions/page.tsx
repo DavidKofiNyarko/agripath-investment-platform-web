@@ -45,14 +45,14 @@ const transactionTypes = [
     label: "Top Ups",
     dbType: "momo_topup",
     active: false,
-    disabled: false,
+    disabled: true,
   },
   {
     id: "withdrawals",
     label: "Withdrawals",
     dbType: ["momo_withdrawal", "bank_withdrawal"],
     active: false,
-    disabled: false,
+    disabled: true,
   },
   {
     id: "payouts",

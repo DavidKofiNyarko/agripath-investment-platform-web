@@ -244,18 +244,37 @@ const isValidProject = (project: unknown): project is SupabaseProject => {
 };
 
 const isValidTransaction = (transaction: unknown): transaction is SupabaseTransactionWithProject => {
-  if (!transaction || typeof transaction !== 'object' || transaction === null) return false;
+  if (!transaction || typeof transaction !== 'object' || transaction === null) {
+    return false;
+  }
   
   const t = transaction as Record<string, unknown>;
   
-  // Simplified validation - just check the essential fields
-  const hasProjectId = typeof t.project_id === 'string';
-  const hasAmount = typeof t.amount === 'number';
-  const hasUnit = typeof t.unit === 'number';
-  const hasCreatedAt = typeof t.created_at === 'string';
-  const hasProjects = !!t.projects;
+  // Check essential fields - allow numbers or numeric strings
+  const hasProjectId = typeof t.project_id === 'string' && t.project_id.length > 0;
+  const hasAmount = typeof t.amount === 'number' || (typeof t.amount === 'string' && !isNaN(parseFloat(t.amount)));
+  const hasUnit = typeof t.unit === 'number' || (typeof t.unit === 'string' && !isNaN(parseFloat(t.unit)));
+  const hasCreatedAt = typeof t.created_at === 'string' && t.created_at.length > 0;
+  const hasProjects = !!t.projects && typeof t.projects === 'object' && t.projects !== null;
   
-  return hasProjectId && hasAmount && hasUnit && hasCreatedAt && hasProjects;
+  // If validation fails, log for debugging
+  if (!hasProjectId || !hasAmount || !hasUnit || !hasCreatedAt || !hasProjects) {
+    console.warn('Portfolio validation failed:', {
+      hasProjectId,
+      hasAmount,
+      hasUnit,
+      hasCreatedAt,
+      hasProjects,
+      project_id: t.project_id,
+      amount: t.amount,
+      unit: t.unit,
+      created_at: t.created_at,
+      projects: t.projects
+    });
+    return false;
+  }
+  
+  return true;
 };
 
 const isValidMetricsData = (data: unknown): data is SupabaseMetricsData => {
@@ -301,9 +320,13 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
       return;
     }
 
-    // Get profile ID - use profile.id if available, otherwise fall back to user.id
-    // (RLS policy will handle filtering correctly in either case)
-    const profileId = profile?.id || user.id;
+    // Wait for profile to load if it's not available yet
+    if (!profile) {
+      setLoading(true);
+      // Wait a bit for profile to load
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // If still no profile after waiting, proceed anyway (RLS will handle it)
+    }
 
     setLoading(true);
     setError(null);
@@ -312,16 +335,19 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
       // Fetch portfolio metrics - only include completed investment transactions
       // Payin transactions are pending payments and shouldn't be counted as investments
       // Note: RLS policy will ensure users only see their own transactions
+      // We don't filter by profile_id here - let RLS handle it
       const { data: metricsData, error: metricsError } = await supabase
         .from('transactions')
         .select('amount, unit, type, status')
-        .eq('profile_id', profileId)
         .in('type', ['Payin', 'investment']) // Include BOTH Payin and investment types
         .eq('status', 'Complete');
 
       if (metricsError) {
+        console.error('Portfolio metrics error:', metricsError);
         throw new Error(`Failed to fetch portfolio metrics: ${metricsError.message}`);
       }
+      
+      console.log('Portfolio metrics data:', metricsData?.length || 0, 'transactions found');
 
       // Type-safe metrics calculation with validation
       const validMetricsData = metricsData?.filter(isValidMetricsData) || [];
@@ -345,6 +371,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
       // Payin with project_id = investment in a project (same as investment type)
       // RLS policy now allows users to see both Active and Completed projects where they have invested
       // Note: RLS policy will ensure users only see their own transactions
+      // We don't filter by profile_id here - let RLS handle it
       const { data: projectsData, error: projectsError } = await supabase
         .from('transactions')
         .select(`
@@ -369,17 +396,23 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             end_date
           )
         `)
-        .eq('profile_id', profileId)
         .in('type', ['Payin', 'investment']) // Include BOTH Payin and investment types
         .eq('status', 'Complete') // Transaction status must be Complete (not project status)
         .order('created_at', { ascending: false });
 
       if (projectsError) {
+        console.error('Portfolio projects error:', projectsError);
         throw new Error(`Failed to fetch projects: ${projectsError.message}`);
       }
+      
+      console.log('Portfolio projects data:', projectsData?.length || 0, 'transactions with projects found');
+      console.log('Portfolio projects raw data:', projectsData);
 
       // Type-safe projects data processing with validation
       const validProjectsData = (projectsData as unknown as SupabaseTransactionWithProject[])?.filter(isValidTransaction) || [];
+      
+      console.log('Portfolio valid projects data:', validProjectsData?.length || 0, 'after validation');
+      console.log('Portfolio valid projects:', validProjectsData);
       
       const projectMap = new Map<string, Project>();
       
@@ -423,8 +456,11 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         }
 
         const existingProject = projectMap.get(projectId)!;
-        existingProject.invested_amount += item.amount;
-        existingProject.units_owned += item.unit;
+        // Ensure amount and unit are numbers (handle string conversion)
+        const amount = typeof item.amount === 'number' ? item.amount : parseFloat(String(item.amount)) || 0;
+        const unit = typeof item.unit === 'number' ? item.unit : parseFloat(String(item.unit)) || 0;
+        existingProject.invested_amount += amount;
+        existingProject.units_owned += unit;
         existingProject.investment_count += 1;
         
         // Update additional properties for display
@@ -461,6 +497,8 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
       });
 
       const projectsArray = Array.from(projectMap.values());
+      console.log('Portfolio final projects array:', projectsArray?.length || 0, 'projects');
+      console.log('Portfolio final projects:', projectsArray);
       setProjects(projectsArray);
 
       // Update metrics with actual project count
@@ -471,6 +509,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
 
       // Fetch recent transactions
       // Note: RLS policy will ensure users only see their own transactions
+      // We don't filter by profile_id here - let RLS handle it
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('transactions')
         .select(`
@@ -488,13 +527,15 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
           channel,
           projects!inner(project_name)
         `)
-        .eq('profile_id', profileId)
         .order('created_at', { ascending: false })
         .limit(10);
 
       if (transactionsError) {
+        console.error('Portfolio transactions error:', transactionsError);
         throw new Error(`Failed to fetch transactions: ${transactionsError.message}`);
       }
+      
+      console.log('Portfolio transactions data:', transactionsData?.length || 0, 'transactions found');
 
       // Type-safe transaction data processing with validation
       const validTransactionsData = (transactionsData as unknown as SupabaseTransactionData[])?.filter((item) => 
@@ -548,9 +589,10 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
 
   useEffect(() => {
     if (user) {
+      console.log('Portfolio: Fetching data for user:', user.id, 'profile:', profile?.id);
       fetchPortfolioData();
     }
-  }, [user, fetchPortfolioData]);
+  }, [user, profile, fetchPortfolioData]);
 
   // Note: Filtering and pagination are now handled client-side
   // No need for useEffect to watch filter changes

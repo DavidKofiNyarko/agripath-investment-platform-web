@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import { Sidebar, MobileSidebar, SidebarProvider, useSidebar } from "./sidebar";
 import ProfileGuard from "./profile-guard";
 import KycBanner from "./kyc-banner";
+import PaymentAccountBanner from "./payment-account-banner";
 import { cn } from "@/lib/utils";
 import LogoSVG from "./logo-svg";
 import Image from "next/image";
@@ -33,6 +34,9 @@ const DashboardContent = ({ children, className }: DashboardLayoutProps) => {
       >
         {/* KYC Banner */}
         <KycBanner />
+        
+        {/* Payment Account Banner */}
+        <PaymentAccountBanner />
 
         {/* Mobile Header */}
         <div className="sticky top-0 z-40 lg:hidden bg-white border-b border-gray-200">

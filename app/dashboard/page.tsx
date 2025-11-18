@@ -675,7 +675,7 @@ const DashboardPage = () => {
         </div>
 
         {/* Account Balance Card */}
-        <Card className="flex flex-col justify-between items-end self-stretch rounded-[12px] bg-green-800/90 text-white border-0 shadow-xl p-4 sm:p-6 lg:p-8">
+        {/* <Card className="flex flex-col justify-between items-end self-stretch rounded-[12px] bg-green-800/90 text-white border-0 shadow-xl p-4 sm:p-6 lg:p-8">
           <CardContent className="p-0 flex flex-col sm:flex-row justify-between items-end self-stretch gap-4 sm:gap-6">
             <div className="flex-1 w-full sm:w-auto">
               <p className="text-lg sm:text-xl lg:text-[24px] leading-tight font-normal text-[#F7F7F7] mb-3 sm:mb-4 lg:mb-6 tracking-wide">
@@ -755,31 +755,31 @@ const DashboardPage = () => {
               </div>
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Portfolio Section */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
+            {/* <h3 className="text-lg sm:text-xl font-semibold text-gray-900">
               Portfolio
-            </h3>
+            </h3> */}
             {/* Custom View More Button for Portfolio */}
-            <ViewMoreButton
+            {/* <ViewMoreButton
               onClick={() => router.push("/portfolio")}
               label="View more"
-            />
+            /> */}
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-            <Card>
+            <Card className="bg-green-800 text-white">
               <CardContent className="p-0">
                 <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
                   <div className="flex-1 flex justify-start items-center gap-2">
                     <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden">
-                      <Wallet className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-green-800" />
+                      <Wallet className="w-6 h-6 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-yellow-500" />
                     </div>
                     <div className="flex justify-center items-center gap-2.5">
-                      <div className="justify-start text-Zinc-950 text-xs sm:text-sm font-medium">
+                      <div className="justify-start text-white text-xs sm:text-sm font-medium">
                         Total Invested
                       </div>
                     </div>
@@ -793,66 +793,66 @@ const DashboardPage = () => {
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-green-800 text-white">
               <CardContent className="p-0">
                 <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
                   <div className="flex-1 flex justify-start items-center gap-2">
                     <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden">
-                      <TrendUp className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-green-800" />
+                      <TrendUp className="w-6 h-6 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-yellow-500" />
                     </div>
                     <div className="flex justify-center items-center gap-2.5">
-                      <div className="justify-start text-Zinc-950 text-xs sm:text-sm font-medium">
+                      <div className="justify-start text-white text-xs sm:text-sm font-medium">
                         Expected Returns
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-                  <div className="justify-start text-Zinc-950 text-xl sm:text-2xl font-extrabold tracking-tight">
+                  <div className="justify-start text-white text-xl sm:text-2xl font-extrabold tracking-tight">
                     GHS {metrics?.expected_returns?.toLocaleString() || "0.00"}
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-green-800 text-white">
               <CardContent className="p-0">
                 <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
                   <div className="flex-1 flex justify-start items-center gap-2">
                     <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden">
-                      <ChartLine className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-green-800" />
+                      <ChartLine className="w-6 h-6 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-yellow-500" />
                     </div>
                     <div className="flex justify-center items-center gap-2.5">
-                      <div className="justify-start text-Zinc-950 text-xs sm:text-sm font-medium">
+                      <div className="justify-start text-white text-xs sm:text-sm font-medium">
                         Active Projects
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-                  <div className="justify-start text-Zinc-950 text-xl sm:text-2xl font-extrabold tracking-tight">
+                  <div className="justify-start text-white text-xl sm:text-2xl font-extrabold tracking-tight">
                     {metrics?.active_projects || 0}
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
+            <Card className="bg-green-800 text-white">
               <CardContent className="p-0">
                 <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">
                   <div className="flex-1 flex justify-start items-center gap-2">
                     <div className="w-5 h-5 sm:w-6 sm:h-6 relative overflow-hidden">
-                      <CheckCircle className="w-4 h-3 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-green-800" />
+                      <CheckCircle className="w-6 h-6 sm:w-5 sm:h-4 left-[3px] top-[3px] absolute text-yellow-500" />
                     </div>
                     <div className="flex justify-center items-center gap-2.5">
-                      <div className="justify-start text-Zinc-950 text-xs sm:text-sm font-medium">
+                      <div className="justify-start text-white text-xs sm:text-sm font-medium">
                         Total Units
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="px-4 sm:px-6 pb-4 sm:pb-6">
-                  <div className="justify-start text-Zinc-950 text-xl sm:text-2xl font-extrabold  tracking-tight">
+                  <div className="justify-start text-white text-xl sm:text-2xl font-extrabold  tracking-tight">
                     {metrics?.total_units || 0}
                   </div>
                 </div>
