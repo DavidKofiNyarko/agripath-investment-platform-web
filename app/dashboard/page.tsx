@@ -493,7 +493,7 @@ const DashboardPage = () => {
           );
 
           // Find transaction by external_id (Paystack reference) first
-          let { data: transactions, error: findError } = await supabase
+          const { data: transactions, error: findError } = await supabase
             .from("transactions")
             .select("transaction_id, external_id, status, type")
             .eq("external_id", reference)

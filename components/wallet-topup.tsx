@@ -46,6 +46,7 @@ const WalletTopup: React.FC = () => {
   const [error, setError] = useState("");
   const [pending, setPending] = useState("");
   const [showKycModal, setShowKycModal] = useState(false);
+  const [savePaymentMethod, setSavePaymentMethod] = useState(false);
 
   const [formData, setFormData] = useState<TopupFormData>({
     amount: "",

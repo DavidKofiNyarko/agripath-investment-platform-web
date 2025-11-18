@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import DashboardLayout from "@/components/dashboard-layout";
 import UserHeader from "@/components/user-header";
@@ -106,7 +106,7 @@ const ghanaianBanks = [
   { code: "ZEN", name: "Zenith Bank Ghana Limited" },
 ];
 
-function SettingsPage() {
+function SettingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useUser();
@@ -1572,6 +1572,25 @@ function SettingsPage() {
         </motion.div>
       </div>
     </DashboardLayout>
+  );
+}
+
+function SettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <DashboardLayout>
+          <div className="flex items-center justify-center min-h-[400px]">
+            <div className="text-center">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-green-600" />
+              <p className="text-gray-600">Loading settings...</p>
+            </div>
+          </div>
+        </DashboardLayout>
+      }
+    >
+      <SettingsPageContent />
+    </Suspense>
   );
 }
 
