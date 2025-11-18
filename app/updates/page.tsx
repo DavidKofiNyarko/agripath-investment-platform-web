@@ -127,31 +127,39 @@ const UpdatesPage = () => {
   }
 
   // Convert project updates to the expected format
-  const formattedUpdates: Update[] = updates.map((update, index) => ({
-    id: index + 1,
-    title: update.title,
-    description: update.description,
-    date: new Date(update.created_at).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    }),
-    category: update.project_name || "Unknown Project",
-    image:
-      update.image_url ||
-      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop",
-    content: update.update_text,
-    media: update.image_url
-      ? [
-          {
-            id: 1,
-            image: update.image_url,
-            title: update.title,
-          },
-        ]
-      : [],
-    isRead: false,
-  }));
+  const formattedUpdates: Update[] = updates.map((update, index) => {
+    // Handle image_url as array or single string/null
+    const imageUrls = Array.isArray(update.image_url)
+      ? update.image_url
+      : update.image_url
+      ? [update.image_url]
+      : [];
+
+    const firstImage =
+      imageUrls.length > 0
+        ? imageUrls[0]
+        : "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop";
+
+    return {
+      id: index + 1,
+      title: update.title,
+      description: update.description,
+      date: new Date(update.created_at).toLocaleDateString("en-GB", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+      }),
+      category: update.project_name || "Unknown Project",
+      image: firstImage,
+      content: update.update_text,
+      media: imageUrls.map((url, imgIndex) => ({
+        id: imgIndex + 1,
+        image: url,
+        title: update.title,
+      })),
+      isRead: false,
+    };
+  });
 
   const newUpdates = formattedUpdates.filter((update) => !update.isRead);
   const readUpdates = formattedUpdates.filter((update) => update.isRead);
@@ -446,13 +454,17 @@ const UpdatesPage = () => {
                     >
                       <CardContent className="p-3 sm:p-4">
                         <div className="flex space-x-2 sm:space-x-3">
-                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0">
-                            <Image
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 relative">
+                            <img
                               src={update.image}
                               alt={update.title}
-                              width={64}
-                              height={64}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.src =
+                                  "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop";
+                              }}
+                              loading="lazy"
                             />
                           </div>
                           <div className="flex-1 min-w-0">
@@ -633,46 +645,40 @@ const UpdatesPage = () => {
                       {selectedUpdate.media.map((media) => (
                         <div
                           key={media.id}
-                          className="cursor-pointer rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-150 bg-gray-100"
+                          className="cursor-pointer rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-150 bg-gray-100 aspect-square relative group"
                           onClick={() => handleMediaClick(media)}
                         >
-                          <div className="aspect-square relative bg-gray-100">
-                            <Image
-                              src={media.image}
-                              alt={media.title}
-                              fill
-                              className="object-cover"
-                              sizes="(max-width: 640px) 100vw, 50vw"
-                            />
-                            <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center">
-                              <div className="opacity-0 hover:opacity-100 transition-opacity duration-200">
-                                <div className="bg-white bg-opacity-90 rounded-full p-2">
-                                  <Play className="h-6 w-6 text-gray-700" />
-                                </div>
+                          <img
+                            src={media.image}
+                            alt={media.title}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              console.error(
+                                "Image failed to load:",
+                                media.image,
+                                e
+                              );
+                              const target = e.target as HTMLImageElement;
+                              target.src =
+                                "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop";
+                            }}
+                            onLoad={() =>
+                              console.log(
+                                "Image loaded successfully:",
+                                media.image
+                              )
+                            }
+                            loading="lazy"
+                          />
+                          <div className="absolute inset-0  bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center pointer-events-none">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                              <div className="bg-white bg-opacity-90 rounded-full p-2">
+                                <Play className="h-6 w-6 text-gray-700" />
                               </div>
                             </div>
                           </div>
                         </div>
                       ))}
-                    </div>
-                  </div>
-                ) : selectedUpdate.image &&
-                  selectedUpdate.image !==
-                    "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop" ? (
-                  <div className="mt-6 sm:mt-8">
-                    <h3 className="text-base sm:text-lg font-semibold text-green-600 mb-4">
-                      Media
-                    </h3>
-                    <div className="rounded-lg overflow-hidden shadow-sm bg-gray-100">
-                      <div className="aspect-video relative">
-                        <Image
-                          src={selectedUpdate.image}
-                          alt={selectedUpdate.title}
-                          fill
-                          className="object-cover"
-                          sizes="(max-width: 768px) 100vw, 80vw"
-                        />
-                      </div>
                     </div>
                   </div>
                 ) : null}
@@ -718,12 +724,16 @@ const UpdatesPage = () => {
               {selectedMedia && (
                 <div className="space-y-4">
                   <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 relative">
-                    <Image
+                    <img
                       src={selectedMedia.image}
                       alt={selectedMedia.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 800px"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src =
+                          "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop";
+                      }}
+                      loading="lazy"
                     />
                   </div>
                   {selectedUpdate?.media && selectedUpdate.media.length > 1 && (
@@ -738,12 +748,16 @@ const UpdatesPage = () => {
                               : "hover:opacity-80"
                           }`}
                         >
-                          <Image
+                          <img
                             src={media.image}
                             alt={media.title}
-                            width={64}
-                            height={64}
                             className="w-full h-full object-cover"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.src =
+                                "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop";
+                            }}
+                            loading="lazy"
                           />
                         </button>
                       ))}

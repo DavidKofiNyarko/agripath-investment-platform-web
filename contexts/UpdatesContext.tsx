@@ -11,7 +11,7 @@ export interface ProjectUpdate {
   created_by: string | null;
   title: string;
   description: string;
-  image_url: string | null;
+  image_url: string[] | null;
   update_type: 'Progress' | 'Milestone' | 'Issue' | 'Completion';
   status: 'Draft' | 'Published' | 'Archived';
   updated_at: string;
@@ -28,7 +28,7 @@ interface UpdateRow {
   created_by: string | null;
   title: string;
   description: string;
-  image_url: string | null;
+  image_url: string[] | null;
   update_type: string;
   status: string;
   updated_at: string;
