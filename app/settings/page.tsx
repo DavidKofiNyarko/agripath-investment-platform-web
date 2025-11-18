@@ -818,31 +818,6 @@ function SettingsPageContent() {
                       htmlFor="avatar-upload-button"
                       className="cursor-pointer"
                     >
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={isUploadingAvatar}
-                        className="flex items-center space-x-2"
-                      >
-                        {isUploadingAvatar ? (
-                          <>
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            <span>Uploading...</span>
-                          </>
-                        ) : (
-                          <>
-                            <Upload className="h-4 w-4" />
-                            <span>
-                              {profile?.avatar_url ||
-                              user?.user_metadata?.picture ||
-                              user?.user_metadata?.avatar_url
-                                ? "Change Picture"
-                                : "Upload Picture"}
-                            </span>
-                          </>
-                        )}
-                      </Button>
                       <input
                         id="avatar-upload-button"
                         type="file"

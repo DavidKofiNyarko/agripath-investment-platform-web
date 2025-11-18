@@ -17,21 +17,24 @@ const NotificationPreferencesComponent: React.FC = () => {
     updatePreferences({ ...localPreferences, [key]: newValue });
   };
 
+  // Map to database categories: Investment, System, Marketing, Announcement, Alert
   const notificationCategories = [
     {
       title: 'Investment & Portfolio',
       settings: [
         {
           key: 'investment_updates' as keyof NotificationPreferences,
-          title: 'Investment Updates',
-          description: 'Get updates when your crops/livestock are started, growth stages, or harvested.',
+          title: 'Project Updates',
+          description: 'Stay in the loop about your farm projects—from planting to harvest and everything in between.',
           enabled: localPreferences.investment_updates,
+          // Maps to: category = 'Investment'
         },
         {
           key: 'market_updates' as keyof NotificationPreferences,
-          title: 'ROI & Payout Alerts',
-          description: 'Be notified when your returns are ready or payouts are sent.',
+          title: 'Returns & Payouts',
+          description: 'Know the moment your earnings are ready or when payouts hit your account.',
           enabled: localPreferences.market_updates,
+          // Maps to: category = 'Investment' (high priority)
         },
       ]
     },
@@ -40,15 +43,17 @@ const NotificationPreferencesComponent: React.FC = () => {
       settings: [
         {
           key: 'email_notifications' as keyof NotificationPreferences,
-          title: 'App Announcements',
-          description: 'Stay informed about new features and updates.',
+          title: 'Platform News',
+          description: 'Discover new features, improvements, and important announcements from AgriPath.',
           enabled: localPreferences.email_notifications,
+          // Maps to: category = 'Announcement'
         },
         {
           key: 'security_alerts' as keyof NotificationPreferences,
-          title: 'Security Alerts',
-          description: 'Get notified if there\'s a login from a new device or account changes.',
+          title: 'Account Security',
+          description: 'Get alerted about logins from new devices or important account changes.',
           enabled: localPreferences.security_alerts,
+          // Maps to: category = 'Alert'
         },
       ]
     },
@@ -57,9 +62,10 @@ const NotificationPreferencesComponent: React.FC = () => {
       settings: [
         {
           key: 'push_notifications' as keyof NotificationPreferences,
-          title: 'Offers & Promotions',
-          description: 'Occasional offers, bonuses, and news from AgriPath.',
+          title: 'Exclusive Deals',
+          description: 'Receive special offers, bonuses, and opportunities tailored just for you.',
           enabled: localPreferences.push_notifications,
+          // Maps to: category = 'Marketing'
         },
       ]
     }
