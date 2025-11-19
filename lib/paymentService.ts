@@ -41,6 +41,7 @@ export interface MobileMoneyPaymentRequest {
   project_id: string;
   subscriber_number?: string; // Optional - Paystack handles it
   network?: string; // Optional - Paystack handles it
+  account_number?: string; // Required by backend - should be subscriber_number for mobile money
   description: string;
   amount: number;
   unit: number;
@@ -164,12 +165,55 @@ class PaymentService {
     paymentData: MobileMoneyPaymentRequest
   ): Promise<PaymentResponse> {
     try {
+      // Ensure network is always set and valid (required by backend)
+      const requestData: MobileMoneyPaymentRequest = { ...paymentData };
+
+      if (!requestData.network || !requestData.network.trim()) {
+        // If subscriber_number is provided, determine network from it
+        if (requestData.subscriber_number) {
+          requestData.network = this.getNetworkProvider(
+            requestData.subscriber_number
+          );
+        } else {
+          // Default to MTN if no subscriber number
+          requestData.network = "MTN";
+        }
+      }
+
+      // Ensure network is uppercase and valid
+      const networkUpper = requestData.network.toUpperCase().trim();
+      if (["MTN", "VOD", "ATL"].includes(networkUpper)) {
+        requestData.network = networkUpper;
+      } else {
+        // If invalid, default to MTN
+        requestData.network = "MTN";
+      }
+
+      // Ensure account_number is set (required by backend for transactions table)
+      // For mobile money, account_number should be phone_number or subscriber_number
+      // Note: phone_number should be passed from the caller if available from profile
+      if (!requestData.account_number || !requestData.account_number.trim()) {
+        // Priority: 1. subscriber_number (which may be from profile), 2. placeholder
+        if (
+          requestData.subscriber_number &&
+          requestData.subscriber_number.trim() &&
+          requestData.subscriber_number !== "0000000000"
+        ) {
+          requestData.account_number = this.formatMobileNumber(
+            requestData.subscriber_number
+          );
+        } else {
+          // Default placeholder if no subscriber number provided
+          requestData.account_number = "0000000000";
+        }
+      }
+
       const response = await fetch(`${this.baseUrl}/momo/payin`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(paymentData),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {
@@ -339,16 +383,66 @@ class PaymentService {
       const requestData: Record<string, unknown> = { ...topupData };
 
       if (topupData.channel === "momo") {
-        // Set default network to MTN if not provided (user can change on Paystack)
-        if (!topupData.network || !topupData.network.trim()) {
-          requestData.network = "MTN";
-        }
         // Set default subscriber_number if not provided (required by backend, user can change on Paystack)
         if (
           !topupData.subscriber_number ||
           !topupData.subscriber_number.trim()
         ) {
           requestData.subscriber_number = "0000000000"; // Placeholder, user will enter on Paystack
+        }
+
+        // Ensure network is always set and valid (required by backend)
+        if (!topupData.network || !topupData.network.trim()) {
+          // If subscriber_number is provided, determine network from it
+          if (
+            topupData.subscriber_number &&
+            topupData.subscriber_number !== "0000000000"
+          ) {
+            requestData.network = this.getNetworkProvider(
+              topupData.subscriber_number
+            );
+          } else {
+            // Default to MTN if no valid subscriber number
+            requestData.network = "MTN";
+          }
+        } else {
+          // Validate and normalize network value
+          const networkUpper = topupData.network.toUpperCase().trim();
+          if (["MTN", "VOD", "ATL"].includes(networkUpper)) {
+            requestData.network = networkUpper;
+          } else {
+            // If invalid, default to MTN
+            requestData.network = "MTN";
+          }
+        }
+
+        // Ensure account_number is set (required by backend for transactions table)
+        // For mobile money, use profile phone_number first, then subscriber_number
+        if (
+          !requestData.account_number ||
+          !(requestData.account_number as string).trim()
+        ) {
+          // Priority: 1. phone_number from profile, 2. subscriber_number, 3. placeholder
+          if (
+            topupData.phone_number &&
+            topupData.phone_number.trim() &&
+            topupData.phone_number !== "0000000000"
+          ) {
+            requestData.account_number = this.formatMobileNumber(
+              topupData.phone_number
+            );
+          } else if (
+            topupData.subscriber_number &&
+            topupData.subscriber_number.trim() &&
+            topupData.subscriber_number !== "0000000000"
+          ) {
+            requestData.account_number = this.formatMobileNumber(
+              topupData.subscriber_number
+            );
+          } else {
+            // Default placeholder if no phone number provided
+            requestData.account_number = "0000000000";
+          }
         }
       }
 

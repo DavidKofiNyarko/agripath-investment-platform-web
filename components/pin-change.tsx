@@ -1,27 +1,40 @@
-'use client';
+"use client";
 
-import React, { useState, useRef } from 'react'; // useEffect unused
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Shield, Check, AlertTriangle, Loader2 } from 'lucide-react';
-import { useProfile } from '@/contexts/ProfileContext';
-import { createClient } from '@/app/utils/supabase/client';
-import PinResetModal from './pin-reset-modal';
+import React, { useState, useRef } from "react"; // useEffect unused
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Eye,
+  EyeOff,
+  Shield,
+  Check,
+  AlertTriangle,
+  Loader2,
+} from "lucide-react";
+import { useProfile } from "@/contexts/ProfileContext";
+import { createClient } from "@/app/utils/supabase/client";
+import PinResetModal from "./pin-reset-modal";
 
 const PinChange: React.FC = () => {
   const { profile, refreshProfile } = useProfile();
-  const [currentPin, setCurrentPin] = useState(['', '', '', '']);
-  const [newPin, setNewPin] = useState(['', '', '', '']);
-  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
+  const [currentPin, setCurrentPin] = useState(["", "", "", ""]);
+  const [newPin, setNewPin] = useState(["", "", "", ""]);
+  const [confirmPin, setConfirmPin] = useState(["", "", "", ""]);
   const [showCurrentPin, setShowCurrentPin] = useState(false);
   const [showNewPin, setShowNewPin] = useState(false);
   const [showConfirmPin, setShowConfirmPin] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [showPinResetModal, setShowPinResetModal] = useState(false);
 
   const supabase = createClient();
@@ -29,23 +42,27 @@ const PinChange: React.FC = () => {
   const newPinRefs = useRef<(HTMLInputElement | null)[]>([]);
   const confirmPinRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  const handlePinChange = (index: number, value: string, pinType: 'current' | 'new' | 'confirm') => {
+  const handlePinChange = (
+    index: number,
+    value: string,
+    pinType: "current" | "new" | "confirm"
+  ) => {
     if (value.length > 1) return;
-    
-    if (pinType === 'current') {
+
+    if (pinType === "current") {
       const newPin = [...currentPin];
       newPin[index] = value;
       setCurrentPin(newPin);
-      
+
       // Auto-focus next input
       if (value && index < 3) {
         currentPinRefs.current[index + 1]?.focus();
       }
-    } else if (pinType === 'new') {
+    } else if (pinType === "new") {
       const newPinArray = [...newPin];
       newPinArray[index] = value;
       setNewPin(newPinArray);
-      
+
       // Auto-focus next input
       if (value && index < 3) {
         newPinRefs.current[index + 1]?.focus();
@@ -54,7 +71,7 @@ const PinChange: React.FC = () => {
       const newConfirmPin = [...confirmPin];
       newConfirmPin[index] = value;
       setConfirmPin(newConfirmPin);
-      
+
       // Auto-focus next input
       if (value && index < 3) {
         confirmPinRefs.current[index + 1]?.focus();
@@ -62,11 +79,25 @@ const PinChange: React.FC = () => {
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent, pinType: 'current' | 'new' | 'confirm') => {
-    if (e.key === 'Backspace') {
-      const currentValue = pinType === 'current' ? currentPin : pinType === 'new' ? newPin : confirmPin;
-      const refs = pinType === 'current' ? currentPinRefs : pinType === 'new' ? newPinRefs : confirmPinRefs;
-      
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent,
+    pinType: "current" | "new" | "confirm"
+  ) => {
+    if (e.key === "Backspace") {
+      const currentValue =
+        pinType === "current"
+          ? currentPin
+          : pinType === "new"
+          ? newPin
+          : confirmPin;
+      const refs =
+        pinType === "current"
+          ? currentPinRefs
+          : pinType === "new"
+          ? newPinRefs
+          : confirmPinRefs;
+
       if (!currentValue[index] && index > 0) {
         refs.current[index - 1]?.focus();
       }
@@ -74,38 +105,38 @@ const PinChange: React.FC = () => {
   };
 
   const validatePins = () => {
-    const currentPinValue = currentPin.join('');
-    const newPinValue = newPin.join('');
-    const confirmPinValue = confirmPin.join('');
+    const currentPinValue = currentPin.join("");
+    const newPinValue = newPin.join("");
+    const confirmPinValue = confirmPin.join("");
 
     if (currentPinValue.length !== 4) {
-      setError('Please enter your current 4-digit PIN');
+      setError("Please enter your current 4-digit PIN");
       return false;
     }
 
     if (newPinValue.length !== 4) {
-      setError('Please enter a new 4-digit PIN');
+      setError("Please enter a new 4-digit PIN");
       return false;
     }
 
     if (confirmPinValue.length !== 4) {
-      setError('Please confirm your new 4-digit PIN');
+      setError("Please confirm your new 4-digit PIN");
       return false;
     }
 
     if (currentPinValue === newPinValue) {
-      setError('New PIN must be different from current PIN');
+      setError("New PIN must be different from current PIN");
       return false;
     }
 
     if (newPinValue !== confirmPinValue) {
-      setError('New PINs do not match. Please try again.');
+      setError("New PINs do not match. Please try again.");
       return false;
     }
 
     // Check if current PIN is correct
     if (profile?.pin !== currentPinValue) {
-      setError('Current PIN is incorrect');
+      setError("Current PIN is incorrect");
       return false;
     }
 
@@ -114,50 +145,52 @@ const PinChange: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccess('');
+    setError("");
+    setSuccess("");
 
     if (!validatePins()) return;
 
     setIsLoading(true);
 
     try {
-      const newPinValue = newPin.join('');
-      
+      const newPinValue = newPin.join("");
+
       const { error } = await supabase
-        .from('profile')
+        .from("profile")
         .update({ pin: newPinValue })
-        .eq('user_id', profile?.user_id);
+        .eq("user_id", profile?.user_id);
 
       if (error) {
-        setError('Failed to update PIN. Please try again.');
+        setError("Failed to update PIN. Please try again.");
         return;
       }
 
-      setSuccess('PIN updated successfully!');
-      setCurrentPin(['', '', '', '']);
-      setNewPin(['', '', '', '']);
-      setConfirmPin(['', '', '', '']);
-      
+      setSuccess("PIN updated successfully!");
+      setCurrentPin(["", "", "", ""]);
+      setNewPin(["", "", "", ""]);
+      setConfirmPin(["", "", "", ""]);
+
       // Refresh profile context
       await refreshProfile();
     } catch (error) {
-      setError('An unexpected error occurred. Please try again.');
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
   const isFormValid = () => {
-    const currentPinValue = currentPin.join('');
-    const newPinValue = newPin.join('');
-    const confirmPinValue = confirmPin.join('');
-    
-    return currentPinValue.length === 4 && 
-           newPinValue.length === 4 && 
-           confirmPinValue.length === 4 && 
-           newPinValue === confirmPinValue &&
-           currentPinValue !== newPinValue;
+    const currentPinValue = currentPin.join("");
+    const newPinValue = newPin.join("");
+    const confirmPinValue = confirmPin.join("");
+
+    return (
+      currentPinValue.length === 4 &&
+      newPinValue.length === 4 &&
+      confirmPinValue.length === 4 &&
+      newPinValue === confirmPinValue &&
+      currentPinValue !== newPinValue
+    );
   };
 
   return (
@@ -182,11 +215,15 @@ const PinChange: React.FC = () => {
               {currentPin.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => { currentPinRefs.current[index] = el; }}
-                  type={showCurrentPin ? 'text' : 'password'}
+                  ref={(el) => {
+                    currentPinRefs.current[index] = el;
+                  }}
+                  type={showCurrentPin ? "text" : "password"}
                   value={digit}
-                  onChange={(e) => handlePinChange(index, e.target.value, 'current')}
-                  onKeyDown={(e) => handleKeyDown(index, e, 'current')}
+                  onChange={(e) =>
+                    handlePinChange(index, e.target.value, "current")
+                  }
+                  onKeyDown={(e) => handleKeyDown(index, e, "current")}
                   className="w-12 h-12 text-center text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500"
                   maxLength={1}
                   disabled={isLoading}
@@ -204,11 +241,15 @@ const PinChange: React.FC = () => {
               {newPin.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => { newPinRefs.current[index] = el; }}
-                  type={showNewPin ? 'text' : 'password'}
+                  ref={(el) => {
+                    newPinRefs.current[index] = el;
+                  }}
+                  type={showNewPin ? "text" : "password"}
                   value={digit}
-                  onChange={(e) => handlePinChange(index, e.target.value, 'new')}
-                  onKeyDown={(e) => handleKeyDown(index, e, 'new')}
+                  onChange={(e) =>
+                    handlePinChange(index, e.target.value, "new")
+                  }
+                  onKeyDown={(e) => handleKeyDown(index, e, "new")}
                   className="w-12 h-12 text-center text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500"
                   maxLength={1}
                   disabled={isLoading}
@@ -226,11 +267,15 @@ const PinChange: React.FC = () => {
               {confirmPin.map((digit, index) => (
                 <Input
                   key={index}
-                  ref={(el) => { confirmPinRefs.current[index] = el; }}
-                  type={showConfirmPin ? 'text' : 'password'}
+                  ref={(el) => {
+                    confirmPinRefs.current[index] = el;
+                  }}
+                  type={showConfirmPin ? "text" : "password"}
                   value={digit}
-                  onChange={(e) => handlePinChange(index, e.target.value, 'confirm')}
-                  onKeyDown={(e) => handleKeyDown(index, e, 'confirm')}
+                  onChange={(e) =>
+                    handlePinChange(index, e.target.value, "confirm")
+                  }
+                  onKeyDown={(e) => handleKeyDown(index, e, "confirm")}
                   className="w-12 h-12 text-center text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500"
                   maxLength={1}
                   disabled={isLoading}
@@ -336,13 +381,13 @@ const PinChange: React.FC = () => {
           {/* Forgot PIN Link */}
           {profile?.pin && (
             <div className="text-center">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => setShowPinResetModal(true)}
                 className="text-sm font-medium text-green-600 hover:text-green-700 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded px-2 py-1"
               >
                 Forgot your PIN? Reset it here
-              </button>
+              </button> */}
             </div>
           )}
 
@@ -358,7 +403,7 @@ const PinChange: React.FC = () => {
                 Updating PIN...
               </>
             ) : (
-              'Update PIN'
+              "Update PIN"
             )}
           </Button>
         </form>

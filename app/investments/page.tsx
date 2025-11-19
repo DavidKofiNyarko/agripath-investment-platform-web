@@ -862,7 +862,13 @@ const InvestmentsPage = () => {
           project_id: projectId,
           amount: totalAmount,
           unit: quantity,
-          // subscriber_number and network removed - Paystack handles it
+          // Use profile phone_number if available, otherwise Paystack will handle it
+          subscriber_number:
+            profile?.phone_number &&
+            profile.phone_number.trim() &&
+            profile.phone_number !== "0000000000"
+              ? profile.phone_number
+              : undefined,
           description: `Investment in ${selectedInvestment.name}`,
           user_email: user?.email || "user@example.com",
         });
@@ -2517,7 +2523,7 @@ const InvestmentsPage = () => {
                     initial="hidden"
                     animate="visible"
                     exit="hidden"
-                    className="flex flex-col items-center justify-center h-full space-y-6 text-center"
+                    className="flex flex-col items-center justify-center h-full space-y-6 text-center p-6"
                   >
                     {isVerifyingPayment ? (
                       <>

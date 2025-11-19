@@ -136,8 +136,8 @@ const SignupPage = () => {
     const { name, value } = e.target;
     setFormData((prev) => {
       const newData = {
-        ...prev,
-        [name]: value,
+      ...prev,
+      [name]: value,
       };
       
       // Validate phone number when it changes
@@ -376,36 +376,36 @@ const SignupPage = () => {
                   Select Country
                 </option>
                 {countries.map((country) => (
-                  <option
+                <option
                     key={country.value}
                     value={country.value}
-                    className="bg-[#1A1A1A] lg:bg-[#091506f3]"
-                  >
+                  className="bg-[#1A1A1A] lg:bg-[#091506f3]"
+                >
                     {country.label}
-                  </option>
+                </option>
                 ))}
               </select>
 
               {/* Phone Number */}
               <div>
-                <div className="flex">
-                  <div className="flex items-center px-3 border border-r-0 border-white/10 rounded-l-xl bg-[#1A1A1A] text-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all duration-200 lg:bg-white/5 lg:backdrop-blur-sm lg:placeholder:text-white/40 lg:focus:ring-white/30 lg:focus:border-white/30 lg:hover:border-white/15">
+              <div className="flex">
+                <div className="flex items-center px-3 border border-r-0 border-white/10 rounded-l-xl bg-[#1A1A1A] text-white focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all duration-200 lg:bg-white/5 lg:backdrop-blur-sm lg:placeholder:text-white/40 lg:focus:ring-white/30 lg:focus:border-white/30 lg:hover:border-white/15">
                     <span className="text-sm">{currentCountryCode.flag}</span>
                     <span className="ml-1 text-sm">{currentCountryCode.code}</span>
-                  </div>
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    placeholder="000 000 000"
+                </div>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleInputChange}
+                  placeholder="000 000 000"
                     className={`flex-1 px-4 py-3.5 bg-[#1A1A1A] border rounded-r-xl text-white placeholder:text-white focus:outline-none focus:ring-2 transition-all duration-200 lg:bg-white/5 lg:backdrop-blur-sm lg:placeholder:text-white/40 lg:focus:ring-white/30 lg:focus:border-white/30 lg:hover:border-white/15 ${
                       phoneError
                         ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                         : "border-white/10 focus:ring-white/20 focus:border-white/20"
                     }`}
-                    required
-                  />
+                  required
+                />
                 </div>
                 {phoneError && (
                   <p className="mt-1 text-xs text-red-400">{phoneError}</p>
@@ -703,30 +703,30 @@ const SignupPage = () => {
                     className="bg-[#091506f3]"
                   >
                     {country.label}
-                  </option>
+                </option>
                 ))}
               </select>
 
               {/* Phone Number */}
               <div>
-                <div className="flex">
-                  <div className="flex items-center px-3 border border-r-0 border-white/10 rounded-l-xl bg-white/5 backdrop-blur-sm text-white/80">
+              <div className="flex">
+                <div className="flex items-center px-3 border border-r-0 border-white/10 rounded-l-xl bg-white/5 backdrop-blur-sm text-white/80">
                     <span className="text-sm">{currentCountryCode.flag}</span>
                     <span className="ml-1 text-sm">{currentCountryCode.code}</span>
-                  </div>
-                  <input
-                    type="tel"
-                    name="phoneNumber"
-                    value={formData.phoneNumber}
-                    onChange={handleInputChange}
-                    placeholder="000 000 000"
+                </div>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleInputChange}
+                  placeholder="000 000 000"
                     className={`flex-1 px-4 py-3.5 bg-white/5 backdrop-blur-sm border rounded-r-xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 transition-all duration-200 hover:border-white/15 ${
                       phoneError
                         ? "border-red-500 focus:ring-red-500 focus:border-red-500"
                         : "border-white/10 focus:ring-white/30 focus:border-white/30"
                     }`}
-                    required
-                  />
+                  required
+                />
                 </div>
                 {phoneError && (
                   <p className="mt-1 text-xs text-red-400">{phoneError}</p>

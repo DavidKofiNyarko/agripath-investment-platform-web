@@ -44,11 +44,20 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Helper to check if phone number is all zeros or empty
+  const isValidPhoneNumber = (phone: string | null | undefined): boolean => {
+    if (!phone) return false;
+    const digitsOnly = phone.replace(/\D/g, "");
+    return digitsOnly.length > 0 && !/^0+$/.test(digitsOnly);
+  };
+
   const [formData, setFormData] = useState({
     first_name: profile?.first_name || "",
     last_name: profile?.last_name || "",
     email: profile?.email || "",
-    phone_number: profile?.phone_number || "",
+    phone_number: isValidPhoneNumber(profile?.phone_number)
+      ? profile.phone_number
+      : "",
     country: profile?.country || "ghana",
   });
 
@@ -504,7 +513,7 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
 
             {/* Forgot PIN Button */}
             <div className="text-center">
-              <Button
+              {/* <Button
                 type="button"
                 variant="link"
                 size="sm"
@@ -512,7 +521,7 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
                 className="text-gray-500 hover:text-gray-700"
               >
                 Forgot your PIN? Reset it here
-              </Button>
+              </Button> */}
             </div>
           </motion.div>
         );

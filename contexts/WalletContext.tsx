@@ -148,7 +148,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data) {
-        setWallet(data);
+      setWallet(data);
       }
     } catch (error) {
       // Error creating wallet
@@ -177,7 +177,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       if (data) {
-        setWallet(data);
+      setWallet(data);
       }
     } catch (error) {
       setWallet(null);
@@ -412,11 +412,27 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           walletTopupData.card_holder = topupData.card_holder || "";
           walletTopupData.user_email = topupData.user_email || userData.email;
         } else if (topupData.channel === "momo") {
-          if (!topupData.subscriber_number) {
-            return { success: false, error: "Missing mobile number" };
-          }
-          walletTopupData.subscriber_number = topupData.subscriber_number;
-          walletTopupData.network = topupData.network || "";
+          // For mobile money, network is required by backend
+          // Use profile phone_number first, then subscriber_number
+          const phoneNumberToUse = userData.phone_number && userData.phone_number.trim() && userData.phone_number !== "0000000000"
+            ? userData.phone_number
+            : (topupData.subscriber_number && topupData.subscriber_number.trim() && topupData.subscriber_number !== "0000000000"
+              ? topupData.subscriber_number
+              : "0000000000");
+
+          walletTopupData.subscriber_number = phoneNumberToUse;
+          
+          // Get network from phone number if not provided
+          walletTopupData.network = topupData.network || 
+            (paymentService as any).getNetworkProvider(phoneNumberToUse) || 
+            "MTN";
+
+          // Set account_number: use profile phone_number first, then subscriber_number
+          walletTopupData.account_number = userData.phone_number && userData.phone_number.trim() && userData.phone_number !== "0000000000"
+            ? (paymentService as any).formatMobileNumber(userData.phone_number)
+            : (topupData.subscriber_number && topupData.subscriber_number.trim() && topupData.subscriber_number !== "0000000000"
+              ? (paymentService as any).formatMobileNumber(topupData.subscriber_number)
+              : "0000000000");
         }
 
         const response = await (paymentService as any).processWalletTopup(
@@ -773,8 +789,8 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           },
           (payload) => {
             if (payload.new) {
-              const updatedWallet = payload.new as Wallet;
-              setWallet(updatedWallet);
+            const updatedWallet = payload.new as Wallet;
+            setWallet(updatedWallet);
             }
           }
         )
@@ -790,11 +806,11 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           }
         });
 
-      return () => {
-        if (channel) {
-          supabase.removeChannel(channel);
-        }
-      };
+    return () => {
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
     } catch (error) {
       // Error setting up real-time subscription
     }

@@ -100,7 +100,7 @@ const VerifyEmailContent = () => {
         
         if (data?.session || finalSession) {
           // Success - user is now authenticated
-          setIsVerified(true);
+        setIsVerified(true);
           localStorage.removeItem("pendingVerificationEmail");
           // Force a refresh of the auth state
           await supabase.auth.getUser();
@@ -332,14 +332,14 @@ const VerifyEmailContent = () => {
             </div>
 
             {/* Instructions */}
-              <div className="text-center space-y-3">
-                <p className="text-white text-sm">
-                  We&apos;ve sent a verification link to{" "}
-                  <span className="font-medium text-[#16a34a]">
+            <div className="text-center space-y-3">
+              <p className="text-white text-sm">
+                We&apos;ve sent a verification link to{" "}
+                <span className="font-medium text-[#16a34a]">
                     {searchParams.get("email") || localStorage.getItem("pendingVerificationEmail") || user?.email || "your email"}
-                  </span>
-                  .
-                </p>
+                </span>
+                .
+              </p>
               <p className="text-[#A0A0A0] text-xs">
                 {isLoading
                   ? "Checking verification..."

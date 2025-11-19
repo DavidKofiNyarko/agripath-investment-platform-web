@@ -15,6 +15,7 @@ const SignInPage = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const supabase = createClient();
   const router = useRouter();
 
@@ -63,24 +64,46 @@ const SignInPage = () => {
 
   const handleEmailSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+    
+    // Basic validation
+    if (!formData.email.trim()) {
+      setError("Please enter your email address");
+      return;
+    }
+    
+    if (!formData.password.trim()) {
+      setError("Please enter your password");
+      return;
+    }
+
     try {
       setIsLoading(true);
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: formData.email,
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email: formData.email.trim(),
         password: formData.password,
       });
 
-      if (error) {
-        // Handle error - could show error message to user
-        console.error("Sign in error:", error.message);
-      } else if (data?.user) {
+      if (signInError) {
+        // Handle specific error cases
+        if (signInError.message.includes("Invalid login credentials")) {
+          setError("Invalid email or password. Please check and try again.");
+        } else if (signInError.message.includes("Email not confirmed")) {
+          setError("Please verify your email address before signing in. Check your inbox for the verification link.");
+        } else {
+          setError(signInError.message || "Failed to sign in. Please try again.");
+        }
+        setIsLoading(false);
+        return;
+      }
+
+      if (data?.user && data?.session) {
         // Success - redirect to dashboard immediately
         router.push("/dashboard");
       }
     } catch (error) {
-      // Handle error
       console.error("Sign in error:", error);
-    } finally {
+      setError("An unexpected error occurred. Please try again.");
       setIsLoading(false);
     }
   };
@@ -160,11 +183,19 @@ const SignInPage = () => {
 
             {/* Email Form */}
             <form onSubmit={handleEmailSignIn} className="space-y-4">
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
               <input
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleInputChange}
+                onChange={(e) => {
+                  handleInputChange(e);
+                  setError(""); // Clear error when user types
+                }}
                 placeholder="Enter your email"
                 className="w-full px-4 py-3.5 bg-[#1A1A1A] border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all duration-200"
                 required
@@ -174,7 +205,10 @@ const SignInPage = () => {
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    handleInputChange(e);
+                    setError(""); // Clear error when user types
+                  }}
                   placeholder="Enter your password"
                   className="w-full px-4 py-3.5 pr-12 bg-[#1A1A1A] border border-white/10 rounded-xl text-white placeholder:text-white/50 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-all duration-200"
                   required
@@ -329,12 +363,20 @@ const SignInPage = () => {
 
             {/* Email Form */}
             <form onSubmit={handleEmailSignIn} className="space-y-5">
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
               <div className="space-y-1">
                 <input
                   type="email"
                   name="email"
                   value={formData.email}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    handleInputChange(e);
+                    setError(""); // Clear error when user types
+                  }}
                   placeholder="Enter your email"
                   className="w-full px-4 py-3.5 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/30 transition-all duration-200 hover:border-white/15"
                   required
@@ -345,7 +387,10 @@ const SignInPage = () => {
                   type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
-                  onChange={handleInputChange}
+                  onChange={(e) => {
+                    handleInputChange(e);
+                    setError(""); // Clear error when user types
+                  }}
                   placeholder="Enter your password"
                   className="w-full px-4 py-3.5 pr-12 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/30 transition-all duration-200 hover:border-white/15"
                   required

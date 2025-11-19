@@ -226,7 +226,7 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
 
           {/* Forgot PIN Link - Always visible */}
           <div className="text-center">
-            <button
+            {/* <button
               type="button"
               onClick={() => {
                 setShowPinResetModal(true);
@@ -235,7 +235,7 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
               className="text-sm font-medium text-green-600 hover:text-green-700 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded px-2 py-1"
             >
               Forgot your PIN? Reset it here
-            </button>
+            </button> */}
           </div>
 
           {/* Action Buttons */}

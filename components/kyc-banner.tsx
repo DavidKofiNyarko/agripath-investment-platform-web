@@ -91,10 +91,10 @@ const KycBanner: React.FC = () => {
         }`}
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
               <AlertTriangle
-                className={`h-5 w-5 flex-shrink-0 ${
+                className={`h-5 w-5 flex-shrink-0 mt-0.5 sm:mt-0 ${
                   content.variant === "error"
                     ? "text-red-600"
                     : content.variant === "warning"
@@ -102,36 +102,22 @@ const KycBanner: React.FC = () => {
                     : "text-green-800"
                 }`}
               />
-              <p
-                className={`text-sm font-medium flex-1 ${
-                  content.variant === "error"
-                    ? "text-red-800"
-                    : content.variant === "warning"
-                    ? "text-yellow-800"
-                    : "text-green-800"
-                }`}
-              >
-                {content.message}
-              </p>
-            </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Button
-                onClick={handleCompleteKyc}
-                size="sm"
-                className={`${
-                  content.variant === "error"
-                    ? "bg-red-600 hover:bg-red-700"
-                    : content.variant === "warning"
-                    ? "bg-yellow-600 hover:bg-yellow-700"
-                    : "bg-green-800 hover:bg-green-900"
-                } text-white`}
-              >
-                {content.buttonText}
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
+              <div className="flex-1 min-w-0">
+                <p
+                  className={`text-sm font-medium ${
+                    content.variant === "error"
+                      ? "text-red-800"
+                      : content.variant === "warning"
+                      ? "text-yellow-800"
+                      : "text-green-800"
+                  }`}
+                >
+                  {content.message}
+                </p>
+              </div>
               <button
                 onClick={() => setIsDismissed(true)}
-                className={`p-1 rounded-md hover:bg-white/50 transition-colors ${
+                className={`p-1 rounded-md hover:bg-white/50 transition-colors flex-shrink-0 ${
                   content.variant === "error"
                     ? "text-red-600 hover:text-red-700"
                     : content.variant === "warning"
@@ -142,6 +128,22 @@ const KycBanner: React.FC = () => {
               >
                 <X className="w-4 h-4" />
               </button>
+            </div>
+            <div className="flex justify-center sm:justify-end">
+              <Button
+                onClick={handleCompleteKyc}
+                size="sm"
+                className={`w-full sm:w-auto ${
+                  content.variant === "error"
+                    ? "bg-red-600 hover:bg-red-700"
+                    : content.variant === "warning"
+                    ? "bg-yellow-600 hover:bg-yellow-700"
+                    : "bg-green-800 hover:bg-green-900"
+                } text-white`}
+              >
+                {content.buttonText}
+                <ArrowRight className="w-4 h-4 ml-2" />
+              </Button>
             </div>
           </div>
         </div>

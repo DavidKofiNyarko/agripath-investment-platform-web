@@ -852,9 +852,9 @@ const DashboardPage = () => {
                           </div>
                         </div>
                       </div>
-                      {/* ROI and Duration arranged side by side */}
+                      {/* ROI and Duration arranged side by side on desktop, stacked on mobile */}
                       <div className="py-2">
-                        <div className="flex flex-row justify-between items-center gap-4">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-4">
                           <div className="flex flex-row items-center gap-2">
                             <div className="text-neutral-800 text-xs sm:text-sm font-semibold whitespace-nowrap">
                               Return:

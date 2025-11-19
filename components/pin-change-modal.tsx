@@ -136,7 +136,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
     try {
       // Validate current PIN using verifyUserPin which handles hashing
       const isValid = await verifyUserPin(pinValue);
-      
+
       if (isValid) {
         setError("");
         setIsLoading(false);
@@ -150,7 +150,9 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
         setIsLoading(false);
 
         if (newAttempts >= maxAttempts) {
-          setError("Too many incorrect attempts. Please try again later or reset your PIN.");
+          setError(
+            "Too many incorrect attempts. Please try again later or reset your PIN."
+          );
           setTimeout(() => {
             onClose();
           }, 3000);
@@ -477,7 +479,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
           {/* Forgot PIN Link - Only show when entering current PIN */}
           {currentStep === "current" && profile?.pin && (
             <div className="text-center">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => {
                   setShowPinResetModal(true);
@@ -486,7 +488,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
                 className="text-sm font-medium text-green-600 hover:text-green-700 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded px-2 py-1"
               >
                 Forgot your PIN? Reset it here
-              </button>
+              </button> */}
             </div>
           )}
 
