@@ -201,7 +201,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({
     if (currentStep === 1) {
       return (
         <div className="space-y-6">
-          <div className="text-center">
+          {/* <div className="text-center">
             <User className="w-16 h-16 text-green-600 mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-gray-900 mb-2">
               Complete Your Profile
@@ -209,7 +209,7 @@ const PinSetupModal: React.FC<PinSetupModalProps> = ({
             <p className="text-gray-600">
               Please provide your personal information to continue
             </p>
-          </div>
+          </div> */}
 
           <div className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

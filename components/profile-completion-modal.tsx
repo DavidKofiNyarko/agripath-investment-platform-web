@@ -1,37 +1,60 @@
-'use client';
+"use client";
 
-import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useProfile } from '@/contexts/ProfileContext';
-import { Loader2, User, Mail, Phone, Lock, CheckCircle, AlertCircle, ChevronLeft, ChevronRight, Shield, Eye, EyeOff } from 'lucide-react';
-import PinResetModal from './pin-reset-modal';
+import React, { useState, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useProfile } from "@/contexts/ProfileContext";
+import {
+  Loader2,
+  User,
+  Mail,
+  Phone,
+  Lock,
+  CheckCircle,
+  AlertCircle,
+  ChevronLeft,
+  ChevronRight,
+  Shield,
+  Eye,
+  EyeOff,
+} from "lucide-react";
+import PinResetModal from "./pin-reset-modal";
+import { countries } from "@/lib/countries";
 
 interface ProfileCompletionModalProps {
   isOpen: boolean;
   onComplete: () => void;
 }
 
-const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen, onComplete }) => {
+const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
+  isOpen,
+  onComplete,
+}) => {
   const { profile, updateProfile } = useProfile();
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState({
-    first_name: profile?.first_name || '',
-    last_name: profile?.last_name || '',
-    email: profile?.email || '',
-    phone_number: profile?.phone_number || '',
-    country: profile?.country || 'Ghana'
+    first_name: profile?.first_name || "",
+    last_name: profile?.last_name || "",
+    email: profile?.email || "",
+    phone_number: profile?.phone_number || "",
+    country: profile?.country || "Ghana",
   });
-  
+
   // PIN states
-  const [pin, setPin] = useState(['', '', '', '']);
-  const [confirmPin, setConfirmPin] = useState(['', '', '', '']);
+  const [pin, setPin] = useState(["", "", "", ""]);
+  const [confirmPin, setConfirmPin] = useState(["", "", "", ""]);
   const [showPin, setShowPin] = useState(false);
   const [showConfirmPin, setShowConfirmPin] = useState(false);
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -41,21 +64,25 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
   const totalSteps = 3;
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+    setFormData((prev) => ({ ...prev, [field]: value }));
     // Clear error when user starts typing
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: '' }));
+      setErrors((prev) => ({ ...prev, [field]: "" }));
     }
   };
 
-  const handlePinChange = (index: number, value: string, type: 'pin' | 'confirm' = 'pin') => {
+  const handlePinChange = (
+    index: number,
+    value: string,
+    type: "pin" | "confirm" = "pin"
+  ) => {
     if (value.length > 1) return; // Only allow single digit
-    
-    if (type === 'pin') {
+
+    if (type === "pin") {
       const newPin = [...pin];
       newPin[index] = value;
       setPin(newPin);
-      
+
       // Auto-focus next input
       if (value && index < 3) {
         pinRefs.current[index + 1]?.focus();
@@ -64,7 +91,7 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
       const newConfirmPin = [...confirmPin];
       newConfirmPin[index] = value;
       setConfirmPin(newConfirmPin);
-      
+
       // Auto-focus next input
       if (value && index < 3) {
         confirmPinRefs.current[index + 1]?.focus();
@@ -72,11 +99,18 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent, type: 'pin' | 'confirm' = 'pin') => {
-    if (e.key === 'Backspace' && !(type === 'pin' ? pin[index] : confirmPin[index])) {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent,
+    type: "pin" | "confirm" = "pin"
+  ) => {
+    if (
+      e.key === "Backspace" &&
+      !(type === "pin" ? pin[index] : confirmPin[index])
+    ) {
       // Focus previous input on backspace
       if (index > 0) {
-        if (type === 'pin') {
+        if (type === "pin") {
           pinRefs.current[index - 1]?.focus();
         } else {
           confirmPinRefs.current[index - 1]?.focus();
@@ -90,35 +124,35 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
 
     if (step === 1) {
       if (!formData.first_name.trim()) {
-        newErrors.first_name = 'First name is required';
+        newErrors.first_name = "First name is required";
       }
       if (!formData.last_name.trim()) {
-        newErrors.last_name = 'Last name is required';
+        newErrors.last_name = "Last name is required";
       }
     }
 
     if (step === 2) {
       if (!formData.email.trim()) {
-        newErrors.email = 'Email is required';
+        newErrors.email = "Email is required";
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-        newErrors.email = 'Please enter a valid email address';
+        newErrors.email = "Please enter a valid email address";
       }
       if (!formData.phone_number.trim()) {
-        newErrors.phone_number = 'Phone number is required';
+        newErrors.phone_number = "Phone number is required";
       } else if (!/^[0-9+\-\s()]+$/.test(formData.phone_number)) {
-        newErrors.phone_number = 'Please enter a valid phone number';
+        newErrors.phone_number = "Please enter a valid phone number";
       }
     }
 
     if (step === 3) {
-      if (pin.some(digit => digit === '')) {
-        newErrors.pin = 'Please enter a complete 4-digit PIN';
+      if (pin.some((digit) => digit === "")) {
+        newErrors.pin = "Please enter a complete 4-digit PIN";
       }
-      if (confirmPin.some(digit => digit === '')) {
-        newErrors.confirm_pin = 'Please confirm your PIN';
+      if (confirmPin.some((digit) => digit === "")) {
+        newErrors.confirm_pin = "Please confirm your PIN";
       }
-      if (pin.join('') !== confirmPin.join('')) {
-        newErrors.confirm_pin = 'PINs do not match';
+      if (pin.join("") !== confirmPin.join("")) {
+        newErrors.confirm_pin = "PINs do not match";
       }
     }
 
@@ -128,12 +162,12 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
 
   const handleNext = () => {
     if (validateStep(currentStep)) {
-      setCurrentStep(prev => Math.min(prev + 1, totalSteps));
+      setCurrentStep((prev) => Math.min(prev + 1, totalSteps));
     }
   };
 
   const handlePrevious = () => {
-    setCurrentStep(prev => Math.max(prev - 1, 1));
+    setCurrentStep((prev) => Math.max(prev - 1, 1));
   };
 
   const handleSubmit = async () => {
@@ -148,29 +182,31 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
         last_name: formData.last_name.trim(),
         email: formData.email.trim(),
         phone_number: formData.phone_number.trim(),
-        pin: pin.join(''),
-        country: formData.country
+        pin: pin.join(""),
+        country: formData.country,
       });
-      
+
       onComplete();
     } catch (error) {
-      console.error('Error updating profile:', error);
-      setErrors({ submit: 'Failed to update profile. Please try again.' });
+      console.error("Error updating profile:", error);
+      setErrors({ submit: "Failed to update profile. Please try again." });
     } finally {
       setLoading(false);
     }
   };
 
   const getFieldStatus = (field: string) => {
-    if (errors[field]) return 'error';
-    if (formData[field as keyof typeof formData]) return 'success';
-    return 'default';
+    if (errors[field]) return "error";
+    if (formData[field as keyof typeof formData]) return "success";
+    return "default";
   };
 
   const getFieldIcon = (field: string) => {
     const status = getFieldStatus(field);
-    if (status === 'error') return <AlertCircle className="h-4 w-4 text-red-500" />;
-    if (status === 'success') return <CheckCircle className="h-4 w-4 text-green-500" />;
+    if (status === "error")
+      return <AlertCircle className="h-4 w-4 text-red-500" />;
+    if (status === "success")
+      return <CheckCircle className="h-4 w-4 text-green-500" />;
     return null;
   };
 
@@ -187,8 +223,12 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
           >
             <div className="text-center mb-6">
               <User className="w-12 h-12 text-green-600 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-900">Personal Information</h3>
-              <p className="text-sm text-gray-600 mt-1">Let's start with your basic details</p>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Personal Information
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Let's start with your basic details
+              </p>
             </div>
 
             {/* First Name */}
@@ -201,14 +241,18 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                   id="first_name"
                   type="text"
                   value={formData.first_name}
-                  onChange={(e) => handleInputChange('first_name', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("first_name", e.target.value)
+                  }
                   placeholder="Enter your first name"
-                  className={`pl-10 ${errors.first_name ? 'border-red-500' : ''}`}
+                  className={`pl-10 ${
+                    errors.first_name ? "border-red-500" : ""
+                  }`}
                 />
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                {getFieldIcon('first_name') && (
+                {getFieldIcon("first_name") && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    {getFieldIcon('first_name')}
+                    {getFieldIcon("first_name")}
                   </div>
                 )}
               </div>
@@ -227,14 +271,18 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                   id="last_name"
                   type="text"
                   value={formData.last_name}
-                  onChange={(e) => handleInputChange('last_name', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("last_name", e.target.value)
+                  }
                   placeholder="Enter your last name"
-                  className={`pl-10 ${errors.last_name ? 'border-red-500' : ''}`}
+                  className={`pl-10 ${
+                    errors.last_name ? "border-red-500" : ""
+                  }`}
                 />
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                {getFieldIcon('last_name') && (
+                {getFieldIcon("last_name") && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    {getFieldIcon('last_name')}
+                    {getFieldIcon("last_name")}
                   </div>
                 )}
               </div>
@@ -248,16 +296,19 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
               <Label htmlFor="country" className="text-sm font-medium">
                 Country
               </Label>
-              <Select value={formData.country} onValueChange={(value) => handleInputChange('country', value)}>
+              <Select
+                value={formData.country}
+                onValueChange={(value) => handleInputChange("country", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select your country" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Ghana">Ghana</SelectItem>
-                  <SelectItem value="Nigeria">Nigeria</SelectItem>
-                  <SelectItem value="Kenya">Kenya</SelectItem>
-                  <SelectItem value="South Africa">South Africa</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
+                <SelectContent className="max-h-[300px]">
+                  {countries.map((country) => (
+                    <SelectItem key={country.value} value={country.value}>
+                      {country.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -275,8 +326,12 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
           >
             <div className="text-center mb-6">
               <Mail className="w-12 h-12 text-green-600 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-900">Contact Information</h3>
-              <p className="text-sm text-gray-600 mt-1">How can we reach you?</p>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Contact Information
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                How can we reach you?
+              </p>
             </div>
 
             {/* Email */}
@@ -289,14 +344,14 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                   id="email"
                   type="email"
                   value={formData.email}
-                  onChange={(e) => handleInputChange('email', e.target.value)}
+                  onChange={(e) => handleInputChange("email", e.target.value)}
                   placeholder="Enter your email address"
-                  className={`pl-10 ${errors.email ? 'border-red-500' : ''}`}
+                  className={`pl-10 ${errors.email ? "border-red-500" : ""}`}
                 />
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                {getFieldIcon('email') && (
+                {getFieldIcon("email") && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    {getFieldIcon('email')}
+                    {getFieldIcon("email")}
                   </div>
                 )}
               </div>
@@ -315,14 +370,18 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                   id="phone_number"
                   type="tel"
                   value={formData.phone_number}
-                  onChange={(e) => handleInputChange('phone_number', e.target.value)}
+                  onChange={(e) =>
+                    handleInputChange("phone_number", e.target.value)
+                  }
                   placeholder="Enter your phone number"
-                  className={`pl-10 ${errors.phone_number ? 'border-red-500' : ''}`}
+                  className={`pl-10 ${
+                    errors.phone_number ? "border-red-500" : ""
+                  }`}
                 />
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                {getFieldIcon('phone_number') && (
+                {getFieldIcon("phone_number") && (
                   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    {getFieldIcon('phone_number')}
+                    {getFieldIcon("phone_number")}
                   </div>
                 )}
               </div>
@@ -344,8 +403,12 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
           >
             <div className="text-center mb-6">
               <Shield className="w-12 h-12 text-green-600 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-900">Security PIN</h3>
-              <p className="text-sm text-gray-600 mt-1">Create a 4-digit PIN for secure transactions</p>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Security PIN
+              </h3>
+              <p className="text-sm text-gray-600 mt-1">
+                Create a 4-digit PIN for secure transactions
+              </p>
             </div>
 
             {/* PIN Input */}
@@ -357,8 +420,10 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                 {pin.map((digit, index) => (
                   <Input
                     key={index}
-                    ref={(el) => { pinRefs.current[index] = el; }}
-                    type={showPin ? 'text' : 'password'}
+                    ref={(el) => {
+                      pinRefs.current[index] = el;
+                    }}
+                    type={showPin ? "text" : "password"}
                     value={digit}
                     onChange={(e) => handlePinChange(index, e.target.value)}
                     onKeyDown={(e) => handleKeyDown(index, e)}
@@ -369,7 +434,9 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                 ))}
               </div>
               {errors.pin && (
-                <p className="text-xs text-red-500 text-center mt-2">{errors.pin}</p>
+                <p className="text-xs text-red-500 text-center mt-2">
+                  {errors.pin}
+                </p>
               )}
             </div>
 
@@ -382,11 +449,15 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                 {confirmPin.map((digit, index) => (
                   <Input
                     key={index}
-                    ref={(el) => { confirmPinRefs.current[index] = el; }}
-                    type={showConfirmPin ? 'text' : 'password'}
+                    ref={(el) => {
+                      confirmPinRefs.current[index] = el;
+                    }}
+                    type={showConfirmPin ? "text" : "password"}
                     value={digit}
-                    onChange={(e) => handlePinChange(index, e.target.value, 'confirm')}
-                    onKeyDown={(e) => handleKeyDown(index, e, 'confirm')}
+                    onChange={(e) =>
+                      handlePinChange(index, e.target.value, "confirm")
+                    }
+                    onKeyDown={(e) => handleKeyDown(index, e, "confirm")}
                     className="w-12 h-12 text-center text-xl font-mono border-2 focus:border-green-500 focus:ring-green-500"
                     maxLength={1}
                     disabled={loading}
@@ -394,7 +465,9 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                 ))}
               </div>
               {errors.confirm_pin && (
-                <p className="text-xs text-red-500 text-center mt-2">{errors.confirm_pin}</p>
+                <p className="text-xs text-red-500 text-center mt-2">
+                  {errors.confirm_pin}
+                </p>
               )}
             </div>
 
@@ -407,8 +480,12 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                 onClick={() => setShowPin(!showPin)}
                 className="flex items-center gap-2"
               >
-                {showPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                {showPin ? 'Hide PIN' : 'Show PIN'}
+                {showPin ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+                {showPin ? "Hide PIN" : "Show PIN"}
               </Button>
               <Button
                 type="button"
@@ -417,8 +494,12 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                 onClick={() => setShowConfirmPin(!showConfirmPin)}
                 className="flex items-center gap-2"
               >
-                {showConfirmPin ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                {showConfirmPin ? 'Hide Confirm' : 'Show Confirm'}
+                {showConfirmPin ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+                {showConfirmPin ? "Hide Confirm" : "Show Confirm"}
               </Button>
             </div>
 
@@ -464,13 +545,13 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
               <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
                 <User className="h-8 w-8 text-green-600" />
               </div>
-              <CardTitle className="text-xl font-semibold text-gray-900">
+              {/* <CardTitle className="text-xl font-semibold text-gray-900">
                 Complete Your Profile
               </CardTitle>
               <p className="text-sm text-gray-600 mt-2">
                 Step {currentStep} of {totalSteps}
-              </p>
-              
+              </p> */}
+
               {/* Progress Bar */}
               <div className="w-full bg-gray-200 rounded-full h-2 mt-4">
                 <motion.div
@@ -481,12 +562,10 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
                 />
               </div>
             </CardHeader>
-            
+
             <CardContent>
               <form onSubmit={(e) => e.preventDefault()}>
-                <AnimatePresence mode="wait">
-                  {renderStep()}
-                </AnimatePresence>
+                <AnimatePresence mode="wait">{renderStep()}</AnimatePresence>
 
                 {/* Submit Error */}
                 {errors.submit && (
@@ -543,7 +622,7 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({ isOpen,
           </Card>
         </motion.div>
       </motion.div>
-      
+
       {/* PIN Reset Modal */}
       <PinResetModal
         isOpen={showPinResetModal}

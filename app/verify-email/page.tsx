@@ -24,10 +24,27 @@ const VerifyEmailContent = () => {
         setIsLoading(true);
         setError("");
 
+        // Get email from user context or session
+        let email = user?.email;
+
+        // If email is not in user context, try to get it from the session
+        if (!email) {
+          const {
+            data: { user: sessionUser },
+          } = await supabase.auth.getUser();
+          email = sessionUser?.email || undefined;
+        }
+
+        // Validate email exists
+        if (!email) {
+          setError("Email address not found. Please sign up again.");
+          return;
+        }
+
         const { error } = await supabase.auth.verifyOtp({
           token,
           type: "email",
-          email: user?.email || "",
+          email: email,
         });
 
         if (error) {
@@ -70,9 +87,33 @@ const VerifyEmailContent = () => {
       setError("");
       setResendSuccess(false);
 
+      // Get email from user context or session
+      let email = user?.email;
+
+      // If email is not in user context, try to get it from the session
+      if (!email) {
+        const {
+          data: { user: sessionUser },
+        } = await supabase.auth.getUser();
+        email = sessionUser?.email || undefined;
+      }
+
+      // Validate email exists
+      if (!email) {
+        setError("Email address not found. Please sign up again.");
+        return;
+      }
+
+      // Validate email format
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        setError("Invalid email address format.");
+        return;
+      }
+
       const { error } = await supabase.auth.resend({
         type: "signup",
-        email: user?.email || "",
+        email: email,
       });
 
       if (error) {

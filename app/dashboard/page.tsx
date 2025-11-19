@@ -931,23 +931,23 @@ const DashboardPage = () => {
                           </div>
                         </div>
                       </div>
-                      {/* ROI and Duration side by side: ROI on left, Duration on right */}
+                      {/* ROI and Duration arranged side by side */}
                       <div className="py-2">
-                        <div className="flex flex-row justify-between items-start gap-4">
-                          <div className="flex-1 flex flex-row items-center gap-2">
-                            <div className="text-left text-neutral-800 text-xs font-semibold">
+                        <div className="flex flex-row justify-between items-center gap-4">
+                          <div className="flex flex-row items-center gap-2">
+                            <div className="text-neutral-800 text-xs sm:text-sm font-semibold whitespace-nowrap">
                               Return:
                             </div>
-                            <div className="text-left text-orange-500 text-sm font-bold leading-none tracking-tight">
+                            <div className="text-orange-500 text-sm sm:text-base font-bold leading-none tracking-tight">
                               {project.expected_return_rate}-
                               {project.max_expected_return_rate}%
                             </div>
                           </div>
-                          <div className="flex-1 flex flex-col justify-start items-end gap-2">
-                            <div className="text-right text-neutral-800 text-xs font-semibold">
-                              Duration
+                          <div className="flex flex-row items-center gap-2">
+                            <div className="text-neutral-800 text-xs sm:text-sm font-semibold whitespace-nowrap">
+                              Duration:
                             </div>
-                            <div className="text-right text-orange-500 text-sm font-bold leading-none tracking-tight">
+                            <div className="text-orange-500 text-sm sm:text-base font-bold leading-none tracking-tight">
                               {project.duration_months} Months
                             </div>
                           </div>
