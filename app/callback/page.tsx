@@ -28,7 +28,6 @@ const PaymentCallbackContent = () => {
         const reference = searchParams.get("reference");
         const status = searchParams.get("status");
 
-
         // We need a reference to verify the payment
         // Use reference from URL, or trxref as fallback
         // This is the Paystack reference (like "wjkyuc51ysxabcq")
@@ -145,10 +144,14 @@ const PaymentCallbackContent = () => {
               `Verification failed with status: ${response.status}`;
           } else {
             const result = await response.json();
-            if (result.success) {
+            // Check both result.success and result.status === "success" to handle different response formats
+            const isSuccess =
+              result.success === true || result.status === "success";
+            if (isSuccess) {
               verificationSuccess = true;
             } else {
-              verificationError = result.message || "Unable to verify payment with backend";
+              verificationError =
+                result.message || "Unable to verify payment with backend";
             }
           }
         } catch (verifyError) {

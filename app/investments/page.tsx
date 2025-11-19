@@ -858,6 +858,7 @@ const InvestmentsPage = () => {
               subscriber_number?: string;
               network?: string;
               account_number?: string;
+              redirect_url?: string;
             }) => Promise<PaymentResponse>;
           }
         ).processMobileMoneyPayment({
@@ -874,6 +875,8 @@ const InvestmentsPage = () => {
               : undefined,
           description: `Investment in ${selectedInvestment.name}`,
           user_email: user?.email || "user@example.com",
+          // Use localhost callback URL for local testing, production URL for production
+          redirect_url: `${window.location.origin}/callback`,
         });
       } else if (selectedPaymentMethod === "card") {
         // Card Payment using the correct payload structure
@@ -1208,7 +1211,10 @@ const InvestmentsPage = () => {
 
       const result = await response.json();
 
-      if (result.success) {
+      // Check both result.success and result.status === "success" to handle different response formats
+      const isSuccess = result.success === true || result.status === "success";
+
+      if (isSuccess) {
         try {
           const {
             data: { user },
@@ -1229,15 +1235,22 @@ const InvestmentsPage = () => {
               .select(); // Return updated data to verify
 
             if (updateError) {
-              // Error updating transaction
+              console.error("Error updating transaction:", updateError);
+              // Still show success message since payment was verified
+              showToast("Payment verified successfully!", "success");
             } else if (updateData && updateData.length > 0) {
               // Refresh transactions list to show updated status
               try {
                 await refreshTransactions();
                 showToast("Transaction completed successfully!", "success");
               } catch (refreshErr) {
-                // Error refreshing transactions
+                console.error("Error refreshing transactions:", refreshErr);
+                // Still show success since payment was verified
+                showToast("Payment verified successfully!", "success");
               }
+            } else {
+              // Transaction might already be updated, still show success
+              showToast("Payment verified successfully!", "success");
             }
           }
 
@@ -1255,14 +1268,23 @@ const InvestmentsPage = () => {
             refreshProjects();
           }
         } catch (updateErr) {
-          // Error during update process
+          console.error("Error during update process:", updateErr);
+          // Still show success since payment was verified
+          showToast("Payment verified successfully!", "success");
         }
       } else {
         // Payment verification failed or still pending
+        const errorMessage =
+          result.message || "Payment verification failed or is still pending";
+        showToast(errorMessage, "error");
+        console.error("Payment verification failed:", result);
       }
     } catch (error) {
-      // Don't set error step - allow user to try again
-      // setCurrentStep("error");
+      // Show error message to user
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to verify payment";
+      showToast(errorMessage, "error");
+      console.error("Error verifying payment:", error);
     } finally {
       setIsVerifyingPayment(false);
     }

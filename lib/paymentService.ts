@@ -46,6 +46,7 @@ export interface MobileMoneyPaymentRequest {
   amount: number;
   unit: number;
   user_email: string; // Required field based on API testing
+  redirect_url?: string; // Optional - for local testing, defaults to production callback URL
 }
 
 export interface PaymentResponse {
