@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { motion, AnimatePresence } from "framer-motion"; // Check unused
-import { Shield, Eye, EyeOff, AlertTriangle, Loader2 } from "lucide-react"; // Check unused
+import { motion, AnimatePresence } from "framer-motion";
+import { Shield, Eye, EyeOff, AlertTriangle, Loader2 } from "lucide-react";
 import { useProfile } from "@/contexts/ProfileContext";
+import PinResetModal from "./pin-reset-modal";
 
 interface PinValidationModalProps {
   isOpen: boolean;
@@ -38,6 +39,7 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
   const [error, setError] = useState("");
   const [isShaking, setIsShaking] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [showPinResetModal, setShowPinResetModal] = useState(false);
 
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
   const maxAttempts = 3;
@@ -111,10 +113,12 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
         setIsLoading(false);
 
         if (newAttempts >= maxAttempts) {
-          setError("Too many incorrect attempts. Please try again later.");
+          setError(
+            "Too many incorrect attempts. Please try again later or reset your PIN."
+          );
           setTimeout(() => {
             onClose();
-          }, 2000);
+          }, 3000);
         } else {
           setError(
             `Incorrect PIN. ${maxAttempts - newAttempts} attempts remaining.`
@@ -220,6 +224,20 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
             )}
           </AnimatePresence>
 
+          {/* Forgot PIN Link - Always visible */}
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setShowPinResetModal(true);
+                onClose();
+              }}
+              className="text-sm font-medium text-green-600 hover:text-green-700 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded px-2 py-1"
+            >
+              Forgot your PIN? Reset it here
+            </button>
+          </div>
+
           {/* Action Buttons */}
           <div className="flex gap-1 sm:gap-2">
             <Button
@@ -254,6 +272,16 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
             </p>
           </div>
         </form>
+
+        {/* PIN Reset Modal */}
+        <PinResetModal
+          isOpen={showPinResetModal}
+          onClose={() => setShowPinResetModal(false)}
+          onSuccess={() => {
+            setShowPinResetModal(false);
+            // Optionally close the validation modal or show success message
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

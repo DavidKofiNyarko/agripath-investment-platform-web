@@ -13,6 +13,24 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/app/utils/supabase/client";
 import { useProfile } from "./ProfileContext";
 import { getApiBaseDomain } from "@/lib/apiConfig";
+import type { RealtimeChannel } from "@supabase/supabase-js";
+
+interface NotificationRow {
+  id: string;
+  title: string;
+  body: string;
+  type: string | null;
+  status: string;
+  published_at?: string;
+  created_at: string;
+}
+
+interface UserNotificationRow {
+  notifications_id: string;
+  user_id: string;
+  read_at: string | null;
+  clicked_at: string | null;
+}
 
 export interface Notification {
   id: string;
@@ -170,6 +188,41 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
       setIsLoading(false);
       isFetchingRef.current = false;
     }
+  }, [profile?.id]);
+
+  // Load preferences from database when profile loads
+  useEffect(() => {
+    const loadPreferences = async () => {
+      if (!profile?.id) {
+        setPreferences(defaultPreferences);
+        return;
+      }
+
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("profile")
+          .select("notification_preferences")
+          .eq("id", profile.id)
+          .single();
+
+        if (!error && data?.notification_preferences) {
+          // Merge with defaults to handle missing fields
+          setPreferences({
+            ...defaultPreferences,
+            ...(data.notification_preferences as Partial<NotificationPreferences>),
+          });
+        } else {
+          // If no preferences found, use defaults
+          setPreferences(defaultPreferences);
+        }
+      } catch (error) {
+        // On error, use defaults
+        setPreferences(defaultPreferences);
+      }
+    };
+
+    loadPreferences();
   }, [profile?.id]);
 
   const markAsRead = async (notificationId: string) => {
@@ -334,10 +387,29 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
     newPreferences: Partial<NotificationPreferences>
   ) => {
     try {
-      setPreferences((prev) => ({ ...prev, ...newPreferences }));
-      // TODO: Save preferences to database if needed
+      const updatedPreferences = { ...preferences, ...newPreferences };
+      setPreferences(updatedPreferences);
+
+      // Save preferences to database (profile table)
+      if (profile?.id) {
+        const supabase = createClient();
+        const { error } = await supabase
+          .from("profile")
+          .update({
+            notification_preferences: updatedPreferences,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", profile.id);
+
+        if (error) {
+          // Revert local state on error
+          setPreferences(preferences);
+          throw error;
+        }
+      }
     } catch (error) {
-      // Error updating preferences
+      // Error updating preferences - state already reverted
+      throw error;
     }
   };
 
@@ -394,7 +466,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
     if (!profile?.id) return;
 
     const supabase = createClient();
-    let channel: any = null;
+    let channel: RealtimeChannel | null = null;
 
     try {
       // Listen to notifications table for new published notifications
@@ -410,7 +482,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           },
           (payload) => {
             if (payload.new) {
-              const newNotification = payload.new as any;
+              const newNotification = payload.new as NotificationRow;
               setNotifications((prev) => [
                 {
                   id: newNotification.id,
@@ -436,7 +508,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           },
           (payload) => {
             if (payload.new) {
-              const updatedNotification = payload.new as any;
+              const updatedNotification = payload.new as NotificationRow;
               setNotifications((prev) =>
                 prev.map((n) =>
                   n.id === updatedNotification.id
@@ -464,18 +536,18 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           },
           (payload) => {
             if (payload.new) {
-              const userNotification = payload.new as any;
+              const userNotification = payload.new as UserNotificationRow;
               setNotifications((prev) =>
                 prev.map((n) =>
                   n.id === userNotification.notifications_id
-                    ? {
+                    ? ({
                         ...n,
                         status: userNotification.read_at
                           ? ("read" as const)
                           : ("unread" as const),
-                        read_at: userNotification.read_at,
-                        clicked_at: userNotification.clicked_at,
-                      }
+                        read_at: userNotification.read_at || undefined,
+                        clicked_at: userNotification.clicked_at || undefined,
+                      } as Notification)
                     : n
                 )
               );

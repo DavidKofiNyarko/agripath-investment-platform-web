@@ -567,72 +567,74 @@ export function TransactionDetailDrawer({
   const TypeIcon = getTypeIcon(transaction.type);
 
   return (
-    <Sheet open={open} onOpenChange={onClose}>
+      <Sheet open={open} onOpenChange={onClose}>
       <SheetContent className="w-full sm:max-w-lg p-0 overflow-y-auto">
-        <SheetHeader className="p-6 border-none">
-          <SheetTitle className="text-xl font-semibold">
+        <SheetHeader className="p-4 sm:p-6 border-b border-gray-200">
+          <SheetTitle className="text-lg sm:text-xl font-semibold">
             Transaction Details
           </SheetTitle>
-          <SheetDescription className="text-gray-600">
+          <SheetDescription className="text-gray-600 text-sm sm:text-base mt-1">
             Complete information about this transaction
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 p-6 space-y-6">
+        <div className="flex-1 p-4 sm:p-6 space-y-4 sm:space-y-6">
           {/* Header Section with Status */}
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-sm border border-green-50">
-            <div className="flex items-center justify-between mb-4">
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 p-4 sm:p-5 rounded-lg border border-green-50">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
               <div className="flex items-center gap-3">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <TypeIcon className="h-5 w-5 text-green-700" />
+                <div className="p-2 sm:p-2.5 bg-green-100 rounded-lg flex-shrink-0">
+                  <TypeIcon className="h-4 w-4 sm:h-5 sm:w-5 text-green-700" />
                 </div>
-                <div>
-                  <h2 className="font-semibold text-gray-900">
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-semibold text-gray-900 text-base sm:text-lg">
                     {getTypeLabel(transaction.type)}
                   </h2>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">
                     #{transaction.transaction_id}
                   </p>
                 </div>
               </div>
-              {getStatusBadge(transaction.status)}
+              <div className="flex-shrink-0">
+                {getStatusBadge(transaction.status)}
+              </div>
             </div>
           </div>
 
           {/* Financial Summary Card */}
-          <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Banknote className="h-4 w-4 text-green-600" />
+          <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+              <Banknote className="h-4 w-4 text-green-600 flex-shrink-0" />
               Financial Summary
             </h3>
 
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-2">
-                <span className="text-gray-600 font-medium">Amount</span>
-                <span className="text-xl font-bold text-green-600">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 py-2">
+                <span className="text-gray-600 font-medium text-sm sm:text-base">Amount</span>
+                <span className="text-lg sm:text-xl font-bold text-green-600">
                   GHS {transaction.amount.toLocaleString()}
                 </span>
               </div>
 
               {transaction.fees > 0 && (
-                <div className="flex items-center justify-between py-2 border-t border-gray-50/20">
-                  <span className="text-gray-600">Transaction Fee</span>
-                  <span className="font-semibold text-gray-700">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 py-2 border-t border-gray-100">
+                  <span className="text-gray-600 text-sm sm:text-base">Transaction Fee</span>
+                  <span className="font-semibold text-gray-700 text-sm sm:text-base">
                     GHS {transaction.fees.toLocaleString()}
                   </span>
                 </div>
               )}
 
-              <div className="flex items-center justify-between py-2 border-t border-gray-50/20">
-                <span className="text-gray-600 font-medium">Net Amount</span>
-                <span className="text-lg font-bold text-gray-900">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 py-2 border-t border-gray-100">
+                <span className="text-gray-600 font-medium text-sm sm:text-base">Net Amount</span>
+                <span className="text-base sm:text-lg font-bold text-gray-900">
                   GHS {transaction.net_amount.toLocaleString()}
                 </span>
               </div>
 
-              <div className="flex items-center justify-between py-2 border-t border-gray-50/20">
-                <span className="text-gray-600 font-medium">Units</span>
-                <span className="text-lg font-bold text-gray-900">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 py-2 border-t border-gray-100">
+                <span className="text-gray-600 font-medium text-sm sm:text-base">Units</span>
+                <span className="text-base sm:text-lg font-bold text-gray-900">
                   {transaction.unit}
                 </span>
               </div>
@@ -698,34 +700,34 @@ export function TransactionDetailDrawer({
 
           {/* Project Information Card */}
           {transaction.project && (
-            <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
-              <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Package className="h-4 w-4 text-purple-600" />
+            <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+                <Package className="h-4 w-4 text-purple-600 flex-shrink-0" />
                 Project Information
               </h3>
 
               <div className="space-y-3">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
-                  <span className="text-gray-600 font-medium text-sm sm:text-base">
+                <div className="flex flex-col gap-1 sm:gap-0 py-2 border-b border-gray-100 last:border-b-0">
+                  <span className="text-gray-600 font-medium text-xs sm:text-sm mb-1">
                     Project Name
                   </span>
-                  <span className="font-semibold text-gray-900 text-sm sm:text-base break-words sm:break-normal">
+                  <span className="font-semibold text-gray-900 text-sm sm:text-base break-words">
                     {transaction.project.project_name}
                   </span>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
-                  <span className="text-gray-600 text-sm sm:text-base font-medium flex items-center gap-2">
-                    <MapPin className="h-4 w-4" />
+                <div className="flex flex-col gap-1 sm:gap-0 py-2 border-b border-gray-100 last:border-b-0">
+                  <span className="text-gray-600 text-xs sm:text-sm font-medium flex items-center gap-2 mb-1">
+                    <MapPin className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                     Location
                   </span>
-                  <span className="font-semibold text-gray-900 text-sm sm:text-base break-words sm:break-normal">
+                  <span className="font-semibold text-gray-900 text-sm sm:text-base break-words pl-5 sm:pl-6">
                     {transaction.project.farm_location}
                   </span>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
-                  <span className="text-gray-600 text-sm sm:text-base font-medium">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 py-2 border-b border-gray-100 last:border-b-0">
+                  <span className="text-gray-600 text-xs sm:text-sm font-medium">
                     Price per Unit
                   </span>
                   <span className="font-semibold text-gray-900 text-sm sm:text-base">
@@ -733,8 +735,8 @@ export function TransactionDetailDrawer({
                   </span>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
-                  <span className="text-gray-600 text-sm sm:text-base font-medium">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 py-2 border-b border-gray-100 last:border-b-0">
+                  <span className="text-gray-600 text-xs sm:text-sm font-medium">
                     Total Units
                   </span>
                   <span className="font-semibold text-gray-900 text-sm sm:text-base">
@@ -742,8 +744,8 @@ export function TransactionDetailDrawer({
                   </span>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-2 gap-1 sm:gap-0">
-                  <span className="text-gray-600 text-sm sm:text-base font-medium">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 py-2">
+                  <span className="text-gray-600 text-xs sm:text-sm font-medium">
                     Project Status
                   </span>
                   <Badge
@@ -752,7 +754,7 @@ export function TransactionDetailDrawer({
                         ? "default"
                         : "secondary"
                     }
-                    className={`capitalize w-fit ${
+                    className={`capitalize w-fit text-xs sm:text-sm ${
                       transaction.project.status === "Active"
                         ? "bg-green-100 text-green-800 hover:bg-green-100"
                         : "bg-gray-100 text-gray-800 hover:bg-gray-100"
@@ -766,16 +768,16 @@ export function TransactionDetailDrawer({
           )}
 
           {/* Transaction Timeline - Simplified */}
-          <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
-            <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-gray-600" />
+          <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 shadow-sm">
+            <h3 className="font-semibold text-gray-900 mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+              <Calendar className="h-4 w-4 text-gray-600 flex-shrink-0" />
               Transaction Timeline
             </h3>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between py-2">
-                <span className="text-gray-600 text-sm">Created</span>
-                <span className="font-medium text-gray-900 text-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 py-2">
+                <span className="text-gray-600 text-xs sm:text-sm">Created</span>
+                <span className="font-medium text-gray-900 text-xs sm:text-sm">
                   {new Date(transaction.created_at).toLocaleString("en-US", {
                     month: "short",
                     day: "numeric",
@@ -787,9 +789,9 @@ export function TransactionDetailDrawer({
               </div>
 
               {transaction.processed_at && (
-                <div className="flex items-center justify-between py-2 border-t border-gray-100">
-                  <span className="text-gray-600 text-sm">Processed</span>
-                  <span className="font-medium text-gray-900 text-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0 py-2 border-t border-gray-100">
+                  <span className="text-gray-600 text-xs sm:text-sm">Processed</span>
+                  <span className="font-medium text-gray-900 text-xs sm:text-sm">
                     {new Date(transaction.processed_at).toLocaleString(
                       "en-US",
                       {
@@ -808,10 +810,10 @@ export function TransactionDetailDrawer({
 
           {/* Download Receipt Button */}
           {transaction && (
-            <div className="bg-white border border-gray-50/10 rounded-sm p-5 shadow-xs">
+            <div className="bg-white border border-gray-200 rounded-lg p-4 sm:p-5 shadow-sm">
               <Button
                 onClick={() => generateReceipt(transaction)}
-                className="w-full bg-green-600 hover:bg-green-700 text-white"
+                className="w-full bg-green-600 hover:bg-green-700 text-white text-sm sm:text-base h-10 sm:h-11"
                 variant="default"
               >
                 <Receipt className="h-4 w-4 mr-2" />

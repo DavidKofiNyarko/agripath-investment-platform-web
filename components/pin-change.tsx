@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Shield, Check, AlertTriangle, Loader2 } from 'lucide-react';
 import { useProfile } from '@/contexts/ProfileContext';
 import { createClient } from '@/app/utils/supabase/client';
+import PinResetModal from './pin-reset-modal';
 
 const PinChange: React.FC = () => {
   const { profile, refreshProfile } = useProfile();
@@ -21,6 +22,7 @@ const PinChange: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [showPinResetModal, setShowPinResetModal] = useState(false);
 
   const supabase = createClient();
   const currentPinRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -331,6 +333,19 @@ const PinChange: React.FC = () => {
             )}
           </AnimatePresence>
 
+          {/* Forgot PIN Link */}
+          {profile?.pin && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => setShowPinResetModal(true)}
+                className="text-sm font-medium text-green-600 hover:text-green-700 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded px-2 py-1"
+              >
+                Forgot your PIN? Reset it here
+              </button>
+            </div>
+          )}
+
           {/* Submit Button */}
           <Button
             type="submit"
@@ -347,6 +362,17 @@ const PinChange: React.FC = () => {
             )}
           </Button>
         </form>
+
+        {/* PIN Reset Modal */}
+        <PinResetModal
+          isOpen={showPinResetModal}
+          onClose={() => setShowPinResetModal(false)}
+          onSuccess={() => {
+            setShowPinResetModal(false);
+            // Refresh profile after PIN reset
+            refreshProfile();
+          }}
+        />
       </CardContent>
     </Card>
   );

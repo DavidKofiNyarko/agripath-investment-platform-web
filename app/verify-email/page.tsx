@@ -160,16 +160,13 @@ const VerifyEmailContent = () => {
       <div className="lg:hidden w-full min-h-screen bg-[#1A1A1A] flex flex-col items-center justify-center p-6">
         <div className="w-full max-w-md space-y-8">
           {/* Logo */}
-          <div className="flex justify-center">
+          <div className="flex justify-center items-center gap-2">
             <Image
               src="/y-logo.svg"
               alt="AgriPath Logo"
               width={100}
               height={100}
             />
-            <h1 className="font-anthropic text-3xl font-bold text-white">
-              AgriPath
-            </h1>
           </div>
 
           {/* Hero Text */}

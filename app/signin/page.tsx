@@ -65,18 +65,21 @@ const SignInPage = () => {
     e.preventDefault();
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
         password: formData.password,
       });
 
       if (error) {
-        // Handle error
-      } else {
-        // Success - redirect handled by auth state change
+        // Handle error - could show error message to user
+        console.error("Sign in error:", error.message);
+      } else if (data?.user) {
+        // Success - redirect to dashboard immediately
+        router.push("/dashboard");
       }
     } catch (error) {
       // Handle error
+      console.error("Sign in error:", error);
     } finally {
       setIsLoading(false);
     }

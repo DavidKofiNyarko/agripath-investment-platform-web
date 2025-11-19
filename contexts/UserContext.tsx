@@ -34,10 +34,15 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     const getUser = async () => {
       try {
         const { data: { user }, error } = await supabase.auth.getUser();
-        if (error) {
+        if (!error && user) {
           setUser(user);
+        } else {
+          setUser(null);
         }
+        setLoading(false);
       } catch (error) {
+        setUser(null);
+        setLoading(false);
       }
     };
 
@@ -45,6 +50,11 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+        } else {
+          setUser(null);
+        }
         setLoading(false);
       }
     );

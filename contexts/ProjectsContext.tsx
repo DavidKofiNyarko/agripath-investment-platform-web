@@ -23,7 +23,7 @@ export interface Project {
   total_value: number;
   expected_return_rate: number;
   duration_months: number;
-  status: "Active" | "Inactive" | "Complete" | "Cancelled";
+  status: "Active" | "Inactive" | "Complete" | "Cancelled" | "DRAFT" | "draft";
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -149,9 +149,31 @@ export const ProjectsProvider = ({
     setLoading(true);
     setError(null);
 
+    // If no user, set loading to false immediately
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      setProjects([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       // Build query with all filters applied
       let query = supabase.from("projects").select("*", { count: "exact" });
+
+      // Always exclude DRAFT and Completed projects (handle all case variations)
+      query = query
+        .neq("status", "DRAFT")
+        .neq("status", "draft")
+        .neq("status", "Draft")
+        .neq("status", "Complete")
+        .neq("status", "complete")
+        .neq("status", "COMPLETE")
+        .neq("status", "Completed")
+        .neq("status", "completed")
+        .neq("status", "COMPLETED");
 
       // Apply search filter
       if (filters.search) {

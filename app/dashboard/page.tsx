@@ -705,7 +705,7 @@ const DashboardPage = () => {
             /> */}
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <Card className="bg-green-800 text-white">
               <CardContent className="p-0">
                 <div className="self-stretch px-4 sm:px-6 pt-4 sm:pt-6 pb-2 inline-flex justify-between items-center">

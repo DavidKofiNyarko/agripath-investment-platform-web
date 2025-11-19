@@ -114,6 +114,7 @@ export const ProfileProvider = ({
       return;
     }
 
+    setLoading(true);
     try {
       // First try to find profile by user_id
       const { data, error } = await supabase
@@ -145,12 +146,16 @@ export const ProfileProvider = ({
 
             if (createError) {
               setProfile(null);
+              setLoading(false);
               return;
             }
 
             setProfile(newProfile);
+            setLoading(false);
+            return;
           } catch (createErr) {
             setProfile(null);
+            setLoading(false);
             return;
           }
         } else {
@@ -163,16 +168,22 @@ export const ProfileProvider = ({
 
             if (updateError) {
               setProfile(dataById);
+              setLoading(false);
               return;
             }
           }
           setProfile(dataById);
+          setLoading(false);
+          return;
         }
-        return;
       }
 
       setProfile(data);
-    } catch (error) {}
+      setLoading(false);
+    } catch (error) {
+      setProfile(null);
+      setLoading(false);
+    }
   }, [user, supabase]);
 
   const createProfile = useCallback(async () => {

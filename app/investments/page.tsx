@@ -16,7 +16,7 @@ import PinValidationModal from "@/components/pin-validation-modal";
 import CustomAlert from "@/components/custom-alert";
 import Loading from "@/components/ui/loading";
 import { createClient } from "@/app/utils/supabase/client";
-import { paymentService } from "@/lib/paymentService";
+import { paymentService, PaymentResponse } from "@/lib/paymentService";
 import { getApiBaseDomain } from "@/lib/apiConfig";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -845,9 +845,19 @@ const InvestmentsPage = () => {
       if (selectedPaymentMethod === "mobile") {
         // Mobile Money Payment using our payment service
         // Phone number and network removed - Paystack handles it
+        // Note: Using processMobileMoneyPayment as processInvestmentMobileMoneyPayment doesn't exist
         paymentResult = await (
-          paymentService as any
-        ).processInvestmentMobileMoneyPayment({
+          paymentService as {
+            processMobileMoneyPayment: (data: {
+              profile_id: string;
+              project_id: string;
+              amount: number;
+              unit: number;
+              description: string;
+              user_email: string;
+            }) => Promise<PaymentResponse>;
+          }
+        ).processMobileMoneyPayment({
           profile_id: profile?.id || "", // Use profile ID (required by backend)
           project_id: projectId,
           amount: totalAmount,
@@ -889,9 +899,7 @@ const InvestmentsPage = () => {
       if (paymentResult.redirect_url) {
         const redirectUrl = paymentResult.redirect_url;
         const paymentTransactionId =
-          (paymentResult as any).transaction_id ||
-          (paymentResult as any).reference ||
-          "";
+          paymentResult.transaction_id || paymentResult.reference || "";
 
         // Store redirect URL and transaction_id for verification
         setRedirectUrl(redirectUrl || "");
@@ -911,13 +919,13 @@ const InvestmentsPage = () => {
         paymentResult.status === "completed" ||
         paymentResult.status === "Complete" ||
         paymentResult.code === "000" ||
-        (paymentResult as any).details?.status === "approved" ||
-        (paymentResult as any).details?.code === "000";
+        paymentResult.details?.status === "approved" ||
+        paymentResult.details?.code === "000";
 
       if (isSuccess) {
         // Check if backend already created transaction (to avoid double unit deduction)
         // Backend API creates transaction and deducts units, so we should check first
-        let backendTransactionId = (paymentResult as any).transaction_id;
+        let backendTransactionId = paymentResult.transaction_id;
 
         // If wallet investment didn't return transaction_id, try to find it in the database
         // by looking for the most recent investment transaction for this project
@@ -977,12 +985,12 @@ const InvestmentsPage = () => {
         }
       } else if (paymentResult.status === "vbv_required") {
         // Handle 3D Secure redirect
-        if ((paymentResult as any).redirect_url) {
-          window.open((paymentResult as any).redirect_url, "_blank");
+        if (paymentResult.redirect_url) {
+          window.open(paymentResult.redirect_url, "_blank");
         }
 
         // Verify backend transaction exists (backend creates all transactions)
-        const backendTransactionId = (paymentResult as any).transaction_id;
+        const backendTransactionId = paymentResult.transaction_id;
         const transactionCheck = await checkBackendTransaction(
           backendTransactionId,
           projectId
@@ -1010,7 +1018,9 @@ const InvestmentsPage = () => {
           );
         }
       } else {
-        throw new Error((paymentResult as any).reason || "Payment failed");
+        throw new Error(
+          paymentResult.reason || paymentResult.error || "Payment failed"
+        );
       }
     } catch (error) {
       // Show user-friendly error message
@@ -2759,7 +2769,7 @@ const InvestmentsPage = () => {
                         </div>
                       </div>
                       <div
-                        className="self-stretch p-4 rounded-2xl w-full outline outline-1 outline-offset-[-1px] outline-green-800 inline-flex justify-center items-center gap-2 cursor-pointer hover:bg-green-50 transition-colors"
+                        className="self-stretch p-4 rounded-2xl w-full outline-1 outline-offset-[-1px] outline-green-800 inline-flex justify-center items-center gap-2 cursor-pointer hover:bg-green-50 transition-colors"
                         onClick={() => {
                           setIsSheetOpen(false);
                           setCurrentStep("details");

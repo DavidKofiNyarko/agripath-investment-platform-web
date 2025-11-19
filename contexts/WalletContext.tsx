@@ -162,6 +162,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
 
+    setLoading(true);
     try {
       const { data, error } = await supabase
         .from("wallets")
@@ -171,6 +172,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
       if (error) {
         setWallet(null);
+        setLoading(false);
         return;
       }
 

@@ -59,7 +59,14 @@ const UpdatesPage = () => {
   const [activeTab, setActiveTab] = useState("notifications");
   const [selectedUpdate, setSelectedUpdate] = useState<Update | null>(null);
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
-  const [selectedNotification, setSelectedNotification] = useState<any>(null);
+  const [selectedNotification, setSelectedNotification] = useState<{
+    id: string;
+    title: string;
+    body: string;
+    type: "Email" | "SMS";
+    status: "read" | "unread";
+    created_at: string;
+  } | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -165,13 +172,13 @@ const UpdatesPage = () => {
   const readUpdates = formattedUpdates.filter((update) => update.isRead);
 
   // Pagination logic
-  const getPaginatedItems = (items: any[]) => {
+  const getPaginatedItems = <T,>(items: T[]): T[] => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return items.slice(startIndex, endIndex);
   };
 
-  const getTotalPages = (items: any[]) => {
+  const getTotalPages = <T,>(items: T[]): number => {
     return Math.ceil(items.length / itemsPerPage);
   };
 
@@ -190,7 +197,14 @@ const UpdatesPage = () => {
     setIsModalOpen(true);
   };
 
-  const handleNotificationClick = async (notification: any) => {
+  const handleNotificationClick = async (notification: {
+    id: string;
+    title: string;
+    body: string;
+    type: "Email" | "SMS";
+    status: "read" | "unread";
+    created_at: string;
+  }) => {
     setSelectedNotification(notification);
     setIsNotificationModalOpen(true);
     setShowDetailView(true);
@@ -401,7 +415,7 @@ const UpdatesPage = () => {
                           <div className="flex items-start justify-between">
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-2">
-                                <Badge
+                                {/* <Badge
                                   variant="secondary"
                                   className={`text-xs ${
                                     notification.type === "Email"
@@ -410,7 +424,7 @@ const UpdatesPage = () => {
                                   }`}
                                 >
                                   {notification.type}
-                                </Badge>
+                                </Badge> */}
                                 {notification.status === "unread" && (
                                   <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                                 )}
@@ -552,7 +566,7 @@ const UpdatesPage = () => {
                 {/* Notification Header */}
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <Badge
+                    {/* <Badge
                       variant="secondary"
                       className={`${
                         selectedNotification.type === "Email"
@@ -561,7 +575,7 @@ const UpdatesPage = () => {
                       }`}
                     >
                       {selectedNotification.type}
-                    </Badge>
+                    </Badge> */}
                     {selectedNotification.status === "unread" && (
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
                     )}

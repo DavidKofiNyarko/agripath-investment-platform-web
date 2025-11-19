@@ -113,6 +113,14 @@ export const UpdatesProvider = ({
     setLoading(true);
     setError(null);
 
+    // If no user, set loading to false immediately
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setUpdates([]);
+      setLoading(false);
+      return;
+    }
+
     try {
       // Build query with filters
       let query = supabase

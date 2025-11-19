@@ -20,6 +20,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { useProfile } from "@/contexts/ProfileContext";
+import PinResetModal from "./pin-reset-modal";
 
 interface PinChangeModalProps {
   isOpen: boolean;
@@ -46,6 +47,7 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
   const [error, setError] = useState("");
   const [isShaking, setIsShaking] = useState(false);
   const [attempts, setAttempts] = useState(0);
+  const [showPinResetModal, setShowPinResetModal] = useState(false);
 
   const pinRefs = useRef<(HTMLInputElement | null)[]>([]);
   const maxAttempts = 3;
@@ -148,10 +150,10 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
         setIsLoading(false);
 
         if (newAttempts >= maxAttempts) {
-          setError("Too many incorrect attempts. Please try again later.");
+          setError("Too many incorrect attempts. Please try again later or reset your PIN.");
           setTimeout(() => {
             onClose();
-          }, 2000);
+          }, 3000);
         } else {
           setError(
             `Incorrect PIN. ${maxAttempts - newAttempts} attempts remaining.`
@@ -472,6 +474,22 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
             )}
           </AnimatePresence>
 
+          {/* Forgot PIN Link - Only show when entering current PIN */}
+          {currentStep === "current" && profile?.pin && (
+            <div className="text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowPinResetModal(true);
+                  onClose();
+                }}
+                className="text-sm font-medium text-green-600 hover:text-green-700 hover:underline transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 rounded px-2 py-1"
+              >
+                Forgot your PIN? Reset it here
+              </button>
+            </div>
+          )}
+
           {/* Action Buttons */}
           <div className="flex gap-3">
             {(currentStep === "new" || currentStep === "confirm") && (
@@ -517,6 +535,16 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
             </p>
           </div>
         </form>
+
+        {/* PIN Reset Modal */}
+        <PinResetModal
+          isOpen={showPinResetModal}
+          onClose={() => setShowPinResetModal(false)}
+          onSuccess={() => {
+            setShowPinResetModal(false);
+            // Optionally refresh profile or show success message
+          }}
+        />
       </DialogContent>
     </Dialog>
   );

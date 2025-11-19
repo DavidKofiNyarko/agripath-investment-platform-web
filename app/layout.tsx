@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { UserProvider } from "@/contexts/UserContext";
 import { ProfileProvider } from "@/contexts/ProfileContext";
@@ -63,11 +63,12 @@ export const metadata: Metadata = {
       "Invest in sustainable agriculture with AgriPath. Access verified farming projects and earn returns.",
     images: ["/logo.png"],
   },
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-  },
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -115,9 +116,7 @@ export default function RootLayout({
                   <TransactionsProvider>
                     <ProjectsProvider>
                       <UpdatesProvider>
-                        <ToastProvider>
-                          {children}
-                        </ToastProvider>
+                        <ToastProvider>{children}</ToastProvider>
                       </UpdatesProvider>
                     </ProjectsProvider>
                   </TransactionsProvider>

@@ -382,16 +382,15 @@ export const PortfolioProvider = ({
       return;
     }
 
-    // Wait for profile to load if it's not available yet
+    setLoading(true);
+    setError(null);
+
+    // Wait for profile to load if it's not available yet (but don't wait forever)
     if (!profile) {
-      setLoading(true);
       // Wait a bit for profile to load
       await new Promise((resolve) => setTimeout(resolve, 500));
       // If still no profile after waiting, proceed anyway (RLS will handle it)
     }
-
-    setLoading(true);
-    setError(null);
 
     try {
       // Fetch portfolio metrics - only include completed investment transactions
@@ -644,8 +643,11 @@ export const PortfolioProvider = ({
 
   useEffect(() => {
     if (user) {
+      fetchPortfolioData();
+    } else {
+      setLoading(false);
     }
-  }, [user, profile, fetchPortfolioData]);
+  }, [user, fetchPortfolioData]);
 
   // Note: Filtering and pagination are now handled client-side
   // No need for useEffect to watch filter changes
