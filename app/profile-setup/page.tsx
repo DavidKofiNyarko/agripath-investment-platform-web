@@ -67,7 +67,7 @@ const ProfileSetupPage = () => {
         lastName: profile.last_name || "",
         email: profile.email || "",
         phoneNumber: profile.phone_number || "",
-        country: profile.country || "Ghana",
+        country: profile.country || "ghana",
       });
     }
   }, [profile]);
