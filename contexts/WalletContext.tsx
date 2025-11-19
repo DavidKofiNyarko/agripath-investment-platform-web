@@ -381,6 +381,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           user_email?: string;
           subscriber_number?: string;
           network?: string;
+          account_number?: string;
         } = {
           profile_id: userData.id,
           project_id: "16beb80e-cb97-44b0-ab8e-13542a6add60", // Default project ID for wallet operations

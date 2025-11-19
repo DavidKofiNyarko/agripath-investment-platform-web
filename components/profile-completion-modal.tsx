@@ -56,7 +56,7 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
     last_name: profile?.last_name || "",
     email: profile?.email || "",
     phone_number: isValidPhoneNumber(profile?.phone_number)
-      ? profile.phone_number
+      ? profile?.phone_number || ""
       : "",
     country: profile?.country || "ghana",
   });

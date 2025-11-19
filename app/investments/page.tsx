@@ -855,6 +855,9 @@ const InvestmentsPage = () => {
               unit: number;
               description: string;
               user_email: string;
+              subscriber_number?: string;
+              network?: string;
+              account_number?: string;
             }) => Promise<PaymentResponse>;
           }
         ).processMobileMoneyPayment({
