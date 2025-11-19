@@ -45,9 +45,8 @@ export async function POST(request: NextRequest) {
       });
 
     if (tokenError) {
-      console.error('Error storing reset token:', tokenError);
       return NextResponse.json(
-        { error: 'Failed to process reset request' },
+        { error: 'Failed to generate reset token' },
         { status: 500 }
       );
     }
@@ -65,11 +64,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (emailError) {
-      console.error('Error sending reset email:', emailError);
-      return NextResponse.json(
-        { error: 'Failed to send reset email' },
-        { status: 500 }
-      );
+      // Email sending failed, but don't reveal this to user for security
     }
 
     return NextResponse.json(
@@ -78,7 +73,6 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error('PIN reset request error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -69,8 +69,6 @@ const SecureAccountPage = () => {
         router.push('/dashboard');
       }, 2000);
     } catch (error) {
-      console.error('Error updating password:', error);
-      setError('An unexpected error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }

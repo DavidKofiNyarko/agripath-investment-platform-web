@@ -531,7 +531,7 @@ export function TransactionDetailDrawer({
           : transactionData.profile,
       });
     } catch (error) {
-      console.error("Error fetching transaction detail:", error);
+      // Error fetching transaction detail
     } finally {
       setLoading(false);
     }

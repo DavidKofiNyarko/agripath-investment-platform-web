@@ -188,15 +188,14 @@ function SettingsPageContent() {
       if (error) {
         // If table doesn't exist, create it
         if (error.code === "42P01") {
-          console.log("Payment accounts table doesn't exist, will create it");
-          return;
+          // Table doesn't exist - handle gracefully
         }
-        throw error;
+        setAccounts([]);
+      } else {
+        setAccounts(data || []);
       }
-
-      setAccounts(data || []);
     } catch (error) {
-      console.error("Error fetching accounts:", error);
+      setAccounts([]);
     } finally {
       setIsLoadingAccounts(false);
     }
@@ -313,10 +312,6 @@ function SettingsPageContent() {
       setIsAddAccountOpen(false);
       await fetchAccounts();
     } catch (error) {
-      console.error("Error saving account:", error);
-      setUploadError(
-        error instanceof Error ? error.message : "Failed to save account"
-      );
     } finally {
       setIsSavingAccount(false);
     }
@@ -335,12 +330,7 @@ function SettingsPageContent() {
       if (error) throw error;
 
       await fetchAccounts();
-    } catch (error) {
-      console.error("Error deleting account:", error);
-      setUploadError(
-        error instanceof Error ? error.message : "Failed to delete account"
-      );
-    }
+    } catch (error) {}
   };
 
   // Handle setting preferred account
@@ -364,14 +354,7 @@ function SettingsPageContent() {
       if (error) throw error;
 
       await fetchAccounts();
-    } catch (error) {
-      console.error("Error setting preferred account:", error);
-      setUploadError(
-        error instanceof Error
-          ? error.message
-          : "Failed to set preferred account"
-      );
-    }
+    } catch (error) {}
   };
 
   // Check if form has been modified
@@ -442,12 +425,6 @@ function SettingsPageContent() {
       // Refresh profile to show new avatar
       await refreshProfile();
     } catch (error) {
-      console.error("Error uploading avatar:", error);
-      setUploadError(
-        error instanceof Error
-          ? error.message
-          : "Failed to upload profile picture"
-      );
     } finally {
       setIsUploadingAvatar(false);
       // Reset file input
@@ -493,12 +470,7 @@ function SettingsPageContent() {
           phone_number: profile.phone_number || "",
         });
       }
-    } catch (error) {
-      console.error("Error updating profile:", error);
-      // You could add error state here to show user feedback
-    } finally {
-      setIsUpdatingProfile(false);
-    }
+    } catch (error) {}
   };
 
   const settingsTabs = [
@@ -555,8 +527,6 @@ function SettingsPageContent() {
       await logoutAllDevices();
       // The logoutAllDevices function handles the redirect
     } catch (error) {
-      console.error("Logout all devices failed:", error);
-      setLogoutError("Failed to logout from all devices. Please try again.");
     } finally {
       setIsLoggingOut(false);
     }

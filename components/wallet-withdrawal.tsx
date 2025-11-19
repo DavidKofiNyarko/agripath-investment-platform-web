@@ -211,7 +211,6 @@ const WalletWithdrawal: React.FC = () => {
         setError(result.error || "Withdrawal failed. Please try again.");
       }
     } catch (err) {
-      console.error("Withdrawal error:", err);
       setError(
         err instanceof Error
           ? err.message

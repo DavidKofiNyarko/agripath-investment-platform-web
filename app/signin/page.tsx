@@ -54,12 +54,8 @@ const SignInPage = () => {
       });
 
       if (error) {
-        console.error(`Error signing in with ${provider}:`, error);
-        alert(`Error signing in with ${provider}: ${error.message}`);
       }
     } catch (error) {
-      console.error(`Error signing in with ${provider}:`, error);
-      alert(`Error signing in with ${provider}. Please try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -75,13 +71,12 @@ const SignInPage = () => {
       });
 
       if (error) {
-        console.error("Error signing in:", error);
-        alert("Error signing in: " + error.message);
+        // Handle error
       } else {
-        console.log("Sign in successful");
+        // Success - redirect handled by auth state change
       }
     } catch (error) {
-      console.error("Error signing in:", error);
+      // Handle error
     } finally {
       setIsLoading(false);
     }

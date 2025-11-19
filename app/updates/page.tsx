@@ -653,121 +653,21 @@ const UpdatesPage = () => {
                             alt={media.title}
                             className="w-full h-full object-cover"
                             onError={(e) => {
-                              console.error(
-                                "Image failed to load:",
-                                media.image,
-                                e
-                              );
                               const target = e.target as HTMLImageElement;
                               target.src =
                                 "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop";
                             }}
-                            onLoad={() =>
-                              console.log(
-                                "Image loaded successfully:",
-                                media.image
-                              )
-                            }
-                            loading="lazy"
+                            onLoad={() => {}}
                           />
-                          <div className="absolute inset-0  bg-opacity-0 group-hover:bg-opacity-20 transition-all duration-200 flex items-center justify-center pointer-events-none">
-                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                              <div className="bg-white bg-opacity-90 rounded-full p-2">
-                                <Play className="h-6 w-6 text-gray-700" />
-                              </div>
-                            </div>
-                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
                 ) : null}
               </div>
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {activeTab === "notifications"
-                      ? "Select a Notification"
-                      : "Select an Update"}
-                  </h3>
-                  <p className="text-gray-600">
-                    {activeTab === "notifications"
-                      ? "Choose a notification from the list to view details"
-                      : "Choose an update from the list to view details"}
-                  </p>
-                </div>
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
-
-        {/* Media Modal */}
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-4xl p-0">
-            <DialogHeader className="p-6 pb-0">
-              <DialogTitle asChild>
-                <VisuallyHidden>{selectedMedia?.title}</VisuallyHidden>
-              </DialogTitle>
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">
-                  {selectedMedia?.title}
-                </h2>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsModalOpen(false)}
-                ></Button>
-              </div>
-            </DialogHeader>
-            <div className="p-6">
-              {selectedMedia && (
-                <div className="space-y-4">
-                  <div className="aspect-video rounded-lg overflow-hidden bg-gray-100 relative">
-                    <img
-                      src={selectedMedia.image}
-                      alt={selectedMedia.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src =
-                          "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop";
-                      }}
-                      loading="lazy"
-                    />
-                  </div>
-                  {selectedUpdate?.media && selectedUpdate.media.length > 1 && (
-                    <div className="flex space-x-2 overflow-x-auto pb-2">
-                      {selectedUpdate.media.map((media) => (
-                        <button
-                          key={media.id}
-                          onClick={() => setSelectedMedia(media)}
-                          className={`w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100 ${
-                            selectedMedia.id === media.id
-                              ? "ring-2 ring-green-500"
-                              : "hover:opacity-80"
-                          }`}
-                        >
-                          <img
-                            src={media.image}
-                            alt={media.title}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              const target = e.target as HTMLImageElement;
-                              target.src =
-                                "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop";
-                            }}
-                            loading="lazy"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

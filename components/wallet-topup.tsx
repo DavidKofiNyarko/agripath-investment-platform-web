@@ -195,7 +195,6 @@ const WalletTopup: React.FC = () => {
         setError(result.error || "Topup failed. Please try again.");
       }
     } catch (err) {
-      console.error("Topup error:", err);
       setError(
         err instanceof Error ? err.message : "Topup failed. Please try again."
       );

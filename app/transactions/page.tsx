@@ -161,13 +161,12 @@ const TransactionsPage = () => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching payouts:", error);
-        return;
+        setPayouts([]);
+      } else {
+        setPayouts(data || []);
       }
-
-      setPayouts(data || []);
     } catch (error) {
-      console.error("Error fetching payouts:", error);
+      setPayouts([]);
     } finally {
       setPayoutsLoading(false);
     }
@@ -319,9 +318,6 @@ const TransactionsPage = () => {
       const filename = generateTransactionFilename();
       downloadCSV(csvContent, filename);
     } catch (error) {
-      console.error("Error exporting CSV:", error);
-      // You could add a toast notification here
-      alert("Failed to export transactions. Please try again.");
     }
   };
 

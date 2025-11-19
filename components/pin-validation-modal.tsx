@@ -125,7 +125,6 @@ const PinValidationModal: React.FC<PinValidationModalProps> = ({
         }
       }
     } catch (error) {
-      console.error("PIN verification error:", error);
       setIsLoading(false);
       setError("An error occurred while verifying your PIN. Please try again.");
     }

@@ -17,7 +17,6 @@ export const logoutAllDevices = async (): Promise<LogoutResult> => {
     const { error } = await supabase.auth.signOut({ scope: 'global' });
     
     if (error) {
-      console.error('Supabase logout error:', error);
       return { success: false, error: error.message };
     }
     
@@ -29,7 +28,6 @@ export const logoutAllDevices = async (): Promise<LogoutResult> => {
     
     return { success: true };
   } catch (error) {
-    console.error('Error logging out all devices:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error occurred' 
@@ -49,13 +47,11 @@ export const logoutOtherDevices = async (): Promise<LogoutResult> => {
     const { error } = await supabase.auth.signOut({ scope: 'others' });
     
     if (error) {
-      console.error('Supabase logout error:', error);
       return { success: false, error: error.message };
     }
     
     return { success: true };
   } catch (error) {
-    console.error('Error logging out other devices:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error occurred' 
@@ -75,7 +71,6 @@ export const logoutCurrentDevice = async (): Promise<LogoutResult> => {
     const { error } = await supabase.auth.signOut({ scope: 'local' });
     
     if (error) {
-      console.error('Supabase logout error:', error);
       return { success: false, error: error.message };
     }
     
@@ -84,7 +79,6 @@ export const logoutCurrentDevice = async (): Promise<LogoutResult> => {
     
     return { success: true };
   } catch (error) {
-    console.error('Error logging out current device:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error.message : 'Unknown error occurred' 

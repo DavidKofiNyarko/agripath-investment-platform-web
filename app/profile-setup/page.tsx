@@ -88,11 +88,12 @@ const ProfileSetupPage = () => {
 
       setCurrentStep("pin");
     } catch (error) {
-      console.error("Error updating profile:", error);
+      // Handle error
     }
   };
 
   const handlePinComplete = () => {
+    // Move to KYC step after PIN is set up
     setCurrentStep("kyc");
   };
 

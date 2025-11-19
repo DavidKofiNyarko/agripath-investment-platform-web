@@ -75,7 +75,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
   const router = useRouter();
 
   const unreadCount = notifications.filter((n) => n.status === "unread").length;
-  
+
   // Use ref to track if fetch is in progress to prevent duplicate calls
   const isFetchingRef = useRef(false);
   const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -83,16 +83,9 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
   const fetchNotifications = useCallback(async () => {
     if (!profile?.id) return;
-    
+
     // Prevent duplicate concurrent calls
     if (isFetchingRef.current) {
-      console.log("⏭️ Fetch already in progress, skipping...");
-      return;
-    }
-
-    // Clear any pending debounced fetch
-    if (fetchTimeoutRef.current) {
-      clearTimeout(fetchTimeoutRef.current);
       fetchTimeoutRef.current = null;
     }
 
@@ -102,7 +95,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
     try {
       const supabase = createClient();
-      
+
       // Fetch published notifications
       const { data: notifications, error: notificationsError } = await supabase
         .from("notifications")
@@ -112,8 +105,6 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
         .limit(50);
 
       if (notificationsError) {
-        console.error("Error fetching notifications:", notificationsError);
-        setError("Failed to fetch notifications");
         return;
       }
 
@@ -124,18 +115,30 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
       // Fetch user's read status for these notifications
       const notificationIds = notifications.map((n) => n.id);
-      const { data: userNotifications, error: userNotificationsError } = await supabase
-        .from("users_notifications")
-        .select("notifications_id, read_at, clicked_at")
-        .eq("user_id", profile.id)
-        .in("notifications_id", notificationIds);
+      const { data: userNotifications, error: userNotificationsError } =
+        await supabase
+          .from("users_notifications")
+          .select("notifications_id, read_at, clicked_at")
+          .eq("user_id", profile.id)
+          .in("notifications_id", notificationIds);
 
       if (userNotificationsError) {
-        console.error("Error fetching user notifications:", userNotificationsError);
-        // Continue anyway, just won't have read status
+        // If error fetching read status, treat all as unread
+        const transformedNotifications: Notification[] = notifications.map(
+          (notification) => ({
+            id: notification.id,
+            title: notification.title,
+            body: notification.body,
+            type: (notification.type || "Email") as "Email" | "SMS",
+            status: "unread" as const,
+            created_at: notification.published_at || notification.created_at,
+          })
+        );
+        setNotifications(transformedNotifications);
+        return;
       }
 
-      // Create a map of notification_id -> read status
+      // Create a map of notification IDs to read status
       const readStatusMap = new Map(
         (userNotifications || []).map((un) => [
           un.notifications_id,
@@ -147,7 +150,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
       const transformedNotifications: Notification[] = notifications.map(
         (notification) => {
           const userNotification = readStatusMap.get(notification.id);
-          
+
           return {
             id: notification.id,
             title: notification.title,
@@ -163,27 +166,21 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
       setNotifications(transformedNotifications);
     } catch (err) {
-      console.error("Error fetching notifications:", err);
-      setError(
-        err instanceof Error ? err.message : "Failed to fetch notifications"
-      );
     } finally {
       setIsLoading(false);
       isFetchingRef.current = false;
     }
   }, [profile?.id]);
-  
 
   const markAsRead = async (notificationId: string) => {
     try {
       if (!profile?.id) {
-        console.error("Cannot mark as read: no profile ID");
         return;
       }
 
       const supabase = createClient();
       const now = new Date().toISOString();
-      
+
       // First, get the notification to get its type
       const { data: notification, error: notificationError } = await supabase
         .from("notifications")
@@ -192,11 +189,10 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
         .single();
 
       if (notificationError || !notification) {
-        console.error("Failed to fetch notification:", notificationError);
         return;
       }
 
-      // Check if the record exists
+      // Check if record exists
       const { data: existing, error: checkError } = await supabase
         .from("users_notifications")
         .select("id")
@@ -205,7 +201,7 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
         .maybeSingle();
 
       let error;
-      
+
       if (existing && !checkError) {
         // Update existing record
         const { error: updateError } = await supabase
@@ -232,35 +228,27 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
       }
 
       if (error) {
-        console.error("Failed to mark notification as read:", error);
-        // Don't update local state if database update failed
         return;
       }
 
-      // Update local state after successful database update
+      // Update local state
       setNotifications((prev) =>
         prev.map((n) =>
           n.id === notificationId
-            ? {
-                ...n,
-                status: "read" as const,
-                read_at: now,
-              }
+            ? { ...n, status: "read" as const, read_at: n.read_at || now }
             : n
         )
       );
 
-      // Update unread count
-      setUnreadCount((prev) => Math.max(0, prev - 1));
+      // unreadCount is automatically computed from notifications, no need to update it manually
     } catch (err) {
-      console.error("Error marking notification as read:", err);
+      // Error marking notification as read
     }
   };
 
   const markAllAsRead = async () => {
     try {
       if (!profile?.id) {
-        console.error("Cannot mark all as read: no profile ID");
         return;
       }
 
@@ -277,19 +265,19 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
       const notificationIds = unreadNotifications.map((n) => n.id);
 
       // First, fetch all notification types in one query
-      const { data: notifications, error: notificationsError } = await supabase
-        .from("notifications")
-        .select("id, type")
-        .in("id", notificationIds);
+      const { data: notificationsData, error: notificationsError } =
+        await supabase
+          .from("notifications")
+          .select("id, type")
+          .in("id", notificationIds);
 
       if (notificationsError) {
-        console.error("Failed to fetch notification types:", notificationsError);
         return;
       }
 
-      // Create a map of notification_id -> type
+      // Create a map of notification IDs to types
       const notificationTypeMap = new Map(
-        (notifications || []).map((n) => [n.id, n.type || "Email"])
+        (notificationsData || []).map((n) => [n.id, n.type || "Email"])
       );
 
       // Process each notification individually to handle insert/update
@@ -302,7 +290,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           .eq("user_id", profile.id)
           .maybeSingle();
 
-        const notificationType = notificationTypeMap.get(notificationId) || "Email";
+        const notificationType =
+          notificationTypeMap.get(notificationId) || "Email";
 
         if (existing && !checkError) {
           // Update existing record
@@ -316,15 +305,13 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
             .eq("user_id", profile.id);
         } else {
           // Insert new record with required type field
-          await supabase
-            .from("users_notifications")
-            .insert({
-              notifications_id: notificationId,
-              user_id: profile.id,
-              type: notificationType,
-              read_at: now,
-              updated_at: now,
-            });
+          await supabase.from("users_notifications").insert({
+            notifications_id: notificationId,
+            user_id: profile.id,
+            type: notificationType,
+            read_at: now,
+            updated_at: now,
+          });
         }
       }
 
@@ -337,24 +324,20 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
         }))
       );
 
-      // Reset unread count
-      setUnreadCount(0);
+      // unreadCount is automatically computed from notifications, no need to update it manually
     } catch (err) {
-      console.error("Error marking all notifications as read:", err);
+      // Error marking all notifications as read
     }
   };
 
   const updatePreferences = async (
     newPreferences: Partial<NotificationPreferences>
   ) => {
-    if (!profile?.id) return;
-
     try {
-      // For now, update local state since we can't modify the database
       setPreferences((prev) => ({ ...prev, ...newPreferences }));
-      console.log("Notification preferences updated:", newPreferences);
-    } catch (err) {
-      console.error("Error updating notification preferences:", err);
+      // TODO: Save preferences to database if needed
+    } catch (error) {
+      // Error updating preferences
     }
   };
 
@@ -378,15 +361,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
       if (response.ok) {
         const result = await response.json();
-        console.log("Test notification sent successfully:", result);
-
-        // Refresh notifications after sending
-        await fetchNotifications();
       } else {
-        console.error("Failed to send test notification:", response.statusText);
+        // Handle error
       }
-    } catch (err) {
-      console.error("Error sending test notification:", err);
+    } catch (error) {
+      // Error sending test notification
     }
   };
 
@@ -400,7 +379,11 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
 
   // Fetch notifications when profile is available (only once per profile)
   useEffect(() => {
-    if (profile?.id && lastFetchedProfileIdRef.current !== profile.id && !isFetchingRef.current) {
+    if (
+      profile?.id &&
+      lastFetchedProfileIdRef.current !== profile.id &&
+      !isFetchingRef.current
+    ) {
       lastFetchedProfileIdRef.current = profile.id;
       fetchNotifications();
     }
@@ -426,11 +409,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
             filter: `status=eq.Published`, // Only published notifications
           },
           (payload) => {
-            console.log("New notification published:", payload);
-            const newNotification = payload.new;
-            
-            // Add new notification directly to state (no API call needed)
-            if (newNotification) {
+            if (payload.new) {
+              const newNotification = payload.new as any;
               setNotifications((prev) => [
                 {
                   id: newNotification.id,
@@ -438,7 +418,8 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
                   body: newNotification.body,
                   type: (newNotification.type || "Email") as "Email" | "SMS",
                   status: "unread" as const,
-                  created_at: newNotification.published_at || newNotification.created_at,
+                  created_at:
+                    newNotification.published_at || newNotification.created_at,
                 },
                 ...prev,
               ]);
@@ -454,20 +435,18 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
             filter: `status=eq.Published`, // Only published notifications
           },
           (payload) => {
-            console.log("Notification updated:", payload);
-            const updatedNotification = payload.new;
-            
-            // Update notification in state directly (no API call needed)
-            if (updatedNotification) {
+            if (payload.new) {
+              const updatedNotification = payload.new as any;
               setNotifications((prev) =>
                 prev.map((n) =>
                   n.id === updatedNotification.id
                     ? {
                         ...n,
-                        title: updatedNotification.title || n.title,
-                        body: updatedNotification.body || n.body,
-                        type: (updatedNotification.type || n.type) as "Email" | "SMS",
-                        created_at: updatedNotification.published_at || updatedNotification.created_at || n.created_at,
+                        title: updatedNotification.title,
+                        body: updatedNotification.body,
+                        type: (updatedNotification.type || "Email") as
+                          | "Email"
+                          | "SMS",
                       }
                     : n
                 )
@@ -484,19 +463,18 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
             filter: `user_id=eq.${profile.id}`, // Only user's read status
           },
           (payload) => {
-            console.log("Notification read status changed:", payload);
-            const userNotification = payload.new || payload.old;
-            
-            // Update read status directly in state (no API call needed)
-            if (userNotification?.notifications_id) {
+            if (payload.new) {
+              const userNotification = payload.new as any;
               setNotifications((prev) =>
                 prev.map((n) =>
                   n.id === userNotification.notifications_id
                     ? {
                         ...n,
-                        status: userNotification.read_at ? ("read" as const) : ("unread" as const),
-                        read_at: userNotification.read_at || n.read_at,
-                        clicked_at: userNotification.clicked_at || n.clicked_at,
+                        status: userNotification.read_at
+                          ? ("read" as const)
+                          : ("unread" as const),
+                        read_at: userNotification.read_at,
+                        clicked_at: userNotification.clicked_at,
                       }
                     : n
                 )
@@ -505,28 +483,25 @@ export const NotificationProvider: React.FC<{ children: ReactNode }> = ({
           }
         )
         .subscribe((status) => {
-          console.log("Real-time notifications subscription status:", status);
           if (status === "SUBSCRIBED") {
-            console.log("✅ Successfully subscribed to notifications changes");
-            console.log("🔄 Using real-time updates (no API calls on events)");
-          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-            console.warn(`❌ Real-time notifications subscription failed (${status})`);
-            console.warn("💡 Make sure realtime is enabled for 'notifications' and 'users_notifications' tables in Supabase");
+            // Successfully subscribed
+          } else if (
+            status === "CHANNEL_ERROR" ||
+            status === "TIMED_OUT" ||
+            status === "CLOSED"
+          ) {
+            // Handle channel errors
           }
         });
-    } catch (error) {
-      console.error("Failed to set up real-time notifications subscription:", error);
-    }
 
-    // Cleanup subscription on unmount
-    return () => {
-      if (fetchTimeoutRef.current) {
-        clearTimeout(fetchTimeoutRef.current);
-      }
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
+      return () => {
+        if (channel) {
+          supabase.removeChannel(channel);
+        }
+      };
+    } catch (error) {
+      // Error setting up real-time subscription
+    }
   }, [profile?.id]);
 
   const value: NotificationContextType = {

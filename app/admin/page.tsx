@@ -41,13 +41,14 @@ const AdminPage: React.FC = () => {
         .order('created_at', { ascending: false });
 
       if (error) {
-        console.error('Error fetching pending KYCs:', error);
         return;
       }
 
-      setPendingKycs(data || []);
+      if (data) {
+        setPendingKycs(data as PendingKyc[]);
+      }
     } catch (error) {
-      console.error('Error:', error);
+      // Error fetching pending KYC
     } finally {
       setLoading(false);
     }
@@ -64,25 +65,13 @@ const AdminPage: React.FC = () => {
         .eq('id', profileId);
 
       if (profileError) {
-        console.error('Error updating profile:', profileError);
-        return;
-      }
-
-      // Update users table with correct enum value
-      const { error: userError } = await supabase
-        .from('users')
-        .update({ kyc_status: status }) // Use 'Completed' or 'Failed' - correct enum values
-        .eq('id', profileId);
-
-      if (userError) {
-        console.error('Error updating users table:', userError);
         return;
       }
 
       // Refresh the list
       await fetchPendingKycs();
     } catch (error) {
-      console.error('Error updating KYC status:', error);
+      // Error updating KYC status
     } finally {
       setProcessing(null);
     }

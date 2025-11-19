@@ -43,8 +43,6 @@ const ForgotPasswordPage = () => {
 
       setIsEmailSent(true);
     } catch (error) {
-      console.error("Error sending reset email:", error);
-      setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }

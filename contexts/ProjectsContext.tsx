@@ -8,6 +8,7 @@ import React, {
   useCallback,
 } from "react";
 import { createClient } from "@/app/utils/supabase/client";
+import type { RealtimeChannel } from "@supabase/supabase-js";
 
 export interface Project {
   id: string;
@@ -149,14 +150,8 @@ export const ProjectsProvider = ({
     setError(null);
 
     try {
-      console.log("🔄 Fetching projects from database...");
-
-      // Build query with filters
-      let query = supabase
-        .from("projects")
-        .select("*", { count: "exact" })
-        .eq("status", "Active") // Only show active projects by default
-        .order("created_at", { ascending: false });
+      // Build query with all filters applied
+      let query = supabase.from("projects").select("*", { count: "exact" });
 
       // Apply search filter
       if (filters.search) {
@@ -175,7 +170,7 @@ export const ProjectsProvider = ({
         query = query.eq("status", filters.status);
       }
 
-      // Apply price range filter
+      // Apply price range filters
       if (filters.minPrice > 0) {
         query = query.gte("unit_price", filters.minPrice);
       }
@@ -222,6 +217,7 @@ export const ProjectsProvider = ({
       const to = from + pagination.itemsPerPage - 1;
       query = query.range(from, to);
 
+      // Execute query
       const { data, error: queryError, count } = await query;
 
       if (queryError) {
@@ -286,23 +282,6 @@ export const ProjectsProvider = ({
             (item.risk_level as "Low" | "Medium" | "High" | null) || null,
         })) || [];
 
-      console.log(
-        "📊 Projects fetched from database:",
-        formattedProjects?.length || 0,
-        "projects"
-      );
-      const tomatoProject = formattedProjects.find((p) =>
-        p.project_name.toLowerCase().includes("tomato")
-      );
-      if (tomatoProject) {
-        console.log("🍅 Tomato project from DB:", {
-          name: tomatoProject.project_name,
-          available_unit: tomatoProject.available_unit,
-          purchased_unit: tomatoProject.purchased_unit,
-          total_units: tomatoProject.total_units,
-        });
-      }
-
       setProjects(formattedProjects);
 
       // Update pagination
@@ -315,10 +294,10 @@ export const ProjectsProvider = ({
         totalItems,
       }));
     } catch (error) {
-      console.error("Error fetching projects:", error);
       setError(
         error instanceof Error ? error.message : "Failed to fetch projects"
       );
+      setProjects([]);
     } finally {
       setLoading(false);
     }
@@ -330,7 +309,7 @@ export const ProjectsProvider = ({
 
   // Set up real-time subscription for projects table
   useEffect(() => {
-    let channel: any = null;
+    let channel: RealtimeChannel | null = null;
 
     try {
       channel = supabase
@@ -343,17 +322,12 @@ export const ProjectsProvider = ({
             table: "projects",
           },
           (payload) => {
-            console.log("Projects table changed:", payload);
-
-            // Handle different event types
             if (payload.eventType === "UPDATE") {
-              // Update the specific project in our state
+              // Update existing project
               const updatedProject = payload.new as Project;
               setProjects((prevProjects) =>
                 prevProjects.map((project) =>
-                  project.id === updatedProject.id
-                    ? { ...project, ...updatedProject }
-                    : project
+                  project.id === updatedProject.id ? updatedProject : project
                 )
               );
             } else if (payload.eventType === "INSERT") {
@@ -374,30 +348,28 @@ export const ProjectsProvider = ({
           }
         )
         .subscribe((status) => {
-          console.log("Real-time subscription status:", status);
           if (status === "SUBSCRIBED") {
-            console.log("✅ Successfully subscribed to projects table changes");
-            console.log("Real-time is now active for projects table");
-          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-            console.warn(`❌ Real-time subscription failed (${status})`);
-            console.warn("💡 Make sure realtime is enabled for the 'projects' table in Supabase");
-            console.warn("💡 Run: ALTER PUBLICATION supabase_realtime ADD TABLE projects;");
+            // Successfully subscribed
+          } else if (
+            status === "CHANNEL_ERROR" ||
+            status === "TIMED_OUT" ||
+            status === "CLOSED"
+          ) {
+            // Handle channel errors
           }
         });
-    } catch (error) {
-      console.error("Failed to set up real-time subscription:", error);
-    }
 
-    // Cleanup subscription on unmount
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
+      return () => {
+        if (channel) {
+          supabase.removeChannel(channel);
+        }
+      };
+    } catch (error) {
+      // Error setting up real-time subscription
+    }
   }, [supabase]);
 
   const refreshProjects = useCallback(async () => {
-    console.log("🔄 Manual refresh triggered");
     await fetchProjects();
   }, [fetchProjects]);
 
@@ -406,8 +378,6 @@ export const ProjectsProvider = ({
   // Real-time updates should handle data changes
   // useEffect(() => {
   //   const interval = setInterval(() => {
-  //     console.log("Periodic projects refresh...");
-  //     fetchProjects();
   //   }, 30000); // 30 seconds
 
   //   return () => clearInterval(interval);

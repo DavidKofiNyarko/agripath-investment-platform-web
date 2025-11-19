@@ -188,7 +188,6 @@ const ProfileCompletionModal: React.FC<ProfileCompletionModalProps> = ({
 
       onComplete();
     } catch (error) {
-      console.error("Error updating profile:", error);
       setErrors({ submit: "Failed to update profile. Please try again." });
     } finally {
       setLoading(false);

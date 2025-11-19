@@ -88,6 +88,7 @@ const ViewMoreButton = ({
 
 const DashboardPage = () => {
   const router = useRouter();
+  const supabase = createClient();
   const { user, loading } = useUser();
   const { profile, loading: profileLoading, isProfileComplete } = useProfile();
   const {
@@ -292,9 +293,6 @@ const DashboardPage = () => {
           setRedirectUrl(redirectUrl);
           // Store the transaction_id from the result (this is the internal transaction_id from backend)
           setTransactionId(result.transaction_id || "");
-          console.log("Stored transaction_id:", result.transaction_id);
-          // Don't set success - payment is pending verification
-          setCurrentStep("loading");
         } else {
           setCurrentStep("error");
         }
@@ -410,27 +408,13 @@ const DashboardPage = () => {
         );
       }
 
-      console.log(
-        "Verifying payment - stored transactionId:",
-        transactionId,
-        "extracted reference:",
-        reference
-      );
-
       // CRITICAL: Always prioritize the stored transactionId (internal transaction_id from backend)
       // The stored transactionId is the internal transaction_id (e.g., "txn258981932")
       // The redirect URL contains Paystack's checkout code (e.g., "2io85zj72zafrzk"), which is NOT our transaction_id
       if (transactionId && transactionId.startsWith("txn")) {
         reference = transactionId;
-        console.log("Using stored transactionId:", reference);
       }
 
-      // First, find the transaction in our database to get the internal transaction_id
-      // The backend verification API REQUIRES our internal transaction_id format (like "txn225862451")
-      let internalTransactionId = null;
-
-      // Always verify the transaction exists in the database, even if reference starts with "txn"
-      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -441,13 +425,10 @@ const DashboardPage = () => {
         return;
       }
 
+      let internalTransactionId = "";
+
       // If reference already starts with "txn", verify it exists in the database
       if (reference.startsWith("txn")) {
-        console.log(
-          "Reference is already internal transaction_id, verifying it exists:",
-          reference
-        );
-
         const { data: transactions, error: verifyError } = await supabase
           .from("transactions")
           .select("transaction_id, external_id, status, type")
@@ -456,10 +437,6 @@ const DashboardPage = () => {
           .limit(1);
 
         if (verifyError || !transactions || transactions.length === 0) {
-          console.error(
-            "Transaction not found with transaction_id:",
-            reference
-          );
           // Check for recent pending transactions
           const { data: recentTransactions } = await supabase
             .from("transactions")
@@ -469,39 +446,15 @@ const DashboardPage = () => {
             .order("created_at", { ascending: false })
             .limit(5);
 
-          console.log("Recent pending transactions:", recentTransactions);
-
-          if (recentTransactions && recentTransactions.length > 0) {
-            // Use the most recent pending transaction
-            internalTransactionId = recentTransactions[0].transaction_id;
-            console.log(
-              "Using most recent pending transaction:",
-              internalTransactionId
-            );
-          } else {
-            setCurrentStep("error");
-            setIsVerifyingPayment(false);
-            return;
-          }
+          setCurrentStep("error");
+          setIsVerifyingPayment(false);
+          return;
         } else {
           internalTransactionId = transactions[0].transaction_id;
-          console.log(
-            "Found transaction with internal ID:",
-            internalTransactionId,
-            "Status:",
-            transactions[0].status
-          );
         }
       } else {
         // Otherwise, find the transaction using the Paystack reference
         try {
-          console.log(
-            "Searching for transaction with Paystack reference:",
-            reference,
-            "for user:",
-            user.id
-          );
-
           // Find transaction by external_id (Paystack reference) first
           const { data: transactions, error: findError } = await supabase
             .from("transactions")
@@ -511,17 +464,11 @@ const DashboardPage = () => {
             .order("created_at", { ascending: false })
             .limit(1);
 
-          console.log("Search by external_id result:", {
-            transactions,
-            findError,
-          });
-
           let transaction =
             transactions && transactions.length > 0 ? transactions[0] : null;
 
           // If not found by external_id, try transaction_id
           if (findError || !transaction) {
-            console.log("Not found by external_id, trying transaction_id...");
             const { data: transactionsByTxnId, error: findError2 } =
               await supabase
                 .from("transactions")
@@ -534,11 +481,6 @@ const DashboardPage = () => {
             if (findError2) {
               throw new Error(findError2.message);
             }
-
-            console.log("Search by transaction_id result:", {
-              transactionsByTxnId,
-              findError2,
-            });
 
             if (
               findError2 ||
@@ -554,40 +496,26 @@ const DashboardPage = () => {
                 .order("created_at", { ascending: false })
                 .limit(5);
 
-              console.log("Recent pending transactions:", recentTransactions);
-              throw new Error(
-                `Transaction not found in database. Reference: ${reference}. Please wait a moment and try again, or contact support.`
-              );
+              setCurrentStep("error");
+              setIsVerifyingPayment(false);
+              return;
             }
             transaction = transactionsByTxnId[0] as Transaction;
           }
 
-          internalTransactionId = transaction.transaction_id;
-          console.log(
-            "Found transaction with internal ID:",
-            internalTransactionId,
-            "Status:",
-            transaction.status
-          );
+          if (transaction) {
+            internalTransactionId = transaction.transaction_id;
+          }
         } catch (findError) {
-          console.error("Error finding transaction:", findError);
-          setCurrentStep("error");
           setIsVerifyingPayment(false);
           return;
         }
       }
 
       if (!internalTransactionId || !internalTransactionId.startsWith("txn")) {
-        console.error("Invalid transaction_id format:", internalTransactionId);
-        setCurrentStep("error");
         setIsVerifyingPayment(false);
         return;
       }
-
-      console.log(
-        "Verifying payment with internal transaction_id:",
-        internalTransactionId
-      );
 
       // Call the backend verification API directly
       // MUST use internal transaction_id - backend does not accept Paystack references
@@ -603,27 +531,20 @@ const DashboardPage = () => {
         }
       );
 
+      if (!response.ok) {
+        throw new Error("Verification failed");
+      }
+
       const result = await response.json();
-      console.log("Payment verification result:", result);
 
-      if (result.status === "success") {
-        // Refresh wallet balance using WalletContext
-        try {
-          await refreshWallet();
-        } catch (refreshError) {
-          console.error("Failed to refresh wallet:", refreshError);
-        }
-
+      if (result.success) {
         setCurrentStep("success");
       } else {
-        console.error("Payment verification failed:", result);
         setCurrentStep("error");
       }
 
       setIsVerifyingPayment(false);
     } catch (error) {
-      console.error("Payment verification failed:", error);
-      setCurrentStep("error");
       setIsVerifyingPayment(false);
     }
   };
@@ -1928,9 +1849,6 @@ const DashboardPage = () => {
                                   setOtpError(
                                     "An error occurred. Please try again."
                                   );
-                                  console.error("OTP submission error:", error);
-                                } finally {
-                                  setIsSubmittingOtp(false);
                                 }
                               }}
                               disabled={

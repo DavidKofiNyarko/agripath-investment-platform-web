@@ -140,7 +140,6 @@ const KycVerification: React.FC<KycVerificationProps> = ({
         });
 
       if (error) {
-        console.error("Upload error:", error);
         setError(`Failed to upload file: ${error}`);
         return null;
       }
@@ -156,7 +155,6 @@ const KycVerification: React.FC<KycVerificationProps> = ({
 
       return publicUrl;
     } catch (error) {
-      console.error("Upload error:", error);
       setError("Failed to upload file");
       return null;
     }
@@ -257,7 +255,6 @@ const KycVerification: React.FC<KycVerificationProps> = ({
         .eq("user_id", user.id);
 
       if (_error) {
-        console.error("KYC submission error:", _error);
         setError(
           isEditMode
             ? "Failed to update KYC documents. Please try again."
@@ -277,7 +274,6 @@ const KycVerification: React.FC<KycVerificationProps> = ({
         if (onComplete) onComplete();
       }, 2000);
     } catch (error) {
-      console.error("KYC submission error:", error);
       setError(
         isEditMode
           ? "Failed to update KYC documents. Please try again."

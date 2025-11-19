@@ -253,14 +253,9 @@ const KycModal: React.FC<KycModalProps> = ({
                 </Button>
                 <Button
                   onClick={() => {
-                    console.log("Edit Documents button clicked");
-                    console.log("onEditKyc function:", onEditKyc);
                     onClose();
                     if (onEditKyc) {
-                      console.log("Calling onEditKyc function");
                       onEditKyc();
-                    } else {
-                      console.log("onEditKyc function not provided");
                     }
                   }}
                   className="flex-1 bg-green-600 hover:bg-green-700"

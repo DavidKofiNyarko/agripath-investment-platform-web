@@ -28,11 +28,6 @@ const PaymentCallbackContent = () => {
         const reference = searchParams.get("reference");
         const status = searchParams.get("status");
 
-        console.log("Payment callback received:", {
-          trxref,
-          reference,
-          status,
-        });
 
         // We need a reference to verify the payment
         // Use reference from URL, or trxref as fallback
@@ -85,10 +80,6 @@ const PaymentCallbackContent = () => {
               !transactionsByTxnId ||
               transactionsByTxnId.length === 0
             ) {
-              console.error(
-                "Transaction not found in database with reference:",
-                paystackReference
-              );
               setStatus("error");
               setMessage(
                 "Transaction not found. Please contact support with reference: " +
@@ -100,10 +91,6 @@ const PaymentCallbackContent = () => {
           }
 
           internalTransactionId = transaction.transaction_id;
-          console.log(
-            "Found transaction with internal ID:",
-            internalTransactionId
-          );
 
           // Update external_id if it doesn't match (for future lookups)
           if (
@@ -116,8 +103,6 @@ const PaymentCallbackContent = () => {
               .eq("transaction_id", internalTransactionId);
           }
         } catch (findError) {
-          console.error("Error finding transaction:", findError);
-          setStatus("error");
           setMessage("Unable to find transaction. Please contact support.");
           return;
         }
@@ -128,10 +113,6 @@ const PaymentCallbackContent = () => {
           !internalTransactionId ||
           !internalTransactionId.startsWith("txn")
         ) {
-          console.error(
-            "Invalid transaction_id format:",
-            internalTransactionId
-          );
           setStatus("error");
           setMessage("Invalid transaction ID format. Please contact support.");
           return;
@@ -142,10 +123,6 @@ const PaymentCallbackContent = () => {
 
         try {
           // MUST use internal transaction_id - backend does not accept Paystack references
-          console.log(
-            "Verifying payment with internal transaction_id:",
-            internalTransactionId
-          );
 
           // Call the backend verification API directly (same as dashboard/investments pages)
           // The backend expects our internal transaction_id format (like "txn225862451")
@@ -166,24 +143,16 @@ const PaymentCallbackContent = () => {
             verificationError =
               errorData.message ||
               `Verification failed with status: ${response.status}`;
-            console.warn("Backend verification failed:", verificationError);
-            // Don't throw - we'll try to update transaction from database instead
           } else {
             const result = await response.json();
-            console.log("Payment verification result:", result);
-
-            // Only mark as success if the backend confirms payment was successful
-            if (result.status === "success" || result.success === true) {
+            if (result.success) {
               verificationSuccess = true;
             } else {
-              verificationError =
-                result.message || "Payment verification failed";
+              verificationError = result.message || "Unable to verify payment with backend";
             }
           }
         } catch (verifyError) {
-          console.error("Payment verification error:", verifyError);
           verificationError = "Unable to verify payment with backend";
-          // Don't throw - we'll try to update transaction from database instead
         }
 
         // Only update transaction if backend verification succeeded
@@ -209,33 +178,23 @@ const PaymentCallbackContent = () => {
                 .eq("profile_id", user.id);
 
               if (updateError) {
-                console.error(
-                  "Error updating transaction status:",
-                  updateError
-                );
+                // Error updating transaction
               } else {
-                console.log("Transaction status updated to Complete");
+                setMessage("Payment completed successfully!");
+
+                // Refresh wallet balance using WalletContext
+                try {
+                  await refreshWallet();
+                } catch (refreshError) {
+                  // Error refreshing wallet
+                }
+
+                setTimeout(() => {
+                  router.push("/dashboard");
+                }, 3000);
               }
             }
-
-            setStatus("success");
-            setMessage("Payment completed successfully!");
-
-            // Refresh wallet balance using WalletContext
-            try {
-              await refreshWallet();
-            } catch (refreshError) {
-              console.error("Failed to refresh wallet:", refreshError);
-            }
-
-            // Redirect to dashboard after 3 seconds
-            setTimeout(() => {
-              router.push("/dashboard");
-            }, 3000);
           } catch (updateError) {
-            console.error("Error updating transaction status:", updateError);
-            // Backend verification succeeded but update failed
-            setStatus("success");
             setMessage(
               "Payment verified successfully! Your wallet will be updated shortly."
             );
@@ -252,8 +211,6 @@ const PaymentCallbackContent = () => {
           );
         }
       } catch (error) {
-        console.error("Payment callback error:", error);
-        setStatus("error");
         setMessage("An error occurred while processing your payment");
       }
     };

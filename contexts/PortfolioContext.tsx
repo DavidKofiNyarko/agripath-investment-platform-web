@@ -1,10 +1,24 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
-import { createClient } from '@/app/utils/supabase/client';
-import { useUser } from './UserContext';
-import { useProfile } from './ProfileContext';
-import { calculateProjectProgress as calculateStageProgress, mapOldStageToNew, ProjectType, ProjectStage, getProjectEndDate, getProjectTimeProgress } from '@/lib/project-stages';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from "react";
+import { createClient } from "@/app/utils/supabase/client";
+import { useUser } from "./UserContext";
+import { useProfile } from "./ProfileContext";
+import {
+  calculateProjectProgress as calculateStageProgress,
+  mapOldStageToNew,
+  ProjectType,
+  ProjectStage,
+  getProjectEndDate,
+  getProjectTimeProgress,
+} from "@/lib/project-stages";
 
 export interface Project {
   id: string;
@@ -55,15 +69,15 @@ interface Transaction {
   id: string;
   transaction_id: string;
   project_id: string;
-  type: 'Payin' | 'Payout' | 'Refund';
+  type: "Payin" | "Payout" | "Refund";
   amount: number;
   unit: number;
-  status: 'Complete' | 'Pending' | 'Failed' | 'Cancelled';
+  status: "Complete" | "Pending" | "Failed" | "Cancelled";
   net_amount: number;
   description: string | null;
   processed_at: string | null;
   created_at: string;
-  channel: 'momo' | 'card' | 'bank';
+  channel: "momo" | "card" | "bank";
   project_name?: string;
 }
 
@@ -73,14 +87,20 @@ interface SupabaseProject {
   project_name: string;
   description: string | null;
   cover_image_url: string | null;
-  project_type: 'CROP' | 'LIVESTOCK' | 'FISHERY' | 'OTHER';
-  status: 'Active' | 'Inactive' | 'Complete' | 'Completed' | 'Cancelled';
+  project_type: "CROP" | "LIVESTOCK" | "FISHERY" | "OTHER";
+  status: "Active" | "Inactive" | "Complete" | "Completed" | "Cancelled";
   total_units: number;
   unit_price: number;
   expected_return_rate: number;
   max_expected_return_rate: number;
   duration_months: number;
-  project_stages: 'PLANNING' | 'PREPARATION' | 'PLANTING' | 'GROWTH' | 'HARVEST' | 'COMPLETED';
+  project_stages:
+    | "PLANNING"
+    | "PREPARATION"
+    | "PLANTING"
+    | "GROWTH"
+    | "HARVEST"
+    | "COMPLETED";
   start_date: string | null;
   end_date: string | null;
   created_at: string;
@@ -97,23 +117,23 @@ interface SupabaseTransactionWithProject {
 interface SupabaseMetricsData {
   amount: number;
   unit: number;
-  type: 'Payin' | 'Payout' | 'Refund';
-  status: 'Complete' | 'Pending' | 'Failed' | 'Cancelled';
+  type: "Payin" | "Payout" | "Refund";
+  status: "Complete" | "Pending" | "Failed" | "Cancelled";
 }
 
 interface SupabaseTransactionData {
   id: string;
   transaction_id: string;
   project_id: string;
-  type: 'Payin' | 'Payout' | 'Refund';
+  type: "Payin" | "Payout" | "Refund";
   amount: number;
   unit: number;
-  status: 'Complete' | 'Pending' | 'Failed' | 'Cancelled';
+  status: "Complete" | "Pending" | "Failed" | "Cancelled";
   net_amount: number;
   description: string | null;
   processed_at: string | null;
   created_at: string;
-  channel: 'momo' | 'card' | 'bank';
+  channel: "momo" | "card" | "bank";
   projects: {
     project_name: string;
   };
@@ -145,151 +165,193 @@ interface PortfolioContextType {
   refreshPortfolio: () => Promise<void>;
 }
 
-const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
+const PortfolioContext = createContext<PortfolioContextType | undefined>(
+  undefined
+);
 
 export const usePortfolio = () => {
   const context = useContext(PortfolioContext);
   if (context === undefined) {
-    throw new Error('usePortfolio must be used within a PortfolioProvider');
+    throw new Error("usePortfolio must be used within a PortfolioProvider");
   }
   return context;
 };
 
 // Calculate accurate project progress based on timeline
-const calculateProjectProgress = (projectStartDate: Date, durationMonths: number) => {
+const calculateProjectProgress = (
+  projectStartDate: Date,
+  durationMonths: number
+) => {
   const now = new Date();
-  const projectEndDate = new Date(projectStartDate.getTime() + durationMonths * 30 * 24 * 60 * 60 * 1000);
+  const projectEndDate = new Date(
+    projectStartDate.getTime() + durationMonths * 30 * 24 * 60 * 60 * 1000
+  );
   const totalDuration = projectEndDate.getTime() - projectStartDate.getTime();
   const elapsed = now.getTime() - projectStartDate.getTime();
-  
+
   // Clamp progress between 0 and 100
   const progress = Math.max(0, Math.min(100, (elapsed / totalDuration) * 100));
   return Math.round(progress);
 };
 
 // Calculate accurate end date from project start + duration
-const calculateProjectEndDate = (projectStartDate: Date, durationMonths: number) => {
-  const endDate = new Date(projectStartDate.getTime() + durationMonths * 30 * 24 * 60 * 60 * 1000);
-  return endDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+const calculateProjectEndDate = (
+  projectStartDate: Date,
+  durationMonths: number
+) => {
+  const endDate = new Date(
+    projectStartDate.getTime() + durationMonths * 30 * 24 * 60 * 60 * 1000
+  );
+  return endDate.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
 };
 
 // Generate accurate project timeline based on real project data
-const generateProjectTimeline = (projectStage: string, durationMonths: number, projectStartDate: Date) => {
-  const timeline: { step: string; date: string; completed: boolean; current?: boolean }[] = [];
+const generateProjectTimeline = (
+  projectStage: string,
+  durationMonths: number,
+  projectStartDate: Date
+) => {
+  const timeline: {
+    step: string;
+    date: string;
+    completed: boolean;
+    current?: boolean;
+  }[] = [];
   const now = new Date();
-  const projectEndDate = new Date(projectStartDate.getTime() + durationMonths * 30 * 24 * 60 * 60 * 1000);
-  
+  const projectEndDate = new Date(
+    projectStartDate.getTime() + durationMonths * 30 * 24 * 60 * 60 * 1000
+  );
+
   // Define project phases based on duration and current stage
   const phases = [
-    { name: 'Project Initiation', duration: 0.5 }, // 0.5 months
-    { name: 'Land Preparation', duration: 1 },     // 1 month
-    { name: 'Planting/Growth', duration: durationMonths * 0.6 }, // 60% of duration
-    { name: 'Harvest Phase', duration: durationMonths * 0.3 },   // 30% of duration
-    { name: 'Project Completion', duration: 0.5 }   // 0.5 months
+    { name: "Project Initiation", duration: 0.5 }, // 0.5 months
+    { name: "Land Preparation", duration: 1 }, // 1 month
+    { name: "Planting/Growth", duration: durationMonths * 0.6 }, // 60% of duration
+    { name: "Harvest Phase", duration: durationMonths * 0.3 }, // 30% of duration
+    { name: "Project Completion", duration: 0.5 }, // 0.5 months
   ];
-  
+
   let currentDate = new Date(projectStartDate);
   let currentPhaseIndex = -1;
-  
+
   // Find which phase we're currently in based on project stage
   const stageMapping: Record<string, number> = {
-    'PLANNING': 0,
-    'PREPARATION': 1,
-    'PLANTING': 2,
-    'GROWTH': 2,
-    'HARVEST': 3,
-    'COMPLETED': 4
+    PLANNING: 0,
+    PREPARATION: 1,
+    PLANTING: 2,
+    GROWTH: 2,
+    HARVEST: 3,
+    COMPLETED: 4,
   };
-  
+
   currentPhaseIndex = stageMapping[projectStage] || 0;
-  
+
   phases.forEach((phase, index) => {
-    const phaseEndDate = new Date(currentDate.getTime() + phase.duration * 30 * 24 * 60 * 60 * 1000);
-    const isCompleted = index < currentPhaseIndex || (index === currentPhaseIndex && now > phaseEndDate);
-    const isCurrent = index === currentPhaseIndex && now >= currentDate && now <= phaseEndDate;
-    
+    const phaseEndDate = new Date(
+      currentDate.getTime() + phase.duration * 30 * 24 * 60 * 60 * 1000
+    );
+    const isCompleted =
+      index < currentPhaseIndex ||
+      (index === currentPhaseIndex && now > phaseEndDate);
+    const isCurrent =
+      index === currentPhaseIndex && now >= currentDate && now <= phaseEndDate;
+
     timeline.push({
       step: phase.name,
-      date: phaseEndDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+      date: phaseEndDate.toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      }),
       completed: isCompleted,
-      current: isCurrent && !isCompleted
+      current: isCurrent && !isCompleted,
     });
-    
+
     currentDate = new Date(phaseEndDate);
   });
-  
+
   return timeline;
 };
 
 // Type validation helpers
 const isValidProject = (project: unknown): project is SupabaseProject => {
-  if (!project || typeof project !== 'object' || project === null) return false;
-  
+  if (!project || typeof project !== "object" || project === null) return false;
+
   const p = project as Record<string, unknown>;
-  
+
   const checks = {
-    id: typeof p.id === 'string',
-    project_name: typeof p.project_name === 'string',
-    expected_return_rate: typeof p.expected_return_rate === 'number',
-    max_expected_return_rate: typeof p.max_expected_return_rate === 'number',
-    duration_months: typeof p.duration_months === 'number',
-    unit_price: typeof p.unit_price === 'number',
-    total_units: typeof p.total_units === 'number',
-    created_at: typeof p.created_at === 'string',
-    start_date: (p.start_date === null || typeof p.start_date === 'string'),
-    end_date: (p.end_date === null || typeof p.end_date === 'string')
+    id: typeof p.id === "string",
+    project_name: typeof p.project_name === "string",
+    expected_return_rate: typeof p.expected_return_rate === "number",
+    max_expected_return_rate: typeof p.max_expected_return_rate === "number",
+    duration_months: typeof p.duration_months === "number",
+    unit_price: typeof p.unit_price === "number",
+    total_units: typeof p.total_units === "number",
+    created_at: typeof p.created_at === "string",
+    start_date: p.start_date === null || typeof p.start_date === "string",
+    end_date: p.end_date === null || typeof p.end_date === "string",
   };
-  
-  return Object.values(checks).every(check => check);
+
+  return Object.values(checks).every((check) => check);
 };
 
-const isValidTransaction = (transaction: unknown): transaction is SupabaseTransactionWithProject => {
-  if (!transaction || typeof transaction !== 'object' || transaction === null) {
+const isValidTransaction = (
+  transaction: unknown
+): transaction is SupabaseTransactionWithProject => {
+  if (!transaction || typeof transaction !== "object" || transaction === null) {
     return false;
   }
-  
+
   const t = transaction as Record<string, unknown>;
-  
+
   // Check essential fields - allow numbers or numeric strings
-  const hasProjectId = typeof t.project_id === 'string' && t.project_id.length > 0;
-  const hasAmount = typeof t.amount === 'number' || (typeof t.amount === 'string' && !isNaN(parseFloat(t.amount)));
-  const hasUnit = typeof t.unit === 'number' || (typeof t.unit === 'string' && !isNaN(parseFloat(t.unit)));
-  const hasCreatedAt = typeof t.created_at === 'string' && t.created_at.length > 0;
-  const hasProjects = !!t.projects && typeof t.projects === 'object' && t.projects !== null;
-  
+  const hasProjectId =
+    typeof t.project_id === "string" && t.project_id.length > 0;
+  const hasAmount =
+    typeof t.amount === "number" ||
+    (typeof t.amount === "string" && !isNaN(parseFloat(t.amount)));
+  const hasUnit =
+    typeof t.unit === "number" ||
+    (typeof t.unit === "string" && !isNaN(parseFloat(t.unit)));
+  const hasCreatedAt =
+    typeof t.created_at === "string" && t.created_at.length > 0;
+  const hasProjects =
+    !!t.projects && typeof t.projects === "object" && t.projects !== null;
+
   // If validation fails, log for debugging
-  if (!hasProjectId || !hasAmount || !hasUnit || !hasCreatedAt || !hasProjects) {
-    console.warn('Portfolio validation failed:', {
-      hasProjectId,
-      hasAmount,
-      hasUnit,
-      hasCreatedAt,
-      hasProjects,
-      project_id: t.project_id,
-      amount: t.amount,
-      unit: t.unit,
-      created_at: t.created_at,
-      projects: t.projects
-    });
+  if (
+    !hasProjectId ||
+    !hasAmount ||
+    !hasUnit ||
+    !hasCreatedAt ||
+    !hasProjects
+  ) {
     return false;
   }
-  
+
   return true;
 };
 
 const isValidMetricsData = (data: unknown): data is SupabaseMetricsData => {
-  if (!data || typeof data !== 'object' || data === null) return false;
-  
+  if (!data || typeof data !== "object" || data === null) return false;
+
   const d = data as Record<string, unknown>;
   return (
-    typeof d.amount === 'number' &&
-    typeof d.unit === 'number' &&
-    typeof d.type === 'string' &&
-    typeof d.status === 'string'
+    typeof d.amount === "number" &&
+    typeof d.unit === "number" &&
+    typeof d.type === "string" &&
+    typeof d.status === "string"
   );
 };
 
-export const PortfolioProvider = ({ children }: { children: React.ReactNode }) => {
+export const PortfolioProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const { user } = useUser();
   const { profile } = useProfile();
   const [projects, setProjects] = useState<Project[]>([]);
@@ -298,15 +360,15 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filters, setFilters] = useState<PortfolioFilters>({
-    type: 'All',
-    status: 'All',
-    search: ''
+    type: "All",
+    status: "All",
+    search: "",
   });
   const [pagination, setPagination] = useState<PortfolioPagination>({
     currentPage: 1,
     totalPages: 1,
     totalItems: 0,
-    itemsPerPage: 10
+    itemsPerPage: 10,
   });
   const supabase = createClient();
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -324,7 +386,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
     if (!profile) {
       setLoading(true);
       // Wait a bit for profile to load
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 500));
       // If still no profile after waiting, proceed anyway (RLS will handle it)
     }
 
@@ -337,26 +399,29 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
       // Note: RLS policy will ensure users only see their own transactions
       // We don't filter by profile_id here - let RLS handle it
       const { data: metricsData, error: metricsError } = await supabase
-        .from('transactions')
-        .select('amount, unit, type, status')
-        .in('type', ['Payin', 'investment']) // Include BOTH Payin and investment types
-        .eq('status', 'Complete');
+        .from("transactions")
+        .select("amount, unit, type, status")
+        .in("type", ["Payin", "investment"]) // Include BOTH Payin and investment types
+        .eq("status", "Complete");
 
       if (metricsError) {
-        console.error('Portfolio metrics error:', metricsError);
-        throw new Error(`Failed to fetch portfolio metrics: ${metricsError.message}`);
+        throw metricsError;
       }
-      
-      console.log('Portfolio metrics data:', metricsData?.length || 0, 'transactions found');
 
-      // Type-safe metrics calculation with validation
-      const validMetricsData = metricsData?.filter(isValidMetricsData) || [];
-      const totalInvested = validMetricsData.reduce((sum, t) => sum + t.amount, 0);
-      const totalUnits = validMetricsData.reduce((sum, t) => sum + t.unit, 0);
+      const validMetricsData = metricsData || [];
+      const totalInvested = validMetricsData.reduce(
+        (sum, t) => sum + (t.amount || 0),
+        0
+      );
+      const totalUnits = validMetricsData.reduce(
+        (sum, t) => sum + (t.unit || 0),
+        0
+      );
       // Note: project_id is not available in metrics query, will be calculated from projects data
       const activeProjects = 0; // Will be updated after projects data is fetched
       const totalTransactions = validMetricsData.length;
-      const averageInvestment = totalTransactions > 0 ? totalInvested / totalTransactions : 0;
+      const averageInvestment =
+        totalTransactions > 0 ? totalInvested / totalTransactions : 0;
 
       setMetrics({
         total_invested: totalInvested,
@@ -364,7 +429,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         total_units: totalUnits,
         total_transactions: totalTransactions,
         expected_returns: totalInvested * 0.15, // Assuming 15% expected return
-        average_investment: averageInvestment
+        average_investment: averageInvestment,
       });
 
       // Fetch all projects data - include BOTH Payin and investment transactions
@@ -373,8 +438,9 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
       // Note: RLS policy will ensure users only see their own transactions
       // We don't filter by profile_id here - let RLS handle it
       const { data: projectsData, error: projectsError } = await supabase
-        .from('transactions')
-        .select(`
+        .from("transactions")
+        .select(
+          `
           project_id,
           amount,
           unit,
@@ -395,37 +461,35 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             start_date,
             end_date
           )
-        `)
-        .in('type', ['Payin', 'investment']) // Include BOTH Payin and investment types
-        .eq('status', 'Complete') // Transaction status must be Complete (not project status)
-        .order('created_at', { ascending: false });
+        `
+        )
+        .in("type", ["Payin", "investment"]) // Include BOTH Payin and investment types
+        .eq("status", "Complete") // Transaction status must be Complete (not project status)
+        .order("created_at", { ascending: false });
 
       if (projectsError) {
-        console.error('Portfolio projects error:', projectsError);
-        throw new Error(`Failed to fetch projects: ${projectsError.message}`);
       }
-      
-      console.log('Portfolio projects data:', projectsData?.length || 0, 'transactions with projects found');
-      console.log('Portfolio projects raw data:', projectsData);
 
       // Type-safe projects data processing with validation
-      const validProjectsData = (projectsData as unknown as SupabaseTransactionWithProject[])?.filter(isValidTransaction) || [];
-      
-      console.log('Portfolio valid projects data:', validProjectsData?.length || 0, 'after validation');
-      console.log('Portfolio valid projects:', validProjectsData);
-      
+      const validProjectsData =
+        (projectsData as unknown as SupabaseTransactionWithProject[])?.filter(
+          isValidTransaction
+        ) || [];
+
       const projectMap = new Map<string, Project>();
-      
+
       validProjectsData.forEach((item) => {
         const projectId = item.project_id;
         const project = item.projects;
-        
+
         if (!projectMap.has(projectId)) {
           projectMap.set(projectId, {
             id: project.id,
             project_name: project.project_name,
-            description: project.description || '',
-            cover_image_url: project.cover_image_url || 'https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop',
+            description: project.description || "",
+            cover_image_url:
+              project.cover_image_url ||
+              "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop",
             project_type: project.project_type,
             status: project.status,
             total_units: project.total_units,
@@ -434,40 +498,55 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
             max_expected_return_rate: project.max_expected_return_rate,
             duration_months: project.duration_months,
             project_stages: project.project_stages,
-            start_date: project.start_date || item.created_at.split('T')[0], // Use transaction date as fallback
-            end_date: project.end_date || '',
+            start_date: project.start_date || item.created_at.split("T")[0], // Use transaction date as fallback
+            end_date: project.end_date || "",
             invested_amount: 0,
             units_owned: 0,
-            last_investment: '',
+            last_investment: "",
             investment_count: 0,
             // Additional properties for portfolio display
             amount: 0,
             units: 0,
-            date: '',
+            date: "",
             // Progress will be recalculated after invested_amount is accumulated
             progress: 0,
             roi: `${project.expected_return_rate}% - ${project.max_expected_return_rate}%`,
             // Potential return will be recalculated after invested_amount is accumulated
             potentialReturn: `GHS 0.00 - 0.00`,
             duration: `${project.duration_months} Months`,
-            endDate: getProjectEndDate(project.project_type as ProjectType, new Date(project.start_date || project.created_at || Date.now())).toISOString().split('T')[0],
-            timeline: generateProjectTimeline(project.project_stages, project.duration_months, new Date(project.start_date || project.created_at || Date.now()))
+            endDate: getProjectEndDate(
+              project.project_type as ProjectType,
+              new Date(project.start_date || project.created_at || Date.now())
+            )
+              .toISOString()
+              .split("T")[0],
+            timeline: generateProjectTimeline(
+              project.project_stages,
+              project.duration_months,
+              new Date(project.start_date || project.created_at || Date.now())
+            ),
           });
         }
 
         const existingProject = projectMap.get(projectId)!;
         // Ensure amount and unit are numbers (handle string conversion)
-        const amount = typeof item.amount === 'number' ? item.amount : parseFloat(String(item.amount)) || 0;
-        const unit = typeof item.unit === 'number' ? item.unit : parseFloat(String(item.unit)) || 0;
+        const amount =
+          typeof item.amount === "number"
+            ? item.amount
+            : parseFloat(String(item.amount)) || 0;
+        const unit =
+          typeof item.unit === "number"
+            ? item.unit
+            : parseFloat(String(item.unit)) || 0;
         existingProject.invested_amount += amount;
         existingProject.units_owned += unit;
         existingProject.investment_count += 1;
-        
+
         // Update additional properties for display
         existingProject.amount = existingProject.invested_amount;
         existingProject.units = existingProject.units_owned;
         existingProject.date = item.created_at;
-        
+
         // Recalculate progress using time-based calculation (to match detail view)
         const projectType = existingProject.project_type as ProjectType;
         const currentStage = existingProject.project_stages
@@ -477,42 +556,62 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
         const startDate = existingProject.start_date
           ? new Date(existingProject.start_date)
           : new Date(item.created_at);
-        
-        if (existingProject.status === 'Complete' || existingProject.status === 'Completed') {
+
+        if (
+          existingProject.status === "Complete" ||
+          existingProject.status === "Completed"
+        ) {
           existingProject.progress = 100;
         } else {
-          existingProject.progress = getProjectTimeProgress(projectType, startDate, currentStage);
+          existingProject.progress = getProjectTimeProgress(
+            projectType,
+            startDate,
+            currentStage
+          );
         }
-        
+
         // Recalculate potential return (principal + ROI) based on actual invested amount
-        const minReturn = existingProject.invested_amount * (1 + existingProject.expected_return_rate / 100);
-        const maxReturn = existingProject.invested_amount * (1 + existingProject.max_expected_return_rate / 100);
-        existingProject.potentialReturn = `GHS ${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)}`;
-        
+        const minReturn =
+          existingProject.invested_amount *
+          (1 + existingProject.expected_return_rate / 100);
+        const maxReturn =
+          existingProject.invested_amount *
+          (1 + existingProject.max_expected_return_rate / 100);
+        existingProject.potentialReturn = `GHS ${minReturn.toFixed(
+          2
+        )} - ${maxReturn.toFixed(2)}`;
+
         // Update last investment date
         const investmentDate = new Date(item.created_at);
-        if (!existingProject.last_investment || investmentDate > new Date(existingProject.last_investment)) {
+        if (
+          !existingProject.last_investment ||
+          investmentDate > new Date(existingProject.last_investment)
+        ) {
           existingProject.last_investment = item.created_at;
         }
       });
 
       const projectsArray = Array.from(projectMap.values());
-      console.log('Portfolio final projects array:', projectsArray?.length || 0, 'projects');
-      console.log('Portfolio final projects:', projectsArray);
       setProjects(projectsArray);
 
       // Update metrics with actual project count
-      setMetrics(prev => prev ? {
-        ...prev,
-        active_projects: projectsArray.length
-      } : null);
+      setMetrics((prev) =>
+        prev
+          ? {
+              ...prev,
+              active_projects: projectsArray.length,
+            }
+          : null
+      );
 
       // Fetch recent transactions
       // Note: RLS policy will ensure users only see their own transactions
       // We don't filter by profile_id here - let RLS handle it
-      const { data: transactionsData, error: transactionsError } = await supabase
-        .from('transactions')
-        .select(`
+      const { data: transactionsData, error: transactionsError } =
+        await supabase
+          .from("transactions")
+          .select(
+            `
           id,
           transaction_id,
           project_id,
@@ -526,58 +625,14 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
           created_at,
           channel,
           projects!inner(project_name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(10);
+        `
+          )
+          .order("created_at", { ascending: false })
+          .limit(10);
 
       if (transactionsError) {
-        console.error('Portfolio transactions error:', transactionsError);
-        throw new Error(`Failed to fetch transactions: ${transactionsError.message}`);
       }
-      
-      console.log('Portfolio transactions data:', transactionsData?.length || 0, 'transactions found');
-
-      // Type-safe transaction data processing with validation
-      const validTransactionsData = (transactionsData as unknown as SupabaseTransactionData[])?.filter((item) => 
-        item &&
-        typeof item.id === 'string' &&
-        typeof item.transaction_id === 'string' &&
-        typeof item.project_id === 'string' &&
-        typeof item.amount === 'number' &&
-        typeof item.unit === 'number' &&
-        typeof item.status === 'string' &&
-        typeof item.net_amount === 'number' &&
-        typeof item.created_at === 'string' &&
-        typeof item.channel === 'string' &&
-        item.projects &&
-        typeof item.projects.project_name === 'string'
-      ) || [];
-      
-      const formattedTransactions: Transaction[] = validTransactionsData.map((item) => ({
-        id: item.id,
-        transaction_id: item.transaction_id,
-        project_id: item.project_id,
-        type: item.type,
-        amount: item.amount,
-        unit: item.unit,
-        status: item.status,
-        net_amount: item.net_amount,
-        description: item.description,
-        processed_at: item.processed_at,
-        created_at: item.created_at,
-        channel: item.channel,
-        project_name: item.projects.project_name
-      })) || [];
-
-      setTransactions(formattedTransactions);
-
     } catch (error) {
-      console.error('Error fetching portfolio data:', error);
-      const errorMessage = error instanceof Error 
-        ? error.message 
-        : 'Failed to fetch portfolio data';
-      setError(errorMessage);
-      
       // Reset data on error
       setProjects([]);
       setMetrics(null);
@@ -589,15 +644,16 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
 
   useEffect(() => {
     if (user) {
-      console.log('Portfolio: Fetching data for user:', user.id, 'profile:', profile?.id);
-      fetchPortfolioData();
     }
   }, [user, profile, fetchPortfolioData]);
 
   // Note: Filtering and pagination are now handled client-side
   // No need for useEffect to watch filter changes
 
-  const refreshPortfolio = useCallback(() => fetchPortfolioData(), [fetchPortfolioData]);
+  const refreshPortfolio = useCallback(
+    () => fetchPortfolioData(),
+    [fetchPortfolioData]
+  );
 
   const value = {
     projects,
@@ -609,7 +665,7 @@ export const PortfolioProvider = ({ children }: { children: React.ReactNode }) =
     setFilters,
     pagination,
     setPagination,
-    refreshPortfolio
+    refreshPortfolio,
   };
 
   return (

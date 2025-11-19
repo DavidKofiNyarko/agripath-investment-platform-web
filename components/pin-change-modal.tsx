@@ -162,7 +162,6 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
         }
       }
     } catch (error) {
-      console.error("Error validating PIN:", error);
       setIsLoading(false);
       setError("Failed to validate PIN. Please try again.");
     }
@@ -222,7 +221,6 @@ const PinChangeModal: React.FC<PinChangeModalProps> = ({
         onClose();
       }, 2000);
     } catch (error) {
-      console.error("Error updating PIN:", error);
       setIsLoading(false);
       setError("Failed to update PIN. Please try again.");
     }

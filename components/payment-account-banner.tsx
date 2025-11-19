@@ -43,15 +43,12 @@ const PaymentAccountBanner: React.FC = () => {
           setAccounts([]);
           return;
         }
-        console.error("Error fetching accounts:", error);
         setAccounts([]);
         return;
       }
 
       setAccounts(data || []);
     } catch (error) {
-      console.error("Error fetching accounts:", error);
-      setAccounts([]);
     } finally {
       setIsLoading(false);
     }

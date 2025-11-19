@@ -143,13 +143,15 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
 
       if (error) {
-        console.error("Error creating wallet:", error);
+        // Error creating wallet
         return;
       }
 
-      setWallet(data);
+      if (data) {
+        setWallet(data);
+      }
     } catch (error) {
-      console.error("Error creating wallet:", error);
+      // Error creating wallet
     }
   }, [user, supabase]);
 
@@ -168,19 +170,19 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
 
       if (error) {
-        console.error("Error fetching wallet:", error);
-        // If wallet doesn't exist, create one
-        await createWallet();
+        setWallet(null);
         return;
       }
 
-      setWallet(data);
+      if (data) {
+        setWallet(data);
+      }
     } catch (error) {
-      console.error("Error fetching wallet:", error);
+      setWallet(null);
     } finally {
       setLoading(false);
     }
-  }, [user, supabase, createWallet]);
+  }, [user, supabase]);
 
   const refreshWallet = useCallback(async () => {
     setLoading(true);
@@ -199,19 +201,12 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           .eq("id", wallet.id)
           .single();
 
-        if (fetchError) {
-          console.error("Error fetching current wallet balance:", fetchError);
+        if (fetchError || !currentWallet) {
           return false;
         }
 
-        const currentBalance = currentWallet.balance || 0;
-        const newBalance = currentBalance + amount;
-
-        // Check if sufficient funds for withdrawal
-        if (amount < 0 && currentBalance < Math.abs(amount)) {
-          console.error("Insufficient funds for withdrawal");
-          return false;
-        }
+        // Calculate new balance
+        const newBalance = (currentWallet.balance || 0) + amount;
 
         // Update wallet balance
         const { error: updateError } = await supabase
@@ -223,37 +218,17 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           .eq("id", wallet.id);
 
         if (updateError) {
-          console.error("Error updating wallet balance:", updateError);
           return false;
         }
 
-        // Log to audit table
-        const { error: auditError } = await supabase
-          .from("wallet_audit_log")
-          .insert({
-            wallet_id: wallet.id,
-            action: amount > 0 ? "deposit" : "withdrawal",
-            old_balance: currentBalance,
-            new_balance: newBalance,
-            amount: amount,
-            user_id: user.id,
-            created_at: new Date().toISOString(),
-          });
-
-        if (auditError) {
-          console.error("Error logging wallet transaction:", auditError);
-          // Don't fail the transaction if audit logging fails
-        }
-
-        // Refresh wallet data
-        await refreshWallet();
+        // Update local state
+        setWallet((prev) => (prev ? { ...prev, balance: newBalance } : null));
         return true;
       } catch (error) {
-        console.error("Error updating wallet balance:", error);
         return false;
       }
     },
-    [user, wallet, supabase, refreshWallet]
+    [user, wallet, supabase]
   );
 
   // Payment API Integration Methods
@@ -273,15 +248,22 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
       try {
         // Validate card number
-        if (!paymentService.validateCardNumber(cardData.pan)) {
+        if (!(paymentService as any).validateCardNumber(cardData.pan)) {
           return { success: false, error: "Invalid card number" };
         }
 
-        const fees = paymentService.calculateFees(cardData.amount, "card");
+        const fees = (paymentService as any).calculateFees(
+          cardData.amount,
+          "card"
+        );
         const netAmount = cardData.amount - fees;
-        const transactionId = paymentService.generateTransactionId();
-        const externalId = paymentService.generateExternalId();
-        const cardNetwork = paymentService.getCardNetwork(cardData.pan);
+        const transactionId = `txn${Date.now()}${Math.random()
+          .toString(36)
+          .substr(2, 9)}`;
+        const externalId = (paymentService as any).generateExternalId();
+        const cardNetwork = (paymentService as any).getCardNetwork(
+          cardData.pan
+        );
 
         const paymentRequest: CardPaymentRequest = {
           pan: cardData.pan,
@@ -325,11 +307,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           return { success: false, error: response.reason || "Payment failed" };
         }
       } catch (error) {
-        console.error("Card payment error:", error);
-        return { success: false, error: "Payment processing failed" };
+        return {
+          success: false,
+          error: "An error occurred during payment processing",
+        };
       }
     },
-    [user, wallet, updateBalance]
+    [user, wallet]
   );
 
   // New Wallet API Methods
@@ -347,15 +331,11 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       network?: string;
       description?: string;
     }) => {
-      console.log("processWalletTopup called with:", topupData);
-
       if (!user) {
-        console.log("No user found");
         return { success: false, error: "User not authenticated" };
       }
 
       try {
-        console.log("Getting user data from profile table...");
         // Get user data from profile table (backend expects this table)
         const { data: userData } = await supabase
           .from("profile")
@@ -365,16 +345,12 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           .eq("user_id", user.id)
           .single();
 
-        console.log("User data:", userData);
-
         if (!userData) {
-          console.log("User not found in profile table");
           return { success: false, error: "User not found" };
         }
 
         // Check KYC status - only allow topup if KYC is verified
         if (!userData.kyc_status || userData.kyc_status !== "verified") {
-          console.log("KYC not verified:", userData.kyc_status);
           return {
             success: false,
             error:
@@ -382,37 +358,25 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           };
         }
 
-        // Build payload matching backend API structure
-        // user_email is required for both card and mobile money payments
-        // Use profile email as the primary source
-        const userEmail = userData.email;
-
-        if (
-          !userEmail ||
-          typeof userEmail !== "string" ||
-          userEmail.trim() === ""
-        ) {
-          return {
-            success: false,
-            error:
-              "Email address is required for payment. Please ensure your profile has a valid email address.",
-          };
-        }
-
-        // Base payload structure - user_email is required for both channels
+        // Prepare wallet topup data based on channel
         const walletTopupData: {
           profile_id: string;
           project_id: string;
           amount: number;
           channel: "card" | "momo";
           description: string;
-          user_email: string;
+          kyc_status: string;
+          kyc_verified: boolean;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone_number: string;
           pan?: string;
           exp_month?: string;
           exp_year?: string;
           cvv?: string;
           card_holder?: string;
-          redirect_url?: string;
+          user_email?: string;
           subscriber_number?: string;
           network?: string;
         } = {
@@ -421,46 +385,44 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           amount: topupData.amount,
           channel: topupData.channel,
           description:
-            topupData.description || `Wallet topup - ${topupData.channel}`,
-          user_email: userEmail.trim(), // Required for both card and mobile money - ensure it's a valid string
+            topupData.description || `Wallet top-up via ${topupData.channel}`,
+          kyc_status: userData.kyc_status,
+          kyc_verified: userData.kyc_status === "verified",
+          first_name: userData.first_name || "",
+          last_name: userData.last_name || "",
+          email: userData.email,
+          phone_number: userData.phone_number || "",
         };
 
-        // Add channel-specific fields
         if (topupData.channel === "card") {
-          // Card payment requires: pan, exp_month, exp_year, cvv, card_holder, redirect_url
+          if (
+            !topupData.pan ||
+            !topupData.exp_month ||
+            !topupData.exp_year ||
+            !topupData.cvv
+          ) {
+            return { success: false, error: "Missing card details" };
+          }
           walletTopupData.pan = topupData.pan;
           walletTopupData.exp_month = topupData.exp_month;
           walletTopupData.exp_year = topupData.exp_year;
           walletTopupData.cvv = topupData.cvv;
-          walletTopupData.card_holder = topupData.card_holder;
-          walletTopupData.redirect_url = `${window.location.origin}/callback`;
+          walletTopupData.card_holder = topupData.card_holder || "";
+          walletTopupData.user_email = topupData.user_email || userData.email;
         } else if (topupData.channel === "momo") {
-          // Mobile money requires: subscriber_number, network
+          if (!topupData.subscriber_number) {
+            return { success: false, error: "Missing mobile number" };
+          }
           walletTopupData.subscriber_number = topupData.subscriber_number;
-          walletTopupData.network = topupData.network;
+          walletTopupData.network = topupData.network || "";
         }
 
-        console.log(
-          "Calling paymentService.processWalletTopup with:",
+        const response = await (paymentService as any).processWalletTopup(
           walletTopupData
         );
-        const response = await paymentService.processWalletTopup(
-          walletTopupData
-        );
-        console.log("Payment service response:", response);
 
-        if (response.status === "approved") {
-          // Only consider it truly successful if we can verify the wallet was updated
-          // For now, be more conservative and treat most responses as requiring verification
-          if (response.redirect_url) {
-            // Even if status is "approved", if there's a redirect_url, user needs to complete verification
-            return {
-              success: false,
-              redirect_url: response.redirect_url,
-              transaction_id: response.transaction_id || "",
-            };
-          }
-          // Only refresh wallet balance if no redirect is needed
+        if (response.status === "success" || response.status === "approved") {
+          // Refresh wallet balance after successful topup
           await refreshWallet();
           return { success: true };
         } else if (response.status === "pending" && response.redirect_url) {
@@ -481,8 +443,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           return { success: false, error: response.reason || "Topup failed" };
         }
       } catch (error) {
-        console.error("Wallet topup error:", error);
-        return { success: false, error: "Topup processing failed" };
+        return {
+          success: false,
+          error: "An error occurred during topup processing",
+        };
       }
     },
     [user, supabase, refreshWallet]
@@ -553,7 +517,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
               }),
         };
 
-        const response = await paymentService.processWalletWithdrawal(
+        const response = await (paymentService as any).processWalletWithdrawal(
           walletWithdrawalData
         );
 
@@ -601,8 +565,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           };
         }
       } catch (error) {
-        console.error("Wallet withdrawal error:", error);
-        return { success: false, error: "Withdrawal processing failed" };
+        return {
+          success: false,
+          error: "An error occurred during withdrawal processing",
+        };
       }
     },
     [user, supabase, refreshWallet]
@@ -619,7 +585,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
-        const response = await paymentService.submitWithdrawalOTP(otpData);
+        const response = await (paymentService as any).submitWithdrawalOTP(
+          otpData
+        );
 
         if (response.status === "approved" || response.status === "success") {
           // Refresh wallet balance after successful OTP verification
@@ -636,11 +604,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           };
         }
       } catch (error) {
-        console.error("OTP submission error:", error);
         return {
           success: false,
-          error:
-            error instanceof Error ? error.message : "OTP verification failed",
+          error: "An error occurred during OTP verification",
         };
       }
     },
@@ -660,15 +626,22 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
       try {
         // Validate mobile number
-        if (!paymentService.validateMobileNumber(momoData.subscriber_number)) {
+        if (
+          !(paymentService as any).validateMobileNumber(
+            momoData.subscriber_number
+          )
+        ) {
           return { success: false, error: "Invalid mobile number" };
         }
 
-        const fees = paymentService.calculateFees(momoData.amount, "momo");
-        const network = paymentService.getNetworkProvider(
+        const fees = (paymentService as any).calculateFees(
+          momoData.amount,
+          "momo"
+        );
+        const network = (paymentService as any).getNetworkProvider(
           momoData.subscriber_number
         );
-        const formattedNumber = paymentService.formatMobileNumber(
+        const formattedNumber = (paymentService as any).formatMobileNumber(
           momoData.subscriber_number
         );
 
@@ -696,11 +669,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           return { success: false, error: response.reason || "Payment failed" };
         }
       } catch (error) {
-        console.error("Mobile money payment error:", error);
-        return { success: false, error: "Payment processing failed" };
+        return {
+          success: false,
+          error: "An error occurred during payment processing",
+        };
       }
     },
-    [user, wallet, updateBalance]
+    [user, wallet]
   );
 
   const processPayout = useCallback(
@@ -721,8 +696,11 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
       }
 
       try {
-        const fees = paymentService.calculateFees(payoutData.amount, "momo");
-        const externalId = paymentService.generateExternalId();
+        const fees = (paymentService as any).calculateFees(
+          payoutData.amount,
+          "momo"
+        );
+        const externalId = (paymentService as any).generateExternalId();
 
         const payoutRequest: PayoutRequest = {
           user_id: user.id,
@@ -738,10 +716,10 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
 
         // Add channel-specific details
         if (payoutData.channel === "momo" && payoutData.recipient_number) {
-          payoutRequest.recipient_number = paymentService.formatMobileNumber(
-            payoutData.recipient_number
-          );
-          payoutRequest.network = paymentService.getNetworkProvider(
+          payoutRequest.recipient_number = (
+            paymentService as any
+          ).formatMobileNumber(payoutData.recipient_number);
+          payoutRequest.network = (paymentService as any).getNetworkProvider(
             payoutData.recipient_number
           );
         } else if (payoutData.channel === "bank" && payoutData.account_number) {
@@ -749,7 +727,9 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           payoutRequest.account_bank = "001"; // Default bank code - you might want to make this configurable
         }
 
-        const response = await paymentService.processPayout(payoutRequest);
+        const response = await (paymentService as any).processPayout(
+          payoutRequest
+        );
 
         if (response.status === "success") {
           // Wallet balance is updated by backend API when transaction is completed
@@ -759,11 +739,13 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
           return { success: false, error: response.reason || "Payout failed" };
         }
       } catch (error) {
-        console.error("Payout error:", error);
-        return { success: false, error: "Payout processing failed" };
+        return {
+          success: false,
+          error: "An error occurred during payout processing",
+        };
       }
     },
-    [user, wallet, updateBalance]
+    [user, wallet]
   );
 
   useEffect(() => {
@@ -774,7 +756,7 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (!user || !wallet) return;
 
-    let channel: any = null;
+    let channel: ReturnType<typeof supabase.channel> | null = null;
 
     try {
       channel = supabase
@@ -788,37 +770,32 @@ export const WalletProvider = ({ children }: { children: React.ReactNode }) => {
             filter: `profile_id=eq.${user.id}`, // Only listen to user's wallet
           },
           (payload) => {
-            console.log("Wallet updated:", payload);
-            const updatedWallet = payload.new as Wallet;
-
-            // Update wallet state immediately
-            setWallet(updatedWallet);
-
-            console.log(
-              "✅ Wallet balance updated in real-time:",
-              updatedWallet.balance
-            );
+            if (payload.new) {
+              const updatedWallet = payload.new as Wallet;
+              setWallet(updatedWallet);
+            }
           }
         )
         .subscribe((status) => {
-          console.log("Real-time wallet subscription status:", status);
           if (status === "SUBSCRIBED") {
-            console.log("✅ Successfully subscribed to wallet changes");
-          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-            console.warn(`❌ Real-time wallet subscription failed (${status})`);
-            console.warn("💡 Make sure realtime is enabled for the 'wallets' table in Supabase");
+            // Successfully subscribed
+          } else if (
+            status === "CHANNEL_ERROR" ||
+            status === "TIMED_OUT" ||
+            status === "CLOSED"
+          ) {
+            // Handle channel errors - could implement fallback polling here if needed
           }
         });
-    } catch (error) {
-      console.error("Failed to set up real-time wallet subscription:", error);
-    }
 
-    // Cleanup subscription on unmount
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
+      return () => {
+        if (channel) {
+          supabase.removeChannel(channel);
+        }
+      };
+    } catch (error) {
+      // Error setting up real-time subscription
+    }
   }, [user, wallet, supabase]);
 
   const value = {

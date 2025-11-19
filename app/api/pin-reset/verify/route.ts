@@ -57,7 +57,6 @@ export async function POST(request: NextRequest) {
       .eq('id', resetToken.profile_id);
 
     if (updateError) {
-      console.error('Error updating PIN:', updateError);
       return NextResponse.json(
         { error: 'Failed to update PIN' },
         { status: 500 }
@@ -71,17 +70,14 @@ export async function POST(request: NextRequest) {
       .eq('token', token);
 
     if (markUsedError) {
-      console.error('Error marking token as used:', markUsedError);
-      // Don't fail the request, PIN was updated successfully
+      // Token marking failed, but PIN was updated, so continue
     }
 
     return NextResponse.json(
-      { message: 'PIN has been reset successfully' },
+      { message: 'PIN reset successfully' },
       { status: 200 }
     );
-
   } catch (error) {
-    console.error('PIN reset verification error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

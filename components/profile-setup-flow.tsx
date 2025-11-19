@@ -156,7 +156,6 @@ const ProfileSetupFlow: React.FC<ProfileSetupFlowProps> = ({ onCompleted }) => {
 
       setCurrentStep("kyc");
     } catch (error) {
-      console.error("Error setting PIN:", error);
       setPinError("Failed to set PIN. Please try again.");
     } finally {
       setSavingPin(false);

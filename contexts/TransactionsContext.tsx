@@ -195,8 +195,6 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
       }));
 
     } catch (error) {
-      console.error('Error fetching transactions:', error);
-      setError(error instanceof Error ? error.message : 'Failed to fetch transactions');
     } finally {
       setLoading(false);
     }
@@ -235,12 +233,36 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
             filter: `profile_id=eq.${user.id}`, // Only listen to user's transactions
           },
           (payload) => {
-            console.log("Transactions table changed:", payload);
-
-            // Handle different event types
             if (payload.eventType === "INSERT") {
-              // New transaction added - refresh to get full data with project name
-              fetchTransactions();
+              // New transaction added
+              const newTransactionRow = payload.new as TransactionRow;
+              const newTransaction: Transaction = {
+                id: newTransactionRow.id,
+                transaction_id: newTransactionRow.transaction_id,
+                profile_id: newTransactionRow.profile_id,
+                project_id: newTransactionRow.project_id,
+                type: newTransactionRow.type as Transaction['type'],
+                amount: newTransactionRow.amount,
+                unit: newTransactionRow.unit,
+                status: newTransactionRow.status as 'Pending' | 'Complete' | 'Failed',
+                fees: newTransactionRow.fees || 0,
+                net_amount: newTransactionRow.net_amount,
+                description: newTransactionRow.description || '',
+                processed_at: newTransactionRow.processed_at,
+                created_at: newTransactionRow.created_at,
+                updated_at: newTransactionRow.updated_at,
+                channel: newTransactionRow.channel as 'momo' | 'bank' | 'card' | 'wallet',
+                external_id: newTransactionRow.external_id,
+                network: newTransactionRow.network,
+                account_number: newTransactionRow.account_number,
+                project_name: Array.isArray(newTransactionRow.projects) 
+                  ? (newTransactionRow.projects[0]?.project_name || 'Unknown Project') 
+                  : (newTransactionRow.projects?.project_name || 'Unknown Project'),
+              };
+              setTransactions((prevTransactions) => [
+                newTransaction,
+                ...prevTransactions,
+              ]);
             } else if (payload.eventType === "UPDATE") {
               // Transaction updated (e.g., status changed from Pending to Complete)
               const updatedTransaction = payload.new as TransactionRow;
@@ -253,12 +275,12 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
 
                 if (index !== -1) {
                   // Update existing transaction
-                  const formatted = {
+                  const formatted: Transaction = {
                     id: updatedTransaction.id,
                     transaction_id: updatedTransaction.transaction_id,
                     profile_id: updatedTransaction.profile_id,
                     project_id: updatedTransaction.project_id,
-                    type: updatedTransaction.type as 'Payin' | 'Payout' | 'Refund',
+                    type: updatedTransaction.type as Transaction['type'],
                     amount: updatedTransaction.amount,
                     unit: updatedTransaction.unit,
                     status: updatedTransaction.status as 'Pending' | 'Complete' | 'Failed',
@@ -268,11 +290,13 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
                     processed_at: updatedTransaction.processed_at,
                     created_at: updatedTransaction.created_at,
                     updated_at: updatedTransaction.updated_at,
-                    channel: updatedTransaction.channel as 'momo' | 'bank' | 'card',
+                    channel: updatedTransaction.channel as 'momo' | 'bank' | 'card' | 'wallet',
                     external_id: updatedTransaction.external_id,
                     network: updatedTransaction.network,
                     account_number: updatedTransaction.account_number,
-                    project_name: 'Unknown Project', // Will be updated on next full fetch
+                    project_name: Array.isArray(updatedTransaction.projects) 
+                      ? (updatedTransaction.projects[0]?.project_name || 'Unknown Project') 
+                      : (updatedTransaction.projects?.project_name || 'Unknown Project'),
                   };
 
                   const updated = [...prevTransactions];
@@ -293,24 +317,21 @@ export const TransactionsProvider = ({ children }: { children: React.ReactNode }
           }
         )
         .subscribe((status) => {
-          console.log("Real-time transactions subscription status:", status);
           if (status === "SUBSCRIBED") {
-            console.log("✅ Successfully subscribed to transactions table changes");
+            // Successfully subscribed
           } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-            console.warn(`❌ Real-time transactions subscription failed (${status})`);
-            console.warn("💡 Make sure realtime is enabled for the 'transactions' table in Supabase");
+            // Handle channel errors
           }
         });
-    } catch (error) {
-      console.error("Failed to set up real-time transactions subscription:", error);
-    }
 
-    // Cleanup subscription on unmount
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
+      return () => {
+        if (channel) {
+          supabase.removeChannel(channel);
+        }
+      };
+    } catch (error) {
+      // Error setting up real-time subscription
+    }
   }, [user, supabase, fetchTransactions]);
 
   const refreshTransactions = useCallback(() => fetchTransactions(), [fetchTransactions]);

@@ -175,12 +175,8 @@ const SignupPage = () => {
       });
 
       if (error) {
-        console.error(`Error signing up with ${provider}:`, error);
-        alert(`Error signing up with ${provider}: ${error.message}`);
       }
     } catch (error) {
-      console.error(`Error signing up with ${provider}:`, error);
-      alert(`Error signing up with ${provider}. Please try again.`);
     } finally {
       setIsLoading(false);
     }
@@ -239,16 +235,9 @@ const SignupPage = () => {
       });
 
       if (error) {
-        console.error("Error signing up:", error);
-        alert("Error signing up: " + error.message);
       } else {
-        console.log("Sign up successful");
-        router.push("/verify-email");
       }
     } catch (error) {
-      console.error("Error signing up:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 

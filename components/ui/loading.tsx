@@ -17,10 +17,6 @@ const Loading: React.FC<LoadingProps> = ({
 }) => {
   const pathname = usePathname();
 
-  // Debug: Log the current pathname
-  React.useEffect(() => {
-    console.log("Loading component - Current pathname:", pathname);
-  }, [pathname]);
 
   const sizeClasses = {
     sm: "w-16 h-14",
@@ -115,10 +111,6 @@ const Loading: React.FC<LoadingProps> = ({
 
   const loadingMessages = getRouteSpecificMessages(pathname);
 
-  // Debug: Log the selected messages
-  React.useEffect(() => {
-    console.log("Loading component - Selected messages:", loadingMessages);
-  }, [loadingMessages]);
 
   const [currentMessage, setCurrentMessage] = React.useState(
     text || loadingMessages[0]

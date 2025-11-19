@@ -137,11 +137,6 @@ class PaymentService {
     redirect_url: string;
   }): Promise<PaymentResponse> {
     try {
-      console.log(
-        "Card payment request:",
-        JSON.stringify(paymentData, null, 2)
-      );
-
       const response = await fetch(`${this.baseUrl}/card/payin`, {
         method: "POST",
         headers: {
@@ -156,10 +151,8 @@ class PaymentService {
       }
 
       const responseData = await response.json();
-      console.log("Card payment response:", responseData);
       return responseData;
     } catch (error) {
-      console.error("Card payment error:", error);
       throw error;
     }
   }
@@ -186,32 +179,6 @@ class PaymentService {
 
       return await response.json();
     } catch (error) {
-      console.error("Mobile money payment error:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Process individual payout
-   */
-  async processPayout(payoutData: PayoutRequest): Promise<PayoutResponse> {
-    try {
-      const response = await fetch(`${this.baseUrl}/payout`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payoutData),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Payout failed");
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error("Payout error:", error);
       throw error;
     }
   }
@@ -220,7 +187,7 @@ class PaymentService {
    * Generate unique transaction ID
    */
   generateTransactionId(): string {
-    return Date.now().toString().padStart(12, "0");
+    return `txn${Date.now()}${Math.random().toString(36).substr(2, 9)}`;
   }
 
   /**
@@ -385,11 +352,6 @@ class PaymentService {
         }
       }
 
-      console.log(
-        "Wallet topup request:",
-        JSON.stringify(requestData, null, 2)
-      );
-
       const response = await fetch(`${this.baseUrl}/wallet/topup`, {
         method: "POST",
         headers: {
@@ -399,7 +361,6 @@ class PaymentService {
       });
 
       const responseData = await response.json();
-      console.log("Wallet topup response:", responseData);
 
       if (!response.ok) {
         throw new Error(responseData.message || "Wallet topup failed");
@@ -407,7 +368,6 @@ class PaymentService {
 
       return responseData;
     } catch (error) {
-      console.error("Wallet topup error:", error);
       throw error;
     }
   }
@@ -438,11 +398,6 @@ class PaymentService {
     account_issuer?: string;
   }): Promise<PaymentResponse> {
     try {
-      console.log(
-        "Wallet withdrawal request:",
-        JSON.stringify(withdrawalData, null, 2)
-      );
-
       const response = await fetch(`${this.baseUrl}/wallet/withdrawal`, {
         method: "POST",
         headers: {
@@ -452,7 +407,6 @@ class PaymentService {
       });
 
       const responseData = await response.json();
-      console.log("Wallet withdrawal response:", responseData);
 
       if (!response.ok) {
         throw new Error(responseData.message || "Wallet withdrawal failed");
@@ -460,7 +414,6 @@ class PaymentService {
 
       return responseData;
     } catch (error) {
-      console.error("Wallet withdrawal error:", error);
       throw error;
     }
   }
@@ -474,8 +427,6 @@ class PaymentService {
     otp: string;
   }): Promise<PaymentResponse> {
     try {
-      console.log("OTP submission request:", JSON.stringify(otpData, null, 2));
-
       const response = await fetch(`${this.baseUrl}/finalize-transfer`, {
         method: "POST",
         headers: {
@@ -485,7 +436,6 @@ class PaymentService {
       });
 
       const responseData = await response.json();
-      console.log("OTP submission response:", responseData);
 
       if (!response.ok) {
         throw new Error(responseData.message || "OTP verification failed");
@@ -493,7 +443,6 @@ class PaymentService {
 
       return responseData;
     } catch (error) {
-      console.error("OTP submission error:", error);
       throw error;
     }
   }
@@ -512,22 +461,6 @@ class PaymentService {
     redirect_url: string;
   }): Promise<PaymentResponse> {
     try {
-      // Debug logging
-      console.log("Investment card payment data:", {
-        profile_id: investmentData.profile_id,
-        project_id: investmentData.project_id,
-        amount: investmentData.amount,
-        unit: investmentData.unit,
-        desc: investmentData.desc,
-        pan: investmentData.pan,
-        exp_month: investmentData.exp_month,
-        exp_year: investmentData.exp_year,
-        cvv: investmentData.cvv,
-        card_holder: investmentData.card_holder,
-        user_email: investmentData.user_email,
-        redirect_url: investmentData.redirect_url,
-      });
-
       // Validate email if provided
       if (
         investmentData.user_email &&
@@ -560,53 +493,6 @@ class PaymentService {
 
       return await this.processCardPayment(paymentRequest);
     } catch (error) {
-      console.error("Investment card payment error:", error);
-      throw error;
-    }
-  }
-
-  /**
-   * Process investment payment via mobile money
-   * Updated to match working API structure
-   */
-  async processInvestmentMobileMoneyPayment(investmentData: {
-    profile_id: string; // Profile ID from the profile table
-    project_id: string;
-    amount: number;
-    unit: number;
-    subscriber_number?: string; // Optional - Paystack handles it
-    network?: string; // Optional - Paystack handles it
-    description?: string;
-    user_email: string; // Required field based on API testing
-  }): Promise<PaymentResponse> {
-    try {
-      // Build payment request - backend requires subscriber_number and network
-      // User can still change these on Paystack window if needed
-      const network = investmentData.network || "MTN";
-      const formattedNumber = investmentData.subscriber_number
-        ? this.formatMobileNumber(investmentData.subscriber_number)
-        : "";
-
-      const paymentRequest: MobileMoneyPaymentRequest = {
-        profile_id: investmentData.profile_id,
-        project_id: investmentData.project_id,
-        subscriber_number: formattedNumber || "0000000000", // Required by backend, user can change on Paystack
-        network: network, // Required by backend, defaults to MTN
-        description: investmentData.description || "Investment payment",
-        amount: investmentData.amount,
-        unit: investmentData.unit,
-        user_email: investmentData.user_email, // Required field
-      };
-
-      console.log(
-        "Momo Payment Request:",
-        JSON.stringify(paymentRequest, null, 2)
-      );
-      return await this.processMobileMoneyPayment(
-        paymentRequest as unknown as MobileMoneyPaymentRequest
-      );
-    } catch (error) {
-      console.error("Investment mobile money payment error:", error);
       throw error;
     }
   }

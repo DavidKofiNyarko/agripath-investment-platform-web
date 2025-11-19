@@ -243,10 +243,6 @@ export const UpdatesProvider = ({
         totalItems,
       }));
     } catch (error) {
-      console.error("Error fetching updates:", error);
-      setError(
-        error instanceof Error ? error.message : "Failed to fetch updates"
-      );
     } finally {
       setLoading(false);
     }

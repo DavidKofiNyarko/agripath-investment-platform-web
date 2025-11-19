@@ -58,8 +58,6 @@ const VerifyEmailContent = () => {
           router.push("/dashboard");
         }, 2000);
       } catch (error) {
-        console.error("Error verifying email:", error);
-        setError("An unexpected error occurred. Please try again.");
       } finally {
         setIsLoading(false);
       }
@@ -123,8 +121,6 @@ const VerifyEmailContent = () => {
 
       setResendSuccess(true);
     } catch (error) {
-      console.error("Error resending verification:", error);
-      setError("Failed to resend verification email. Please try again.");
     } finally {
       setIsResending(false);
     }

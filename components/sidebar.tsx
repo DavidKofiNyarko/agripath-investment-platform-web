@@ -113,7 +113,7 @@ const SidebarContent = ({ className }: SidebarProps) => {
       await signOut();
       router.push("/signin");
     } catch (error) {
-      console.error("Error signing out:", error);
+      // Error signing out
     } finally {
       setIsLoggingOut(false);
     }
@@ -312,7 +312,7 @@ const MobileSidebarContent = ({ className }: SidebarProps) => {
       await signOut();
       router.push("/signin");
     } catch (error) {
-      console.error("Error signing out:", error);
+      // Error signing out
     } finally {
       setIsLoggingOut(false);
     }
