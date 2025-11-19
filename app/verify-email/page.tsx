@@ -19,15 +19,22 @@ const VerifyEmailContent = () => {
   const { user } = useUser();
 
   const verifyEmailToken = useCallback(
-    async (token: string) => {
+    async (token: string, tokenHash?: string) => {
       try {
         setIsLoading(true);
         setError("");
 
-        // Get email from user context or session
-        let email = user?.email;
+        // Try to get email from multiple sources
+        let email = searchParams.get("email") || undefined;
+        
+        if (!email) {
+          email = localStorage.getItem("pendingVerificationEmail") || undefined;
+        }
 
-        // If email is not in user context, try to get it from the session
+        if (!email) {
+          email = user?.email;
+        }
+
         if (!email) {
           const {
             data: { user: sessionUser },
@@ -35,13 +42,46 @@ const VerifyEmailContent = () => {
           email = sessionUser?.email || undefined;
         }
 
-        // Validate email exists
+        // If we have a token hash, use hash-based verification (more secure, doesn't require email)
+        if (tokenHash) {
+          const { data, error } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: "email",
+          });
+
+          if (error) {
+            setError(error.message);
+            return;
+          }
+
+          // Verify that session was created - wait a moment for cookies to be set
+          await new Promise(resolve => setTimeout(resolve, 500));
+          
+          // Check session again to ensure it's properly set
+          const { data: { session: finalSession } } = await supabase.auth.getSession();
+          
+          if (data?.session || finalSession) {
+            // Success - user is now authenticated
+            setIsVerified(true);
+            localStorage.removeItem("pendingVerificationEmail");
+            // Force a refresh of the auth state
+            await supabase.auth.getUser();
+            // Redirect to dashboard
+            router.push("/dashboard");
+            return;
+          } else {
+            setError("Session creation failed. Please try again.");
+            return;
+          }
+        }
+
+        // Fallback to token-based verification (requires email)
         if (!email) {
           setError("Email address not found. Please sign up again.");
           return;
         }
 
-        const { error } = await supabase.auth.verifyOtp({
+        const { data, error } = await supabase.auth.verifyOtp({
           token,
           type: "email",
           email: email,
@@ -52,32 +92,85 @@ const VerifyEmailContent = () => {
           return;
         }
 
-        setIsVerified(true);
-        // Redirect to dashboard after 2 seconds
-        setTimeout(() => {
+        // Wait a moment for cookies to be set
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Check session again to ensure it's properly set
+        const { data: { session: finalSession } } = await supabase.auth.getSession();
+        
+        if (data?.session || finalSession) {
+          // Success - user is now authenticated
+          setIsVerified(true);
+          localStorage.removeItem("pendingVerificationEmail");
+          // Force a refresh of the auth state
+          await supabase.auth.getUser();
+          // Redirect to dashboard
           router.push("/dashboard");
-        }, 2000);
+        } else {
+          setError("Session creation failed. Please try again.");
+        }
       } catch (error) {
+        console.error("Verification error:", error);
+        setError("An error occurred during verification. Please try again.");
       } finally {
         setIsLoading(false);
       }
     },
-    [supabase, user?.email, router]
+    [supabase, user?.email, router, searchParams]
   );
 
   // Handle email verification on page load
   useEffect(() => {
+    let subscription: { unsubscribe: () => void } | null = null;
+
     const handleEmailVerification = async () => {
+      // First, check if user is already authenticated (Supabase may have verified server-side)
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        // User is already authenticated, just redirect
+        setIsVerified(true);
+        localStorage.removeItem("pendingVerificationEmail");
+        router.push("/dashboard");
+        return;
+      }
+
+      // Set up auth state listener to catch when session is created
+      const { data: { subscription: authSubscription } } = supabase.auth.onAuthStateChange(
+        async (event, session) => {
+          if (event === "SIGNED_IN" && session?.user) {
+            // Session was created, redirect to dashboard
+            setIsVerified(true);
+            localStorage.removeItem("pendingVerificationEmail");
+            router.push("/dashboard");
+          }
+        }
+      );
+      subscription = authSubscription;
+
+      // If not authenticated, check for verification tokens in URL
       const token = searchParams.get("token");
+      const tokenHash = searchParams.get("token_hash");
       const type = searchParams.get("type");
 
-      if (token && type === "email") {
+      // Supabase email links include both token and token_hash
+      // token_hash is preferred as it's more secure and doesn't require email
+      if (tokenHash && type === "email") {
+        await verifyEmailToken(token || "", tokenHash);
+      } else if (token && type === "email") {
+        // Fallback to token-based verification
         await verifyEmailToken(token);
       }
     };
 
     handleEmailVerification();
-  }, [searchParams, verifyEmailToken]);
+
+    // Cleanup subscription on unmount
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe();
+      }
+    };
+  }, [searchParams, verifyEmailToken, supabase.auth, router]);
 
   const handleResendVerification = async () => {
     try {
@@ -85,10 +178,21 @@ const VerifyEmailContent = () => {
       setError("");
       setResendSuccess(false);
 
-      // Get email from user context or session
-      let email = user?.email;
+      // Get email from multiple sources (priority order):
+      // 1. URL query parameter
+      // 2. localStorage (stored during signup)
+      // 3. User context
+      // 4. Session
+      let email = searchParams.get("email") || undefined;
 
-      // If email is not in user context, try to get it from the session
+      if (!email) {
+        email = localStorage.getItem("pendingVerificationEmail") || undefined;
+      }
+
+      if (!email) {
+        email = user?.email;
+      }
+
       if (!email) {
         const {
           data: { user: sessionUser },
@@ -120,7 +224,13 @@ const VerifyEmailContent = () => {
       }
 
       setResendSuccess(true);
+      // Clear error after successful resend
+      setTimeout(() => {
+        setResendSuccess(false);
+      }, 5000);
     } catch (error) {
+      console.error("Resend verification error:", error);
+      setError("An unexpected error occurred. Please try again.");
     } finally {
       setIsResending(false);
     }
@@ -222,14 +332,14 @@ const VerifyEmailContent = () => {
             </div>
 
             {/* Instructions */}
-            <div className="text-center space-y-3">
-              <p className="text-white text-sm">
-                We&apos;ve sent a verification link to{" "}
-                <span className="font-medium text-[#16a34a]">
-                  {user?.email || "your email"}
-                </span>
-                .
-              </p>
+              <div className="text-center space-y-3">
+                <p className="text-white text-sm">
+                  We&apos;ve sent a verification link to{" "}
+                  <span className="font-medium text-[#16a34a]">
+                    {searchParams.get("email") || localStorage.getItem("pendingVerificationEmail") || user?.email || "your email"}
+                  </span>
+                  .
+                </p>
               <p className="text-[#A0A0A0] text-xs">
                 {isLoading
                   ? "Checking verification..."
@@ -353,7 +463,7 @@ const VerifyEmailContent = () => {
                 <p className="text-white/90 text-sm">
                   We&apos;ve sent a verification link to{" "}
                   <span className="font-medium text-[#16a34a]">
-                    {user?.email || "your email"}
+                    {searchParams.get("email") || localStorage.getItem("pendingVerificationEmail") || user?.email || "your email"}
                   </span>
                   .
                 </p>

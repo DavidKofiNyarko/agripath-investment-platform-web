@@ -226,7 +226,7 @@ const SignupPage = () => {
 
     try {
       setIsLoading(true);
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
@@ -235,9 +235,19 @@ const SignupPage = () => {
       });
 
       if (error) {
-      } else {
+        console.error("Sign up error:", error.message);
+        alert(error.message || "Failed to create account. Please try again.");
+        setIsLoading(false);
+      } else if (data?.user) {
+        // Store email in localStorage for verify-email page
+        localStorage.setItem("pendingVerificationEmail", formData.email);
+        // Success - redirect to verify email page with email as query param
+        router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
       }
     } catch (error) {
+      console.error("Sign up error:", error);
+      alert("An unexpected error occurred. Please try again.");
+      setIsLoading(false);
     }
   };
 
