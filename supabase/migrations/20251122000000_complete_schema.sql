@@ -1664,24 +1664,24 @@ BEGIN
     -- If status changed from Complete to something else, subtract the units
     IF OLD.status = 'Complete' AND NEW.status != 'Complete' AND OLD.type = 'investment' THEN
       UPDATE projects 
-        purchased_unit = purchased_unit - OLD.unit,
-        available_unit = GREATEST(0, total_units - (purchased_unit - OLD.unit))
+      SET purchased_unit = purchased_unit - OLD.unit,
+          available_unit = GREATEST(0, total_units - (purchased_unit - OLD.unit))
       WHERE id = OLD.project_id;
     END IF;
     
     -- If status changed to Complete, add the units
     IF OLD.status != 'Complete' AND NEW.status = 'Complete' AND NEW.type = 'investment' THEN
       UPDATE projects 
-        purchased_unit = purchased_unit + NEW.unit,
-        available_unit = GREATEST(0, total_units - (purchased_unit + NEW.unit))
+      SET purchased_unit = purchased_unit + NEW.unit,
+          available_unit = GREATEST(0, total_units - (purchased_unit + NEW.unit))
       WHERE id = NEW.project_id;
     END IF;
     
     -- If unit amount changed and status is Complete
     IF OLD.unit != NEW.unit AND NEW.status = 'Complete' AND NEW.type = 'investment' THEN
       UPDATE projects 
-        purchased_unit = purchased_unit - OLD.unit + NEW.unit,
-        available_unit = GREATEST(0, total_units - (purchased_unit - OLD.unit + NEW.unit))
+      SET purchased_unit = purchased_unit - OLD.unit + NEW.unit,
+          available_unit = GREATEST(0, total_units - (purchased_unit - OLD.unit + NEW.unit))
       WHERE id = NEW.project_id;
     END IF;
     
@@ -1693,8 +1693,8 @@ BEGIN
     -- Only update for investment transactions with Complete status
     IF OLD.type = 'investment' AND OLD.status = 'Complete' THEN
       UPDATE projects 
-        purchased_unit = purchased_unit - OLD.unit,
-        available_unit = GREATEST(0, total_units - (purchased_unit - OLD.unit))
+      SET purchased_unit = purchased_unit - OLD.unit,
+          available_unit = GREATEST(0, total_units - (purchased_unit - OLD.unit))
       WHERE id = OLD.project_id;
     END IF;
     RETURN OLD;
