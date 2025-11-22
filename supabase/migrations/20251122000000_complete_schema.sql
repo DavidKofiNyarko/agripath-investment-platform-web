@@ -872,6 +872,7 @@ BEGIN
   
   -- Update wallet balance
   UPDATE public.wallets 
+  SET balance = balance + p_amount,
       updated_at = NOW()
   WHERE id = p_wallet_id;
   
@@ -944,7 +945,7 @@ BEGIN
         
         -- Update the project
         UPDATE projects
-            purchased_unit = v_calculated_purchased_units,
+        SET purchased_unit = v_calculated_purchased_units,
             available_unit = v_calculated_available_units,
             updated_at = NOW()
         WHERE id = v_project_record.id;
@@ -1016,7 +1017,7 @@ BEGIN
     
     -- Update the project
     UPDATE projects
-        purchased_unit = v_calculated_purchased_units,
+    SET purchased_unit = v_calculated_purchased_units,
         available_unit = v_calculated_available_units,
         updated_at = NOW()
     WHERE id = p_project_id;
@@ -1313,6 +1314,7 @@ BEGIN
       
       -- Update wallet balance (add payouts)
       UPDATE wallets
+      SET balance = old_balance_val + payout_sum,
           updated_at = NOW()
       WHERE id = wallet_rec.id;
       
@@ -1371,6 +1373,7 @@ CREATE OR REPLACE FUNCTION "public"."update_last_login"() RETURNS "trigger"
     AS $$
 BEGIN
   UPDATE public.users
+  SET last_login = NOW(),
       updated_at = NOW()
   WHERE id = NEW.id;
   RETURN NEW;
@@ -1781,6 +1784,7 @@ CREATE OR REPLACE FUNCTION "public"."update_user_investment_stats"() RETURNS "tr
     AS $$
 BEGIN
     UPDATE users 
+    SET total_invested = (
         SELECT COALESCE(SUM(amount), 0)
         FROM transactions 
         WHERE profile_id = NEW.profile_id AND status = 'Complete'
