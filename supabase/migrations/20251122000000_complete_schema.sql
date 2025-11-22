@@ -429,6 +429,7 @@ CREATE OR REPLACE FUNCTION "public"."delete_project_safely"("p_project_id" "uuid
 BEGIN
   -- Step 1: Set related_project_id to NULL for all approval requests
   UPDATE approval_requests
+  SET related_project_id = NULL
   WHERE related_project_id = p_project_id;
 
   -- Step 2: Delete records with NO ACTION constraints
