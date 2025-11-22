@@ -871,10 +871,7 @@ BEGIN
   END IF;
   
   -- Update wallet balance
-  UPDATE public.wallets 
-  SET balance = balance + p_amount,
-      updated_at = NOW()
-  WHERE id = p_wallet_id;
+  UPDATE public.wallets SET balance = balance + p_amount, updated_at = NOW() WHERE id = p_wallet_id;
   
   -- Record transaction with correct enum type
   INSERT INTO public.transactions (
