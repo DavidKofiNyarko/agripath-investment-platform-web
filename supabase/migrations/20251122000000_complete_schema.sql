@@ -1094,6 +1094,7 @@ BEGIN
   -- If this is a project approval request, update the project status to REJECTED
   IF v_related_project_id IS NOT NULL THEN
     UPDATE projects 
+    SET status = 'Rejected'
     WHERE id = v_related_project_id;
   END IF;
   
@@ -1462,7 +1463,7 @@ BEGIN
     IF NEW.unit IS NOT NULL AND NEW.unit > 0 THEN
         -- Update the project stock and total_value in REAL-TIME
         UPDATE projects
-            available_unit = GREATEST(0, new_available), -- Ensure it doesn't go negative
+        SET available_unit = GREATEST(0, new_available), -- Ensure it doesn't go negative
             purchased_unit = new_purchased,
             total_value = COALESCE(total_value, 0) + COALESCE(NEW.amount, 0), -- Increment total raised
             updated_at = NOW(),
@@ -1525,7 +1526,7 @@ BEGIN
         -- Update project if unit is valid (REAL-TIME update)
         IF NEW.unit IS NOT NULL AND NEW.unit > 0 THEN
             UPDATE projects
-                available_unit = GREATEST(0, new_available),
+            SET available_unit = GREATEST(0, new_available),
                 purchased_unit = new_purchased,
                 total_value = COALESCE(total_value, 0) + COALESCE(NEW.amount, 0), -- Increment total raised
                 updated_at = NOW(),
@@ -1547,7 +1548,7 @@ BEGIN
         IF project_exists AND OLD.unit IS NOT NULL AND OLD.unit > 0 THEN
             -- Reverse the unit and amount changes (REAL-TIME reversal)
             UPDATE projects
-                available_unit = available_unit + OLD.unit,
+            SET available_unit = available_unit + OLD.unit,
                 purchased_unit = GREATEST(0, purchased_unit - OLD.unit),
                 total_value = GREATEST(0, COALESCE(total_value, 0) - COALESCE(OLD.amount, 0)), -- Decrement total raised
                 updated_at = NOW()
@@ -1618,7 +1619,7 @@ BEGIN
     
     -- Update the project
     UPDATE projects
-        total_units = p_new_total_units,
+    SET total_units = p_new_total_units,
         available_unit = v_new_available_units,
         purchased_unit = v_current_purchased_units,
         updated_at = NOW()
@@ -1651,8 +1652,8 @@ BEGIN
     -- Only update for investment transactions with Complete status
     IF NEW.type = 'investment' AND NEW.status = 'Complete' THEN
       UPDATE projects 
-        purchased_unit = purchased_unit + NEW.unit,
-        available_unit = GREATEST(0, total_units - (purchased_unit + NEW.unit))
+      SET purchased_unit = purchased_unit + NEW.unit,
+          available_unit = GREATEST(0, total_units - (purchased_unit + NEW.unit))
       WHERE id = NEW.project_id;
     END IF;
     RETURN NEW;
@@ -1737,7 +1738,7 @@ BEGIN
     
     -- Update the project with new unit counts
     UPDATE projects 
-        purchased_unit = total_purchased_units,
+    SET purchased_unit = total_purchased_units,
         available_unit = total_available_units,
         updated_at = NOW()
     WHERE id = p_project_id;
@@ -1755,14 +1756,14 @@ CREATE OR REPLACE FUNCTION "public"."update_project_units_on_transaction_change"
 BEGIN
   IF (TG_OP = 'INSERT') THEN
     UPDATE projects
-      purchased_unit = COALESCE(purchased_unit, 0) + NEW.unit,
-      available_unit = COALESCE(total_units, 0) - (COALESCE(purchased_unit, 0) + NEW.unit)
+    SET purchased_unit = COALESCE(purchased_unit, 0) + NEW.unit,
+        available_unit = COALESCE(total_units, 0) - (COALESCE(purchased_unit, 0) + NEW.unit)
     WHERE id = NEW.project_id;
 
   ELSIF (TG_OP = 'DELETE') THEN
     UPDATE projects
-      purchased_unit = COALESCE(purchased_unit, 0) - OLD.unit,
-      available_unit = COALESCE(total_units, 0) - (COALESCE(purchased_unit, 0) - OLD.unit)
+    SET purchased_unit = COALESCE(purchased_unit, 0) - OLD.unit,
+        available_unit = COALESCE(total_units, 0) - (COALESCE(purchased_unit, 0) - OLD.unit)
     WHERE id = OLD.project_id;
   END IF;
 
