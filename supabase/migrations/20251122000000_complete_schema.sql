@@ -10,10 +10,6 @@ CREATE TYPE "public"."PAYOUT_CHANNEL" AS ENUM (
     'BANK'
 );
 
-
-ALTER TYPE "public"."PAYOUT_CHANNEL" OWNER TO "postgres";
-
-
 CREATE TYPE "public"."PROJECT_STAGE" AS ENUM (
     'LAND_PREPARATION',
     'PLANTING',
@@ -49,13 +45,7 @@ CREATE TYPE "public"."PROJECT_STAGE" AS ENUM (
     'PAYOUT_CLOSURE_AQUACULTURE'
 );
 
-
-ALTER TYPE "public"."PROJECT_STAGE" OWNER TO "postgres";
-
-
 COMMENT ON TYPE "public"."PROJECT_STAGE" IS 'Project stages based on official project timelines document - covers CROP, LIVESTOCK, POULTRY, and AQUACULTURE project types';
-
-
 
 CREATE TYPE "public"."PROJECT_TYPES" AS ENUM (
     'CROP',
@@ -63,13 +53,7 @@ CREATE TYPE "public"."PROJECT_TYPES" AS ENUM (
     'POULTRY'
 );
 
-
-ALTER TYPE "public"."PROJECT_TYPES" OWNER TO "postgres";
-
-
 COMMENT ON TYPE "public"."PROJECT_TYPES" IS 'PROJECT TYPES';
-
-
 
 CREATE TYPE "public"."account_status" AS ENUM (
     'Active',
@@ -77,19 +61,11 @@ CREATE TYPE "public"."account_status" AS ENUM (
     'Inactive'
 );
 
-
-ALTER TYPE "public"."account_status" OWNER TO "postgres";
-
-
 CREATE TYPE "public"."admin_status" AS ENUM (
     'Active',
     'Inactive',
     'Suspended'
 );
-
-
-ALTER TYPE "public"."admin_status" OWNER TO "postgres";
-
 
 CREATE TYPE "public"."admin_type_old" AS ENUM (
     'Supper Admin',
@@ -104,23 +80,13 @@ CREATE TYPE "public"."admin_type_old" AS ENUM (
     'Investment Manager'
 );
 
-
-ALTER TYPE "public"."admin_type_old" OWNER TO "postgres";
-
-
 CREATE TYPE "public"."audience_type" AS ENUM (
     'Users',
     'Investors',
     'All'
 );
 
-
-ALTER TYPE "public"."audience_type" OWNER TO "postgres";
-
-
 COMMENT ON TYPE "public"."audience_type" IS 'notification audience types';
-
-
 
 CREATE TYPE "public"."channel" AS ENUM (
     'momo',
@@ -129,13 +95,7 @@ CREATE TYPE "public"."channel" AS ENUM (
     'wallet'
 );
 
-
-ALTER TYPE "public"."channel" OWNER TO "postgres";
-
-
 COMMENT ON TYPE "public"."channel" IS 'payment channels';
-
-
 
 CREATE TYPE "public"."kyc_status" AS ENUM (
     'completed',
@@ -143,10 +103,6 @@ CREATE TYPE "public"."kyc_status" AS ENUM (
     'failed',
     'verified'
 );
-
-
-ALTER TYPE "public"."kyc_status" OWNER TO "postgres";
-
 
 CREATE TYPE "public"."notification_category" AS ENUM (
     'Investment',
@@ -156,10 +112,6 @@ CREATE TYPE "public"."notification_category" AS ENUM (
     'Alert'
 );
 
-
-ALTER TYPE "public"."notification_category" OWNER TO "postgres";
-
-
 CREATE TYPE "public"."notification_channel" AS ENUM (
     'Email',
     'SMS',
@@ -168,10 +120,6 @@ CREATE TYPE "public"."notification_channel" AS ENUM (
     'All'
 );
 
-
-ALTER TYPE "public"."notification_channel" OWNER TO "postgres";
-
-
 CREATE TYPE "public"."notification_priority" AS ENUM (
     'Low',
     'Medium',
@@ -179,20 +127,12 @@ CREATE TYPE "public"."notification_priority" AS ENUM (
     'Urgent'
 );
 
-
-ALTER TYPE "public"."notification_priority" OWNER TO "postgres";
-
-
 CREATE TYPE "public"."notification_status" AS ENUM (
     'Scheduled',
     'Published',
     'Failed',
     'Draft'
 );
-
-
-ALTER TYPE "public"."notification_status" OWNER TO "postgres";
-
 
 CREATE TYPE "public"."notification_type" AS ENUM (
     'InApp',
@@ -202,13 +142,7 @@ CREATE TYPE "public"."notification_type" AS ENUM (
     'SMS'
 );
 
-
-ALTER TYPE "public"."notification_type" OWNER TO "postgres";
-
-
 COMMENT ON TYPE "public"."notification_type" IS 'type of notifications';
-
-
 
 CREATE TYPE "public"."payout_types" AS ENUM (
     'Returns',
@@ -218,13 +152,7 @@ CREATE TYPE "public"."payout_types" AS ENUM (
     'Withdrawal'
 );
 
-
-ALTER TYPE "public"."payout_types" OWNER TO "postgres";
-
-
 COMMENT ON TYPE "public"."payout_types" IS 'type of payouts';
-
-
 
 CREATE TYPE "public"."transaction_status" AS ENUM (
     'Complete',
@@ -232,13 +160,7 @@ CREATE TYPE "public"."transaction_status" AS ENUM (
     'Failed'
 );
 
-
-ALTER TYPE "public"."transaction_status" OWNER TO "postgres";
-
-
 COMMENT ON TYPE "public"."transaction_status" IS 'status of transactions';
-
-
 
 CREATE TYPE "public"."transaction_type" AS ENUM (
     'Payin',
@@ -252,13 +174,7 @@ CREATE TYPE "public"."transaction_type" AS ENUM (
     'investment'
 );
 
-
-ALTER TYPE "public"."transaction_type" OWNER TO "postgres";
-
-
 COMMENT ON TYPE "public"."transaction_type" IS 'type of transactions';
-
-
 
 CREATE TYPE "public"."user_gender" AS ENUM (
     'Male',
@@ -266,36 +182,20 @@ CREATE TYPE "public"."user_gender" AS ENUM (
     'Other'
 );
 
-
-ALTER TYPE "public"."user_gender" OWNER TO "postgres";
-
-
 CREATE TYPE "public"."user_notification_status" AS ENUM (
     'Unread',
     'Read',
     'Dismissed'
 );
 
-
-ALTER TYPE "public"."user_notification_status" OWNER TO "postgres";
-
-
 COMMENT ON TYPE "public"."user_notification_status" IS 'status of user notification';
-
-
 
 CREATE TYPE "public"."wallet_type" AS ENUM (
     'USER',
     'COMPANY'
 );
 
-
-ALTER TYPE "public"."wallet_type" OWNER TO "postgres";
-
-
 COMMENT ON TYPE "public"."wallet_type" IS 'type of wallet ';
-
-
 
 CREATE OR REPLACE FUNCTION "public"."approve_request"("p_request_id" "uuid", "p_reviewed_by" "uuid", "p_approval_notes" "text" DEFAULT NULL::"text") RETURNS boolean
     LANGUAGE "plpgsql"
@@ -355,7 +255,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."audit_wallet_changes"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -398,7 +297,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."calc_full_months"("start_d" "date", "end_d" "date") RETURNS integer
     LANGUAGE "sql" IMMUTABLE STRICT
     AS $$
@@ -406,7 +304,6 @@ CREATE OR REPLACE FUNCTION "public"."calc_full_months"("start_d" "date", "end_d"
   SELECT (extract(year FROM age(end_d, start_d))::int * 12)
        + (extract(month FROM age(end_d, start_d))::int);
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."calculate_investor_units"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -426,7 +323,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."calculate_payout_amount"("base_amount" numeric, "payment_method" character varying) RETURNS numeric
     LANGUAGE "plpgsql"
     AS $$
@@ -439,7 +335,6 @@ BEGIN
     END;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."calculate_project_duration_months"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -467,7 +362,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."create_approval_request"("p_request_type" character varying, "p_title" character varying, "p_description" "text", "p_request_data" "jsonb", "p_requested_by" "uuid", "p_priority" character varying DEFAULT 'Medium'::character varying, "p_expires_hours" integer DEFAULT 72, "p_related_project_id" "uuid" DEFAULT NULL::"uuid", "p_related_payout_id" "uuid" DEFAULT NULL::"uuid", "p_related_user_id" "uuid" DEFAULT NULL::"uuid") RETURNS "uuid"
     LANGUAGE "plpgsql"
@@ -529,7 +423,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."delete_project_safely"("p_project_id" "uuid") RETURNS "void"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -553,7 +446,6 @@ BEGIN
   DELETE FROM projects WHERE id = p_project_id;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."find_blocking_triggers"() RETURNS TABLE("trigger_name" "text", "table_name" "text", "trigger_timing" "text", "trigger_event" "text", "trigger_function" "text")
     LANGUAGE "plpgsql"
@@ -583,7 +475,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."generate_approval_request_id"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -592,7 +483,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."generate_high_ticket_investment_id"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -605,7 +495,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."generate_project_report_id"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -617,7 +506,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."generate_project_update_id"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -626,7 +514,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."generate_transaction_id"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -639,7 +526,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."generate_user_invitation_id"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -650,7 +536,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."get_current_user_email"() RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -665,7 +550,6 @@ BEGIN
   RETURN user_email;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."get_dashboard_stats"() RETURNS json
     LANGUAGE "plpgsql"
@@ -686,10 +570,7 @@ BEGIN
 END;
 $$;
 
-
 COMMENT ON FUNCTION "public"."get_dashboard_stats"() IS 'Returns aggregated dashboard metrics';
-
-
 
 CREATE OR REPLACE FUNCTION "public"."get_investor_summary"("p_project_id" "uuid") RETURNS TABLE("user_id" "uuid", "total_units" integer, "total_amount" numeric, "transaction_count" integer, "first_investment_date" timestamp with time zone, "last_investment_date" timestamp with time zone)
     LANGUAGE "plpgsql"
@@ -712,7 +593,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."get_transaction_analytics"() RETURNS json
     LANGUAGE "plpgsql"
     AS $$
@@ -732,10 +612,7 @@ BEGIN
 END;
 $$;
 
-
 COMMENT ON FUNCTION "public"."get_transaction_analytics"() IS 'Returns transaction analytics and statistics';
-
-
 
 CREATE OR REPLACE FUNCTION "public"."get_user_analytics"() RETURNS json
     LANGUAGE "plpgsql"
@@ -757,10 +634,7 @@ BEGIN
 END;
 $$;
 
-
 COMMENT ON FUNCTION "public"."get_user_analytics"() IS 'Returns user analytics and statistics';
-
-
 
 CREATE OR REPLACE FUNCTION "public"."handle_new_user"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -786,7 +660,6 @@ EXCEPTION WHEN OTHERS THEN
   RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."handle_new_user_signup"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -844,7 +717,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."is_admin"("user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -858,7 +730,6 @@ BEGIN
   );
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."is_finance_admin"("user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -886,10 +757,7 @@ BEGIN
 END;
 $$;
 
-
 COMMENT ON FUNCTION "public"."is_finance_admin"("user_id" "uuid") IS 'Checks if a user is a Finance Admin';
-
-
 
 CREATE OR REPLACE FUNCTION "public"."is_finance_or_super_admin"("user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -905,7 +773,6 @@ BEGIN
   );
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."is_investment_admin"("user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -936,10 +803,7 @@ BEGIN
 END;
 $$;
 
-
 COMMENT ON FUNCTION "public"."is_investment_admin"("user_id" "uuid") IS 'Checks if a user is an Investment Admin or Investment Manager';
-
-
 
 CREATE OR REPLACE FUNCTION "public"."is_super_admin"("user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -971,7 +835,6 @@ BEGIN
   );
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."process_wallet_transaction"("p_wallet_id" "uuid", "p_amount" numeric, "p_type" character varying, "p_description" "text" DEFAULT NULL::"text") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -1022,7 +885,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."projects_set_duration_months"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -1045,7 +907,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."recalculate_all_project_units"() RETURNS TABLE("project_id" "uuid", "project_name" character varying, "total_units" integer, "old_purchased_units" bigint, "new_purchased_units" bigint, "old_available_units" bigint, "new_available_units" bigint, "status" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -1108,7 +969,6 @@ BEGIN
     RETURN;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."recalculate_project_units"("p_project_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -1178,7 +1038,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."reject_request"("p_request_id" "uuid", "p_reviewed_by" "uuid", "p_rejection_reason" "text") RETURNS boolean
     LANGUAGE "plpgsql"
     AS $$
@@ -1240,7 +1099,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."sync_all_project_units"() RETURNS TABLE("project_id" "uuid", "project_code" character varying, "project_name" character varying, "total_units" integer, "purchased_units" integer, "available_units" integer, "unit_price" numeric, "total_investors" integer, "total_invested" numeric)
     LANGUAGE "plpgsql"
     AS $$
@@ -1263,7 +1121,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."sync_available_units"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -1278,7 +1135,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."sync_investor_from_auth"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -1311,7 +1167,6 @@ begin
   return NEW;
 end;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."sync_project_units_comprehensive"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -1416,7 +1271,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."sync_wallet_balances_for_payouts"() RETURNS TABLE("profile_id" "uuid", "wallet_id" "uuid", "old_balance" numeric, "new_balance" numeric, "total_payouts" numeric, "transactions_count" bigint)
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -1477,7 +1331,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."update_approval_requests_updated_at"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -1486,7 +1339,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."update_available_units_on_project_change"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -1499,7 +1351,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."update_available_units_on_total_units_change"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -1514,7 +1365,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."update_last_login"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -1526,7 +1376,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."update_payment_accounts_updated_at"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -1535,7 +1384,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."update_project_available_units"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -1552,7 +1400,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."update_project_stock_after_transaction"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -1626,7 +1473,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."update_project_stock_on_status_change"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -1708,7 +1554,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."update_project_total_units"("p_project_id" "uuid", "p_new_total_units" integer) RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
@@ -1793,7 +1638,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."update_project_units"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -1855,7 +1699,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."update_project_units_for_project"("p_project_id" "uuid") RETURNS "void"
     LANGUAGE "plpgsql"
     AS $$
@@ -1900,10 +1743,7 @@ BEGIN
 END;
 $$;
 
-
 COMMENT ON FUNCTION "public"."update_project_units_for_project"("p_project_id" "uuid") IS 'Recalculates unit counts for a specific project based on current transaction data';
-
-
 
 CREATE OR REPLACE FUNCTION "public"."update_project_units_on_transaction_change"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -1926,7 +1766,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."update_updated_at_column"() RETURNS "trigger"
     LANGUAGE "plpgsql"
     AS $$
@@ -1935,7 +1774,6 @@ BEGIN
     RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."update_user_investment_stats"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -1962,7 +1800,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."update_wallet_on_topup_complete"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -1973,7 +1810,6 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 
 CREATE OR REPLACE FUNCTION "public"."validate_unit_limits"() RETURNS "trigger"
     LANGUAGE "plpgsql"
@@ -2028,7 +1864,6 @@ BEGIN
 END;
 $$;
 
-
 CREATE OR REPLACE FUNCTION "public"."validate_unit_limits_before_transaction"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
     AS $$
@@ -2064,12 +1899,7 @@ BEGIN
 END;
 $$;
 
-
 COMMENT ON FUNCTION "public"."validate_unit_limits_before_transaction"() IS 'Validates that sufficient units are available before allowing a new investment transaction';
-
-
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."_prisma_migrations" (
     "id" character varying(36) NOT NULL,
@@ -2081,10 +1911,6 @@ CREATE TABLE IF NOT EXISTS "public"."_prisma_migrations" (
     "started_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "applied_steps_count" integer DEFAULT 0 NOT NULL
 );
-
-
-ALTER TABLE "public"."_prisma_migrations" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."admins" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2105,13 +1931,7 @@ CREATE TABLE IF NOT EXISTS "public"."admins" (
     "updated_at" timestamp with time zone DEFAULT "now"()
 );
 
-
-ALTER TABLE "public"."admins" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."admins" IS 'Stores admin user accounts with different permission levels';
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."approval_audit_log" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2125,13 +1945,7 @@ CREATE TABLE IF NOT EXISTS "public"."approval_audit_log" (
     CONSTRAINT "approval_audit_log_action_check" CHECK ((("action")::"text" = ANY ((ARRAY['Created'::character varying, 'Submitted'::character varying, 'Approved'::character varying, 'Rejected'::character varying, 'Modified'::character varying, 'Expired'::character varying, 'Cancelled'::character varying])::"text"[])))
 );
 
-
-ALTER TABLE "public"."approval_audit_log" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."approval_audit_log" IS 'Maintains audit trail of all approval actions';
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."approval_notifications" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2146,13 +1960,7 @@ CREATE TABLE IF NOT EXISTS "public"."approval_notifications" (
     CONSTRAINT "approval_notifications_notification_type_check" CHECK ((("notification_type")::"text" = ANY ((ARRAY['Request Created'::character varying, 'Request Approved'::character varying, 'Request Rejected'::character varying, 'Request Expired'::character varying, 'Reminder'::character varying])::"text"[])))
 );
 
-
-ALTER TABLE "public"."approval_notifications" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."approval_notifications" IS 'Tracks notifications sent to approvers and requesters';
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."approval_requests" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2182,13 +1990,7 @@ CREATE TABLE IF NOT EXISTS "public"."approval_requests" (
     CONSTRAINT "approval_requests_status_check" CHECK ((("status")::"text" = ANY ((ARRAY['Pending'::character varying, 'Approved'::character varying, 'Rejected'::character varying, 'Under Review'::character varying])::"text"[])))
 );
 
-
-ALTER TABLE "public"."approval_requests" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."approval_requests" IS 'Stores all approval requests for investments, payouts, and other operations';
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."approval_workflow_steps" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2205,13 +2007,7 @@ CREATE TABLE IF NOT EXISTS "public"."approval_workflow_steps" (
     CONSTRAINT "approval_workflow_steps_status_check" CHECK ((("status")::"text" = ANY ((ARRAY['Pending'::character varying, 'Approved'::character varying, 'Rejected'::character varying, 'Skipped'::character varying])::"text"[])))
 );
 
-
-ALTER TABLE "public"."approval_workflow_steps" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."approval_workflow_steps" IS 'Defines multi-step approval workflows for complex requests';
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."countries" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2222,13 +2018,7 @@ CREATE TABLE IF NOT EXISTS "public"."countries" (
     "created_at" timestamp with time zone DEFAULT "now"()
 );
 
-
-ALTER TABLE "public"."countries" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."countries" IS 'Stores country information for analytics';
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."users" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2268,37 +2058,19 @@ CREATE TABLE IF NOT EXISTS "public"."users" (
     CONSTRAINT "users_preferred_network_check" CHECK ((("preferred_network" IS NULL) OR (("preferred_network")::"text" = ANY ((ARRAY['MTN'::character varying, 'Vodafone'::character varying, 'AirtelTigo'::character varying, 'Telecel'::character varying])::"text"[]))))
 );
 
-
-ALTER TABLE "public"."users" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."users" IS 'Stores user account information and investment statistics';
-
-
 
 COMMENT ON COLUMN "public"."users"."preferred_network" IS 'User preferred mobile network (MTN, Vodafone, AirtelTigo)';
 
-
-
 COMMENT ON COLUMN "public"."users"."bank_account" IS 'User bank account number for payouts';
-
-
 
 COMMENT ON COLUMN "public"."users"."bank_name" IS 'User bank name for payouts';
 
-
-
 COMMENT ON COLUMN "public"."users"."fcm_token" IS 'for push notifications';
-
-
 
 COMMENT ON COLUMN "public"."users"."email_preferences" IS 'email preferences for marketing campaings';
 
-
-
 COMMENT ON COLUMN "public"."users"."push_preferences" IS 'preferences to receive notifications';
-
-
 
 CREATE OR REPLACE VIEW "public"."country_analytics" WITH ("security_invoker"='on') AS
  SELECT "c"."name",
@@ -2311,9 +2083,7 @@ CREATE OR REPLACE VIEW "public"."country_analytics" WITH ("security_invoker"='on
   GROUP BY "c"."id", "c"."name", "c"."flag", "c"."currency"
   ORDER BY ("count"("u"."id")) DESC;
 
-
 ALTER VIEW "public"."country_analytics" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."high_ticket_investments" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2328,10 +2098,6 @@ CREATE TABLE IF NOT EXISTS "public"."high_ticket_investments" (
     "updated_at" timestamp with time zone DEFAULT "now"(),
     CONSTRAINT "high_ticket_investments_status_check" CHECK ((("status")::"text" = ANY ((ARRAY['Active'::character varying, 'Completed'::character varying, 'Failed'::character varying])::"text"[])))
 );
-
-
-ALTER TABLE "public"."high_ticket_investments" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."projects" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2369,49 +2135,25 @@ CREATE TABLE IF NOT EXISTS "public"."projects" (
     CONSTRAINT "projects_risk_level_check" CHECK ((("risk_level")::"text" = ANY ((ARRAY['Low'::character varying, 'Medium'::character varying, 'High'::character varying])::"text"[])))
 );
 
-
-ALTER TABLE "public"."projects" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."projects" IS 'Stores farming projects available for investment';
-
-
 
 COMMENT ON COLUMN "public"."projects"."project_code" IS 'Project code - supports codes up to 50 characters';
 
-
-
 COMMENT ON COLUMN "public"."projects"."duration_months" IS 'Project duration in months - nullable since agricultural projects have variable timelines';
-
-
 
 COMMENT ON COLUMN "public"."projects"."start_date" IS 'Project start date - nullable since dates are dynamic in agricultural projects';
 
-
-
 COMMENT ON COLUMN "public"."projects"."end_date" IS 'Project end date - nullable since dates are dynamic in agricultural projects';
-
-
 
 COMMENT ON COLUMN "public"."projects"."available_unit" IS 'available units';
 
-
-
 COMMENT ON COLUMN "public"."projects"."purchased_unit" IS 'purchased unit';
-
-
 
 COMMENT ON COLUMN "public"."projects"."project_stages" IS 'Project stage - supports all stage names including long livestock stages (no length limit)';
 
-
-
 COMMENT ON COLUMN "public"."projects"."payout_type" IS 'type of payouts';
 
-
-
 COMMENT ON COLUMN "public"."projects"."risk_level" IS 'Risk level of the investment project: Low, Medium, or High';
-
-
 
 CREATE OR REPLACE VIEW "public"."high_ticket_investment_analytics" AS
  SELECT "hti"."id",
@@ -2427,9 +2169,7 @@ CREATE OR REPLACE VIEW "public"."high_ticket_investment_analytics" AS
      JOIN "public"."projects" "p" ON (("hti"."project_id" = "p"."id")))
      JOIN "public"."users" "u" ON ((("hti"."user_id")::"text" = ("u"."user_id")::"text")));
 
-
 ALTER VIEW "public"."high_ticket_investment_analytics" OWNER TO "postgres";
-
 
 CREATE OR REPLACE VIEW "public"."high_ticket_investment_analytics_v2" AS
  SELECT "hti"."id",
@@ -2446,9 +2186,7 @@ CREATE OR REPLACE VIEW "public"."high_ticket_investment_analytics_v2" AS
      JOIN "public"."projects" "p" ON (("hti"."project_id" = "p"."id")))
      JOIN "public"."users" "u" ON ((("hti"."user_id")::"text" = ("u"."user_id")::"text")));
 
-
 ALTER VIEW "public"."high_ticket_investment_analytics_v2" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."investments" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
@@ -2462,10 +2200,6 @@ CREATE TABLE IF NOT EXISTS "public"."investments" (
     "unit" bigint
 );
 
-
-ALTER TABLE "public"."investments" OWNER TO "postgres";
-
-
 CREATE TABLE IF NOT EXISTS "public"."latest_updates" (
     "created_at" timestamp with time zone DEFAULT "now"() NOT NULL,
     "updated_at" timestamp with time zone DEFAULT "now"(),
@@ -2475,13 +2209,7 @@ CREATE TABLE IF NOT EXISTS "public"."latest_updates" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL
 );
 
-
-ALTER TABLE "public"."latest_updates" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."latest_updates" IS 'latest project updates';
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."notification_queue" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
@@ -2493,19 +2221,11 @@ CREATE TABLE IF NOT EXISTS "public"."notification_queue" (
     "created_at" timestamp(6) with time zone DEFAULT "now"()
 );
 
-
-ALTER TABLE "public"."notification_queue" OWNER TO "postgres";
-
-
 CREATE TABLE IF NOT EXISTS "public"."notification_targets" (
     "notification_id" "uuid" NOT NULL,
     "profile_id" "uuid" NOT NULL,
     "created_at" timestamp with time zone DEFAULT "now"()
 );
-
-
-ALTER TABLE "public"."notification_targets" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."notifications" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2526,13 +2246,7 @@ CREATE TABLE IF NOT EXISTS "public"."notifications" (
     "type" "public"."notification_type"
 );
 
-
-ALTER TABLE "public"."notifications" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."notifications" IS 'Stores in-app notifications sent to users';
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."payment_accounts" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
@@ -2550,10 +2264,6 @@ CREATE TABLE IF NOT EXISTS "public"."payment_accounts" (
     CONSTRAINT "payment_accounts_network_check" CHECK ((("network" = ANY (ARRAY['MTN'::"text", 'VOD'::"text", 'ATL'::"text"])) OR ("network" IS NULL))),
     CONSTRAINT "payment_accounts_type_check" CHECK (("type" = ANY (ARRAY['bank'::"text", 'momo'::"text"])))
 );
-
-
-ALTER TABLE "public"."payment_accounts" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."payouts" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2577,13 +2287,7 @@ CREATE TABLE IF NOT EXISTS "public"."payouts" (
     CONSTRAINT "payouts_status_check" CHECK ((("status")::"text" = ANY (ARRAY[('Pending'::character varying)::"text", ('Processing'::character varying)::"text", ('Complete'::character varying)::"text", ('Failed'::character varying)::"text"])))
 );
 
-
-ALTER TABLE "public"."payouts" OWNER TO "postgres";
-
-
 COMMENT ON COLUMN "public"."payouts"."payout_type" IS 'type of payouts';
-
-
 
 CREATE OR REPLACE VIEW "public"."payout_calculations" AS
  SELECT "p"."id",
@@ -2598,9 +2302,7 @@ CREATE OR REPLACE VIEW "public"."payout_calculations" AS
      JOIN "public"."users" "u" ON (("p"."user_id" = "u"."id")))
      JOIN "public"."projects" "pr" ON (("p"."project_id" = "pr"."id")));
 
-
 ALTER VIEW "public"."payout_calculations" OWNER TO "postgres";
-
 
 CREATE OR REPLACE VIEW "public"."payout_calculations_v2" AS
  SELECT "p"."id",
@@ -2615,9 +2317,7 @@ CREATE OR REPLACE VIEW "public"."payout_calculations_v2" AS
      JOIN "public"."users" "u" ON (("p"."user_id" = "u"."id")))
      JOIN "public"."projects" "pr" ON (("p"."project_id" = "pr"."id")));
 
-
 ALTER VIEW "public"."payout_calculations_v2" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."pin_reset_tokens" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
@@ -2628,10 +2328,6 @@ CREATE TABLE IF NOT EXISTS "public"."pin_reset_tokens" (
     "created_at" timestamp with time zone DEFAULT "now"(),
     "updated_at" timestamp with time zone DEFAULT "now"()
 );
-
-
-ALTER TABLE "public"."pin_reset_tokens" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."profile" (
     "id" "uuid" NOT NULL,
@@ -2654,25 +2350,13 @@ CREATE TABLE IF NOT EXISTS "public"."profile" (
     CONSTRAINT "profiles_kyc_status_check" CHECK (("kyc_status" = ANY (ARRAY['pending'::"text", 'verified'::"text", 'rejected'::"text", 'complete'::"text"])))
 );
 
-
-ALTER TABLE "public"."profile" OWNER TO "postgres";
-
-
 COMMENT ON COLUMN "public"."profile"."pin" IS 'Encrypted 4-digit PIN for transaction authorization';
-
-
 
 COMMENT ON COLUMN "public"."profile"."kyc_status" IS 'KYC verification status: pending, verified, or rejected';
 
-
-
 COMMENT ON COLUMN "public"."profile"."kyc_documents" IS 'JSON object containing URLs to uploaded KYC documents (id_front, id_back, selfie)';
 
-
-
 COMMENT ON COLUMN "public"."profile"."last_login" IS 'Tracks the user''s last login timestamp.';
-
-
 
 CREATE SEQUENCE IF NOT EXISTS "public"."project_report_seq"
     START WITH 1
@@ -2680,7 +2364,6 @@ CREATE SEQUENCE IF NOT EXISTS "public"."project_report_seq"
     NO MINVALUE
     NO MAXVALUE
     CACHE 1;
-
 
 CREATE TABLE IF NOT EXISTS "public"."project_reports" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
@@ -2701,10 +2384,6 @@ CREATE TABLE IF NOT EXISTS "public"."project_reports" (
     CONSTRAINT "project_reports_status_check" CHECK ((("status")::"text" = ANY ((ARRAY['Draft'::character varying, 'Submitted'::character varying, 'Approved'::character varying, 'Rejected'::character varying])::"text"[])))
 );
 
-
-ALTER TABLE "public"."project_reports" OWNER TO "postgres";
-
-
 CREATE OR REPLACE VIEW "public"."project_reports_summary_v2" AS
  SELECT "pr"."id",
     "pr"."report_id",
@@ -2719,9 +2398,7 @@ CREATE OR REPLACE VIEW "public"."project_reports_summary_v2" AS
      JOIN "public"."projects" "p" ON (("pr"."project_id" = "p"."id")))
      LEFT JOIN "public"."admins" "a" ON (("pr"."created_by" = "a"."id")));
 
-
 ALTER VIEW "public"."project_reports_summary_v2" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."project_stage" (
     "id" bigint NOT NULL,
@@ -2732,13 +2409,7 @@ CREATE TABLE IF NOT EXISTS "public"."project_stage" (
     "status" boolean DEFAULT false
 );
 
-
-ALTER TABLE "public"."project_stage" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."project_stage" IS 'Tracks individual project stage progress and completion status';
-
-
 
 CREATE SEQUENCE IF NOT EXISTS "public"."project_stage_id_seq"
     START WITH 1
@@ -2747,10 +2418,7 @@ CREATE SEQUENCE IF NOT EXISTS "public"."project_stage_id_seq"
     NO MAXVALUE
     CACHE 1;
 
-
 ALTER SEQUENCE "public"."project_stage_id_seq" OWNED BY "public"."project_stage"."id";
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."project_updates" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
@@ -2768,10 +2436,6 @@ CREATE TABLE IF NOT EXISTS "public"."project_updates" (
     CONSTRAINT "project_updates_update_type_check" CHECK ((("update_type")::"text" = ANY ((ARRAY['Progress'::character varying, 'Milestone'::character varying, 'Issue'::character varying, 'Completion'::character varying])::"text"[])))
 );
 
-
-ALTER TABLE "public"."project_updates" OWNER TO "postgres";
-
-
 CREATE OR REPLACE VIEW "public"."project_updates_summary_v2" AS
  SELECT "pu"."id",
     "pu"."title",
@@ -2787,9 +2451,7 @@ CREATE OR REPLACE VIEW "public"."project_updates_summary_v2" AS
      JOIN "public"."projects" "p" ON (("pu"."project_id" = "p"."id")))
      LEFT JOIN "public"."admins" "a" ON (("pu"."created_by" = "a"."id")));
 
-
 ALTER VIEW "public"."project_updates_summary_v2" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."support_tickets" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
@@ -2812,10 +2474,6 @@ CREATE TABLE IF NOT EXISTS "public"."support_tickets" (
     CONSTRAINT "support_tickets_status_check" CHECK ((("status")::"text" = ANY ((ARRAY['Open'::character varying, 'In Progress'::character varying, 'Resolved'::character varying, 'Closed'::character varying])::"text"[])))
 );
 
-
-ALTER TABLE "public"."support_tickets" OWNER TO "postgres";
-
-
 CREATE TABLE IF NOT EXISTS "public"."system_settings" (
     "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
     "setting_key" character varying(100) NOT NULL,
@@ -2827,10 +2485,6 @@ CREATE TABLE IF NOT EXISTS "public"."system_settings" (
     "updated_at" timestamp with time zone DEFAULT "now"(),
     CONSTRAINT "system_settings_setting_type_check" CHECK ((("setting_type")::"text" = ANY ((ARRAY['string'::character varying, 'number'::character varying, 'boolean'::character varying, 'json'::character varying])::"text"[])))
 );
-
-
-ALTER TABLE "public"."system_settings" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."transactions" (
     "transaction_id" character varying NOT NULL,
@@ -2856,29 +2510,15 @@ CREATE TABLE IF NOT EXISTS "public"."transactions" (
     "metadata" json
 );
 
-
-ALTER TABLE "public"."transactions" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."transactions" IS 'Stores all investment transactions';
-
-
 
 COMMENT ON COLUMN "public"."transactions"."channel" IS 'transaction channels';
 
-
-
 COMMENT ON COLUMN "public"."transactions"."external_id" IS 'external id from payswitch';
-
-
 
 COMMENT ON COLUMN "public"."transactions"."network" IS 'network for momo transaction';
 
-
-
 COMMENT ON COLUMN "public"."transactions"."account_number" IS 'account number';
-
-
 
 CREATE OR REPLACE VIEW "public"."transaction_analytics" WITH ("security_invoker"='on') AS
  SELECT "date_trunc"('month'::"text", "created_at") AS "month",
@@ -2907,9 +2547,7 @@ CREATE OR REPLACE VIEW "public"."transaction_analytics" WITH ("security_invoker"
   GROUP BY ("date_trunc"('month'::"text", "created_at"))
   ORDER BY ("date_trunc"('month'::"text", "created_at")) DESC;
 
-
 ALTER VIEW "public"."transaction_analytics" OWNER TO "postgres";
-
 
 CREATE TABLE IF NOT EXISTS "public"."users_notifications" (
     "user_id" "uuid" DEFAULT "gen_random_uuid"(),
@@ -2927,13 +2565,7 @@ CREATE TABLE IF NOT EXISTS "public"."users_notifications" (
     "sms_delivery_id" "text"
 );
 
-
-ALTER TABLE "public"."users_notifications" OWNER TO "postgres";
-
-
 COMMENT ON TABLE "public"."users_notifications" IS 'this is to track user specific notifications';
-
-
 
 CREATE TABLE IF NOT EXISTS "public"."wallet_audit_log" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
@@ -2948,10 +2580,6 @@ CREATE TABLE IF NOT EXISTS "public"."wallet_audit_log" (
     "created_at" timestamp with time zone DEFAULT "now"()
 );
 
-
-ALTER TABLE "public"."wallet_audit_log" OWNER TO "postgres";
-
-
 CREATE TABLE IF NOT EXISTS "public"."wallets" (
     "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
     "profile_id" "uuid",
@@ -2965,867 +2593,483 @@ CREATE TABLE IF NOT EXISTS "public"."wallets" (
     "float_account_id" "text"
 );
 
-
-ALTER TABLE "public"."wallets" OWNER TO "postgres";
-
-
 ALTER TABLE ONLY "public"."project_stage" ALTER COLUMN "id" SET DEFAULT "nextval"('"public"."project_stage_id_seq"'::"regclass");
-
-
 
 ALTER TABLE ONLY "public"."_prisma_migrations"
     ADD CONSTRAINT "_prisma_migrations_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."admins"
     ADD CONSTRAINT "admins_admin_id_key" UNIQUE ("admin_id");
-
-
 
 ALTER TABLE ONLY "public"."admins"
     ADD CONSTRAINT "admins_email_key" UNIQUE ("email");
 
-
-
 ALTER TABLE ONLY "public"."admins"
     ADD CONSTRAINT "admins_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."approval_audit_log"
     ADD CONSTRAINT "approval_audit_log_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."approval_notifications"
     ADD CONSTRAINT "approval_notifications_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."approval_requests"
     ADD CONSTRAINT "approval_requests_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."approval_requests"
     ADD CONSTRAINT "approval_requests_request_id_key" UNIQUE ("request_id");
-
-
 
 ALTER TABLE ONLY "public"."approval_workflow_steps"
     ADD CONSTRAINT "approval_workflow_steps_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."countries"
     ADD CONSTRAINT "countries_name_key" UNIQUE ("name");
-
-
 
 ALTER TABLE ONLY "public"."countries"
     ADD CONSTRAINT "countries_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."high_ticket_investments"
     ADD CONSTRAINT "high_ticket_investments_investment_id_key" UNIQUE ("investment_id");
-
-
 
 ALTER TABLE ONLY "public"."high_ticket_investments"
     ADD CONSTRAINT "high_ticket_investments_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."investments"
     ADD CONSTRAINT "investments_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."investments"
     ADD CONSTRAINT "investments_project_id_key" UNIQUE ("project_id");
 
-
-
 ALTER TABLE ONLY "public"."latest_updates"
     ADD CONSTRAINT "latest_updates_id_key" UNIQUE ("id");
-
-
 
 ALTER TABLE ONLY "public"."latest_updates"
     ADD CONSTRAINT "latest_updates_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."notification_queue"
     ADD CONSTRAINT "notification_queue_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."notification_targets"
     ADD CONSTRAINT "notification_targets_pkey" PRIMARY KEY ("notification_id", "profile_id");
 
-
-
 ALTER TABLE ONLY "public"."notifications"
     ADD CONSTRAINT "notifications_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."payment_accounts"
     ADD CONSTRAINT "payment_accounts_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."payouts"
     ADD CONSTRAINT "payouts_payout_id_key" UNIQUE ("payout_id");
-
-
 
 ALTER TABLE ONLY "public"."payouts"
     ADD CONSTRAINT "payouts_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."pin_reset_tokens"
     ADD CONSTRAINT "pin_reset_tokens_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."pin_reset_tokens"
     ADD CONSTRAINT "pin_reset_tokens_token_key" UNIQUE ("token");
 
-
-
 ALTER TABLE ONLY "public"."profile"
     ADD CONSTRAINT "profiles_email_key" UNIQUE ("email");
-
-
 
 ALTER TABLE ONLY "public"."profile"
     ADD CONSTRAINT "profiles_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."project_reports"
     ADD CONSTRAINT "project_reports_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."project_reports"
     ADD CONSTRAINT "project_reports_report_id_key" UNIQUE ("report_id");
 
-
-
 ALTER TABLE ONLY "public"."project_stage"
     ADD CONSTRAINT "project_stage_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."project_updates"
     ADD CONSTRAINT "project_updates_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."projects"
     ADD CONSTRAINT "projects_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."projects"
     ADD CONSTRAINT "projects_project_code_key" UNIQUE ("project_code");
 
-
-
 ALTER TABLE ONLY "public"."support_tickets"
     ADD CONSTRAINT "support_tickets_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."support_tickets"
     ADD CONSTRAINT "support_tickets_ticket_id_key" UNIQUE ("ticket_id");
 
-
-
 ALTER TABLE ONLY "public"."system_settings"
     ADD CONSTRAINT "system_settings_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."system_settings"
     ADD CONSTRAINT "system_settings_setting_key_key" UNIQUE ("setting_key");
 
-
-
 ALTER TABLE ONLY "public"."transactions"
     ADD CONSTRAINT "transactions_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."transactions"
     ADD CONSTRAINT "transactions_transaction_id_key" UNIQUE ("transaction_id");
 
-
-
 ALTER TABLE ONLY "public"."payment_accounts"
     ADD CONSTRAINT "unique_profile_account_type" UNIQUE ("profile_id", "type");
 
-
-
 COMMENT ON CONSTRAINT "unique_profile_account_type" ON "public"."payment_accounts" IS 'Ensures each user can only have one bank account and one mobile money account';
-
-
 
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_email_key" UNIQUE ("email");
 
-
-
 ALTER TABLE ONLY "public"."users_notifications"
     ADD CONSTRAINT "users_notifications_notifications_id_user_id_key" UNIQUE ("notifications_id", "user_id");
-
-
 
 ALTER TABLE ONLY "public"."users_notifications"
     ADD CONSTRAINT "users_notifications_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."users"
     ADD CONSTRAINT "users_user_id_key" UNIQUE ("user_id");
 
-
-
 ALTER TABLE ONLY "public"."wallet_audit_log"
     ADD CONSTRAINT "wallet_audit_log_pkey" PRIMARY KEY ("id");
-
-
 
 ALTER TABLE ONLY "public"."wallets"
     ADD CONSTRAINT "wallets_pkey" PRIMARY KEY ("id");
 
-
-
 ALTER TABLE ONLY "public"."wallets"
     ADD CONSTRAINT "wallets_user_id_key" UNIQUE ("profile_id");
 
-
-
 CREATE INDEX "idx_admins_email" ON "public"."admins" USING "btree" ("email");
-
-
 
 CREATE INDEX "idx_admins_status" ON "public"."admins" USING "btree" ("status");
 
-
-
 CREATE INDEX "idx_admins_type" ON "public"."admins" USING "btree" ("admin_type");
-
-
 
 CREATE INDEX "idx_approval_audit_log_performed_by" ON "public"."approval_audit_log" USING "btree" ("performed_by");
 
-
-
 CREATE INDEX "idx_approval_audit_log_request" ON "public"."approval_audit_log" USING "btree" ("approval_request_id");
-
-
 
 CREATE INDEX "idx_approval_audit_log_timestamp" ON "public"."approval_audit_log" USING "btree" ("timestamp");
 
-
-
 CREATE INDEX "idx_approval_notifications_read" ON "public"."approval_notifications" USING "btree" ("is_read");
-
-
 
 CREATE INDEX "idx_approval_notifications_recipient" ON "public"."approval_notifications" USING "btree" ("recipient_id");
 
-
-
 CREATE INDEX "idx_approval_notifications_request" ON "public"."approval_notifications" USING "btree" ("approval_request_id");
-
-
 
 CREATE INDEX "idx_approval_requests_created_at" ON "public"."approval_requests" USING "btree" ("created_at");
 
-
-
 CREATE INDEX "idx_approval_requests_expires_at" ON "public"."approval_requests" USING "btree" ("expires_at");
-
-
 
 CREATE INDEX "idx_approval_requests_related_payout" ON "public"."approval_requests" USING "btree" ("related_payout_id");
 
-
-
 CREATE INDEX "idx_approval_requests_related_project" ON "public"."approval_requests" USING "btree" ("related_project_id");
-
-
 
 CREATE INDEX "idx_approval_requests_requested_by" ON "public"."approval_requests" USING "btree" ("requested_by");
 
-
-
 CREATE INDEX "idx_approval_requests_reviewed_by" ON "public"."approval_requests" USING "btree" ("reviewed_by");
-
-
 
 CREATE INDEX "idx_approval_requests_status" ON "public"."approval_requests" USING "btree" ("status");
 
-
-
 CREATE INDEX "idx_approval_requests_type" ON "public"."approval_requests" USING "btree" ("request_type");
-
-
 
 CREATE INDEX "idx_approval_workflow_steps_request" ON "public"."approval_workflow_steps" USING "btree" ("approval_request_id");
 
-
-
 CREATE INDEX "idx_approval_workflow_steps_status" ON "public"."approval_workflow_steps" USING "btree" ("status");
-
-
 
 CREATE INDEX "idx_high_ticket_investments_project_id" ON "public"."high_ticket_investments" USING "btree" ("project_id");
 
-
-
 CREATE INDEX "idx_high_ticket_investments_status" ON "public"."high_ticket_investments" USING "btree" ("status");
-
-
 
 CREATE INDEX "idx_high_ticket_investments_user_id" ON "public"."high_ticket_investments" USING "btree" ("user_id");
 
-
-
 CREATE INDEX "idx_notification_queue_notification_id" ON "public"."notification_queue" USING "btree" ("notification_id");
-
-
 
 CREATE INDEX "idx_notification_queue_status" ON "public"."notification_queue" USING "btree" ("status");
 
-
-
 CREATE INDEX "idx_notification_queue_user_id" ON "public"."notification_queue" USING "btree" ("user_id");
-
-
 
 CREATE INDEX "idx_notifications_created_at" ON "public"."notifications" USING "btree" ("created_at");
 
-
-
 CREATE INDEX "idx_notifications_created_by" ON "public"."notifications" USING "btree" ("created_by");
-
-
 
 CREATE INDEX "idx_notifications_scheduled_for" ON "public"."notifications" USING "btree" ("scheduled_for");
 
-
-
 CREATE INDEX "idx_notifications_status" ON "public"."notifications" USING "btree" ("status");
-
-
 
 CREATE INDEX "idx_payment_accounts_is_preferred" ON "public"."payment_accounts" USING "btree" ("profile_id", "is_preferred") WHERE ("is_preferred" = true);
 
-
-
 CREATE INDEX "idx_payment_accounts_profile_id" ON "public"."payment_accounts" USING "btree" ("profile_id");
-
-
 
 CREATE INDEX "idx_payment_accounts_type" ON "public"."payment_accounts" USING "btree" ("type");
 
-
-
 CREATE INDEX "idx_payouts_created_at" ON "public"."payouts" USING "btree" ("created_at");
-
-
 
 CREATE INDEX "idx_payouts_project_id" ON "public"."payouts" USING "btree" ("project_id");
 
-
-
 CREATE INDEX "idx_payouts_status" ON "public"."payouts" USING "btree" ("status");
-
-
 
 CREATE INDEX "idx_payouts_user_id" ON "public"."payouts" USING "btree" ("user_id");
 
-
-
 CREATE INDEX "idx_pin_reset_tokens_expires_at" ON "public"."pin_reset_tokens" USING "btree" ("expires_at");
-
-
 
 CREATE INDEX "idx_pin_reset_tokens_profile_id" ON "public"."pin_reset_tokens" USING "btree" ("profile_id");
 
-
-
 CREATE INDEX "idx_pin_reset_tokens_token" ON "public"."pin_reset_tokens" USING "btree" ("token");
-
-
 
 CREATE INDEX "idx_profiles_kyc_status" ON "public"."profile" USING "btree" ("kyc_status");
 
-
-
 CREATE INDEX "idx_profiles_pin" ON "public"."profile" USING "btree" ("pin") WHERE ("pin" IS NOT NULL);
-
-
 
 CREATE INDEX "idx_projects_code" ON "public"."projects" USING "btree" ("project_code");
 
-
-
 CREATE INDEX "idx_projects_created_at" ON "public"."projects" USING "btree" ("created_at");
-
-
 
 CREATE INDEX "idx_projects_status" ON "public"."projects" USING "btree" ("status");
 
-
-
 CREATE INDEX "idx_projects_units" ON "public"."projects" USING "btree" ("total_units", "purchased_unit", "available_unit");
-
-
 
 CREATE INDEX "idx_support_tickets_assigned_to" ON "public"."support_tickets" USING "btree" ("assigned_to");
 
-
-
 CREATE INDEX "idx_support_tickets_category" ON "public"."support_tickets" USING "btree" ("category");
-
-
 
 CREATE INDEX "idx_support_tickets_created_at" ON "public"."support_tickets" USING "btree" ("created_at");
 
-
-
 CREATE INDEX "idx_support_tickets_priority" ON "public"."support_tickets" USING "btree" ("priority");
-
-
 
 CREATE INDEX "idx_support_tickets_status" ON "public"."support_tickets" USING "btree" ("status");
 
-
-
 CREATE INDEX "idx_support_tickets_user_id" ON "public"."support_tickets" USING "btree" ("user_id");
-
-
 
 CREATE INDEX "idx_system_settings_category" ON "public"."system_settings" USING "btree" ("category");
 
-
-
 CREATE INDEX "idx_system_settings_key" ON "public"."system_settings" USING "btree" ("setting_key");
-
-
 
 CREATE INDEX "idx_transactions_created_at" ON "public"."transactions" USING "btree" ("created_at");
 
-
-
 CREATE INDEX "idx_transactions_profile_id" ON "public"."transactions" USING "btree" ("profile_id");
-
-
 
 CREATE INDEX "idx_transactions_project_id" ON "public"."transactions" USING "btree" ("project_id");
 
-
-
 CREATE INDEX "idx_transactions_project_type_status" ON "public"."transactions" USING "btree" ("project_id", "type", "status");
-
-
 
 CREATE INDEX "idx_transactions_status" ON "public"."transactions" USING "btree" ("status");
 
-
-
 CREATE INDEX "idx_transactions_type" ON "public"."transactions" USING "btree" ("type");
-
-
 
 CREATE INDEX "idx_users_bank_name" ON "public"."users" USING "btree" ("bank_name");
 
-
-
 CREATE INDEX "idx_users_country" ON "public"."users" USING "btree" ("country");
-
-
 
 CREATE INDEX "idx_users_created_at" ON "public"."users" USING "btree" ("created_at");
 
-
-
 CREATE INDEX "idx_users_email" ON "public"."users" USING "btree" ("email");
-
-
 
 CREATE INDEX "idx_users_kyc_status" ON "public"."users" USING "btree" ("kyc_status");
 
-
-
 CREATE INDEX "idx_users_preferred_network" ON "public"."users" USING "btree" ("preferred_network");
-
-
 
 CREATE INDEX "idx_users_status" ON "public"."users" USING "btree" ("account_status");
 
-
-
 CREATE OR REPLACE TRIGGER "generate_high_ticket_investment_id_trigger" BEFORE INSERT ON "public"."high_ticket_investments" FOR EACH ROW EXECUTE FUNCTION "public"."generate_high_ticket_investment_id"();
-
-
 
 CREATE OR REPLACE TRIGGER "generate_project_report_id_trigger" BEFORE INSERT ON "public"."project_reports" FOR EACH ROW EXECUTE FUNCTION "public"."generate_project_report_id"();
 
-
-
 CREATE OR REPLACE TRIGGER "generate_transaction_id_trigger" BEFORE INSERT ON "public"."transactions" FOR EACH ROW EXECUTE FUNCTION "public"."generate_transaction_id"();
-
-
 
 CREATE OR REPLACE TRIGGER "trg_projects_set_duration_months" BEFORE INSERT OR UPDATE OF "start_date", "end_date" ON "public"."projects" FOR EACH ROW EXECUTE FUNCTION "public"."projects_set_duration_months"();
 
-
-
 CREATE OR REPLACE TRIGGER "trigger_calculate_duration_on_insert" BEFORE INSERT ON "public"."projects" FOR EACH ROW EXECUTE FUNCTION "public"."calculate_project_duration_months"();
-
-
 
 CREATE OR REPLACE TRIGGER "trigger_calculate_duration_on_update" BEFORE UPDATE ON "public"."projects" FOR EACH ROW WHEN ((("old"."project_type" IS DISTINCT FROM "new"."project_type") OR ("old"."project_stages" IS DISTINCT FROM "new"."project_stages"))) EXECUTE FUNCTION "public"."calculate_project_duration_months"();
 
-
-
 CREATE OR REPLACE TRIGGER "trigger_generate_approval_request_id" BEFORE INSERT ON "public"."approval_requests" FOR EACH ROW EXECUTE FUNCTION "public"."generate_approval_request_id"();
-
-
 
 CREATE OR REPLACE TRIGGER "trigger_sync_available_units" BEFORE INSERT OR UPDATE OF "total_units" ON "public"."projects" FOR EACH ROW EXECUTE FUNCTION "public"."sync_available_units"();
 
-
-
 CREATE OR REPLACE TRIGGER "trigger_sync_project_units_comprehensive" BEFORE INSERT OR UPDATE ON "public"."projects" FOR EACH ROW EXECUTE FUNCTION "public"."sync_project_units_comprehensive"();
-
-
 
 CREATE OR REPLACE TRIGGER "trigger_update_approval_requests_updated_at" BEFORE UPDATE ON "public"."approval_requests" FOR EACH ROW EXECUTE FUNCTION "public"."update_approval_requests_updated_at"();
 
-
-
 CREATE OR REPLACE TRIGGER "trigger_validate_unit_limits" BEFORE INSERT ON "public"."transactions" FOR EACH ROW WHEN (("new"."type" = ANY (ARRAY['investment'::"public"."transaction_type", 'Payin'::"public"."transaction_type"]))) EXECUTE FUNCTION "public"."validate_unit_limits_before_transaction"();
-
-
 
 CREATE OR REPLACE TRIGGER "update_admins_updated_at" BEFORE UPDATE ON "public"."admins" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
-
-
 CREATE OR REPLACE TRIGGER "update_high_ticket_investments_updated_at" BEFORE UPDATE ON "public"."high_ticket_investments" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
 
 CREATE OR REPLACE TRIGGER "update_notifications_updated_at" BEFORE UPDATE ON "public"."notifications" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
-
-
 CREATE OR REPLACE TRIGGER "update_payment_accounts_timestamp" BEFORE UPDATE ON "public"."payment_accounts" FOR EACH ROW EXECUTE FUNCTION "public"."update_payment_accounts_updated_at"();
-
-
 
 CREATE OR REPLACE TRIGGER "update_payouts_updated_at" BEFORE UPDATE ON "public"."payouts" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
-
-
 CREATE OR REPLACE TRIGGER "update_profiles_updated_at" BEFORE UPDATE ON "public"."profile" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
 
 CREATE OR REPLACE TRIGGER "update_project_reports_updated_at" BEFORE UPDATE ON "public"."project_reports" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
-
-
 CREATE OR REPLACE TRIGGER "update_project_stock_on_status_change_trigger" AFTER UPDATE ON "public"."transactions" FOR EACH ROW WHEN ((("old"."status" IS DISTINCT FROM "new"."status") OR ("old"."unit" IS DISTINCT FROM "new"."unit"))) EXECUTE FUNCTION "public"."update_project_stock_on_status_change"();
-
-
 
 CREATE OR REPLACE TRIGGER "update_project_stock_trigger" AFTER INSERT ON "public"."transactions" FOR EACH ROW WHEN ((("new"."project_id" IS NOT NULL) AND ("new"."type" = ANY (ARRAY['investment'::"public"."transaction_type", 'Payin'::"public"."transaction_type"])))) EXECUTE FUNCTION "public"."update_project_stock_after_transaction"();
 
-
-
 CREATE OR REPLACE TRIGGER "update_project_updates_updated_at" BEFORE UPDATE ON "public"."project_updates" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
 
 CREATE OR REPLACE TRIGGER "update_projects_updated_at" BEFORE UPDATE ON "public"."projects" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
-
-
 CREATE OR REPLACE TRIGGER "update_support_tickets_updated_at" BEFORE UPDATE ON "public"."support_tickets" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
 
 CREATE OR REPLACE TRIGGER "update_system_settings_updated_at" BEFORE UPDATE ON "public"."system_settings" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
 
-
-
 CREATE OR REPLACE TRIGGER "update_transactions_updated_at" BEFORE UPDATE ON "public"."transactions" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
 
 CREATE OR REPLACE TRIGGER "update_user_stats_on_transaction" AFTER INSERT OR DELETE OR UPDATE ON "public"."transactions" FOR EACH ROW EXECUTE FUNCTION "public"."update_user_investment_stats"();
 
-
-
 CREATE OR REPLACE TRIGGER "update_users_updated_at" BEFORE UPDATE ON "public"."users" FOR EACH ROW EXECUTE FUNCTION "public"."update_updated_at_column"();
-
-
 
 CREATE OR REPLACE TRIGGER "update_wallet_on_topup_complete_trigger" AFTER UPDATE ON "public"."transactions" FOR EACH ROW WHEN (("old"."status" IS DISTINCT FROM "new"."status")) EXECUTE FUNCTION "public"."update_wallet_on_topup_complete"();
 
 ALTER TABLE "public"."transactions" DISABLE TRIGGER "update_wallet_on_topup_complete_trigger";
 
-
-
 CREATE OR REPLACE TRIGGER "update_wallet_on_transaction_insert_trigger" AFTER INSERT ON "public"."transactions" FOR EACH ROW EXECUTE FUNCTION "public"."update_wallet_on_topup_complete"();
 
 ALTER TABLE "public"."transactions" DISABLE TRIGGER "update_wallet_on_transaction_insert_trigger";
 
-
-
 CREATE OR REPLACE TRIGGER "wallet_audit_trigger" AFTER UPDATE ON "public"."wallets" FOR EACH ROW EXECUTE FUNCTION "public"."audit_wallet_changes"();
-
-
 
 ALTER TABLE ONLY "public"."approval_audit_log"
     ADD CONSTRAINT "approval_audit_log_approval_request_id_fkey" FOREIGN KEY ("approval_request_id") REFERENCES "public"."approval_requests"("id") ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."approval_audit_log"
     ADD CONSTRAINT "approval_audit_log_performed_by_fkey" FOREIGN KEY ("performed_by") REFERENCES "public"."admins"("id");
-
-
 
 ALTER TABLE ONLY "public"."approval_notifications"
     ADD CONSTRAINT "approval_notifications_approval_request_id_fkey" FOREIGN KEY ("approval_request_id") REFERENCES "public"."approval_requests"("id") ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."approval_notifications"
     ADD CONSTRAINT "approval_notifications_recipient_id_fkey" FOREIGN KEY ("recipient_id") REFERENCES "public"."admins"("id");
-
-
 
 ALTER TABLE ONLY "public"."approval_requests"
     ADD CONSTRAINT "approval_requests_related_payout_id_fkey" FOREIGN KEY ("related_payout_id") REFERENCES "public"."payouts"("id");
 
-
-
 ALTER TABLE ONLY "public"."approval_requests"
     ADD CONSTRAINT "approval_requests_related_project_id_fkey" FOREIGN KEY ("related_project_id") REFERENCES "public"."projects"("id");
-
-
 
 ALTER TABLE ONLY "public"."approval_requests"
     ADD CONSTRAINT "approval_requests_related_user_id_fkey" FOREIGN KEY ("related_user_id") REFERENCES "public"."users"("id");
 
-
-
 ALTER TABLE ONLY "public"."approval_requests"
     ADD CONSTRAINT "approval_requests_requested_by_fkey" FOREIGN KEY ("requested_by") REFERENCES "public"."admins"("id");
-
-
 
 ALTER TABLE ONLY "public"."approval_requests"
     ADD CONSTRAINT "approval_requests_reviewed_by_fkey" FOREIGN KEY ("reviewed_by") REFERENCES "public"."admins"("id");
 
-
-
 ALTER TABLE ONLY "public"."approval_workflow_steps"
     ADD CONSTRAINT "approval_workflow_steps_approval_request_id_fkey" FOREIGN KEY ("approval_request_id") REFERENCES "public"."approval_requests"("id") ON DELETE CASCADE;
-
-
 
 ALTER TABLE ONLY "public"."approval_workflow_steps"
     ADD CONSTRAINT "approval_workflow_steps_approved_by_fkey" FOREIGN KEY ("approved_by") REFERENCES "public"."admins"("id");
 
-
-
 ALTER TABLE ONLY "public"."high_ticket_investments"
     ADD CONSTRAINT "high_ticket_investments_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE CASCADE;
-
-
 
 ALTER TABLE ONLY "public"."high_ticket_investments"
     ADD CONSTRAINT "high_ticket_investments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("user_id") ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."investments"
     ADD CONSTRAINT "investments_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id");
-
-
 
 ALTER TABLE ONLY "public"."investments"
     ADD CONSTRAINT "investments_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id");
 
-
-
 ALTER TABLE ONLY "public"."notification_queue"
     ADD CONSTRAINT "notification_queue_notification_id_fkey" FOREIGN KEY ("notification_id") REFERENCES "public"."notifications"("id") ON DELETE CASCADE;
-
-
 
 ALTER TABLE ONLY "public"."notification_queue"
     ADD CONSTRAINT "notification_queue_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE SET NULL;
 
-
-
 ALTER TABLE ONLY "public"."notification_targets"
     ADD CONSTRAINT "notification_targets_notification_id_fkey" FOREIGN KEY ("notification_id") REFERENCES "public"."notifications"("id") ON DELETE CASCADE;
-
-
 
 ALTER TABLE ONLY "public"."notification_targets"
     ADD CONSTRAINT "notification_targets_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "public"."profile"("id");
 
-
-
 ALTER TABLE ONLY "public"."notifications"
     ADD CONSTRAINT "notifications_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "public"."admins"("id");
-
-
 
 ALTER TABLE ONLY "public"."payment_accounts"
     ADD CONSTRAINT "payment_accounts_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "public"."profile"("id") ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."payouts"
     ADD CONSTRAINT "payouts_profiles_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "public"."profile"("id");
-
-
 
 ALTER TABLE ONLY "public"."payouts"
     ADD CONSTRAINT "payouts_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."pin_reset_tokens"
     ADD CONSTRAINT "pin_reset_tokens_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "public"."profile"("id") ON DELETE CASCADE;
-
-
 
 ALTER TABLE ONLY "public"."profile"
     ADD CONSTRAINT "profiles_id_fkey" FOREIGN KEY ("id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."project_reports"
     ADD CONSTRAINT "project_reports_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "auth"."users"("id");
-
-
 
 ALTER TABLE ONLY "public"."project_reports"
     ADD CONSTRAINT "project_reports_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."project_reports"
     ADD CONSTRAINT "project_reports_reviewed_by_fkey" FOREIGN KEY ("reviewed_by") REFERENCES "public"."admins"("id");
-
-
 
 ALTER TABLE ONLY "public"."project_stage"
     ADD CONSTRAINT "project_stage_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id");
 
-
-
 ALTER TABLE ONLY "public"."project_updates"
     ADD CONSTRAINT "project_updates_created_by_fkey" FOREIGN KEY ("created_by") REFERENCES "auth"."users"("id");
-
-
 
 ALTER TABLE ONLY "public"."project_updates"
     ADD CONSTRAINT "project_updates_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."support_tickets"
     ADD CONSTRAINT "support_tickets_assigned_to_fkey" FOREIGN KEY ("assigned_to") REFERENCES "public"."admins"("id");
-
-
 
 ALTER TABLE ONLY "public"."support_tickets"
     ADD CONSTRAINT "support_tickets_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."transactions"
     ADD CONSTRAINT "transactions_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "public"."profile"("id");
-
-
 
 ALTER TABLE ONLY "public"."transactions"
     ADD CONSTRAINT "transactions_project_id_fkey" FOREIGN KEY ("project_id") REFERENCES "public"."projects"("id") ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."transactions"
     ADD CONSTRAINT "transactions_wallet_id_fkey" FOREIGN KEY ("wallet_id") REFERENCES "public"."wallets"("id");
-
-
 
 ALTER TABLE ONLY "public"."users_notifications"
     ADD CONSTRAINT "users_notifications_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "public"."profile"("id") ON UPDATE CASCADE ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."wallet_audit_log"
     ADD CONSTRAINT "wallet_audit_log_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "auth"."users"("id");
-
-
 
 ALTER TABLE ONLY "public"."wallet_audit_log"
     ADD CONSTRAINT "wallet_audit_log_wallet_id_fkey" FOREIGN KEY ("wallet_id") REFERENCES "public"."wallets"("id");
 
-
-
 ALTER TABLE ONLY "public"."wallets"
     ADD CONSTRAINT "wallets_auth_user_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
 
 ALTER TABLE ONLY "public"."wallets"
     ADD CONSTRAINT "wallets_profile_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "public"."profile"("id") ON UPDATE CASCADE ON DELETE CASCADE;
 
-
-
 ALTER TABLE ONLY "public"."wallets"
     ADD CONSTRAINT "wallets_user_id_fkey" FOREIGN KEY ("profile_id") REFERENCES "auth"."users"("id") ON DELETE CASCADE;
-
-
 
 CREATE POLICY "Admins can create approval audit log entries" ON "public"."approval_audit_log" FOR INSERT TO "authenticated" WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."admins"
   WHERE (("admins"."id" = "approval_audit_log"."performed_by") AND (("admins"."email")::"text" = ("auth"."jwt"() ->> 'email'::"text"))))));
 
-
-
 CREATE POLICY "Admins can create approval requests" ON "public"."approval_requests" FOR INSERT TO "authenticated" WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."admins"
   WHERE (("admins"."id" = "approval_requests"."requested_by") AND (("admins"."email")::"text" = ("auth"."jwt"() ->> 'email'::"text"))))));
-
-
 
 CREATE POLICY "Admins can insert payout transactions" ON "public"."transactions" FOR INSERT WITH CHECK (((EXISTS ( SELECT 1
    FROM "public"."profile" "p"
@@ -3833,33 +3077,19 @@ CREATE POLICY "Admins can insert payout transactions" ON "public"."transactions"
    FROM "public"."admins"
   WHERE ((("admins"."email")::"text" = ("auth"."jwt"() ->> 'email'::"text")) AND ("admins"."role" = ANY (ARRAY['Super Admin'::"public"."admin_type_old", 'Finance Admin'::"public"."admin_type_old", 'Investment Admin'::"public"."admin_type_old"]))))) AND ("type" = ANY (ARRAY['Payout'::"public"."transaction_type", 'payout_return'::"public"."transaction_type"])))));
 
-
-
 CREATE POLICY "Admins can insert payouts" ON "public"."payouts" FOR INSERT WITH CHECK ((EXISTS ( SELECT 1
    FROM "public"."admins"
   WHERE ((("admins"."email")::"text" = ("auth"."jwt"() ->> 'email'::"text")) AND ("admins"."role" = ANY (ARRAY['Super Admin'::"public"."admin_type_old", 'Finance Admin'::"public"."admin_type_old", 'Investment Admin'::"public"."admin_type_old"]))))));
 
-
-
 CREATE POLICY "Admins can manage all investments" ON "public"."investments" USING ("public"."is_admin"("auth"."uid"()));
-
-
 
 CREATE POLICY "Admins can manage all notifications" ON "public"."users_notifications" USING ("public"."is_admin"("auth"."uid"()));
 
-
-
 CREATE POLICY "Admins can manage all projects" ON "public"."projects" USING ("public"."is_admin"("auth"."uid"())) WITH CHECK ("public"."is_admin"("auth"."uid"()));
-
-
 
 CREATE POLICY "Admins can manage all support tickets" ON "public"."support_tickets" USING ("public"."is_admin"("auth"."uid"()));
 
-
-
 CREATE POLICY "Admins can manage notifications" ON "public"."notifications" USING ("public"."is_admin"("auth"."uid"()));
-
-
 
 CREATE POLICY "Admins can update approval requests" ON "public"."approval_requests" FOR UPDATE TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."admins"
@@ -3867,11 +3097,7 @@ CREATE POLICY "Admins can update approval requests" ON "public"."approval_reques
    FROM "public"."admins"
   WHERE ((("admins"."email")::"text" = ("auth"."jwt"() ->> 'email'::"text")) AND ("admins"."role" = ANY (ARRAY['Super Admin'::"public"."admin_type_old", 'Finance Admin'::"public"."admin_type_old", 'Investment Admin'::"public"."admin_type_old"]))))));
 
-
-
 CREATE POLICY "Admins can view all high ticket investments" ON "public"."high_ticket_investments" USING ("public"."is_admin"("auth"."uid"()));
-
-
 
 CREATE POLICY "Admins can view all payment accounts" ON "public"."payment_accounts" FOR SELECT USING ((("auth"."uid"() IN ( SELECT "profile"."user_id"
    FROM "public"."profile"
@@ -3879,181 +3105,99 @@ CREATE POLICY "Admins can view all payment accounts" ON "public"."payment_accoun
    FROM "public"."admins"
   WHERE ((("admins"."email")::"text" = ("auth"."jwt"() ->> 'email'::"text")) AND ("admins"."role" = ANY (ARRAY['Super Admin'::"public"."admin_type_old", 'Finance Admin'::"public"."admin_type_old", 'Investment Admin'::"public"."admin_type_old"])))))));
 
-
-
 CREATE POLICY "Admins can view all payouts" ON "public"."payouts" FOR SELECT USING (((EXISTS ( SELECT 1
    FROM "public"."profile"
   WHERE (("profile"."id" = "payouts"."profile_id") AND ("profile"."user_id" = "auth"."uid"())))) OR (EXISTS ( SELECT 1
    FROM "public"."admins"
   WHERE ((("admins"."email")::"text" = ("auth"."jwt"() ->> 'email'::"text")) AND ("admins"."role" = ANY (ARRAY['Super Admin'::"public"."admin_type_old", 'Finance Admin'::"public"."admin_type_old", 'Investment Admin'::"public"."admin_type_old"])))))));
 
-
-
 CREATE POLICY "Admins can view all users" ON "public"."users" USING ("public"."is_admin"("auth"."uid"()));
-
-
 
 CREATE POLICY "Admins can view all wallet audit logs" ON "public"."wallet_audit_log" USING ("public"."is_admin"("auth"."uid"()));
 
-
-
 CREATE POLICY "Admins can view their own data" ON "public"."admins" FOR SELECT USING (("auth"."uid"() = "id"));
-
-
 
 CREATE POLICY "Admins can view their own data by email" ON "public"."admins" FOR SELECT USING ((TRIM(BOTH FROM "public"."get_current_user_email"()) = TRIM(BOTH FROM "email")));
 
-
-
 CREATE POLICY "All authenticated users can view project updates" ON "public"."project_updates" FOR SELECT TO "authenticated" USING (true);
-
-
 
 CREATE POLICY "Authenticated users can view active projects" ON "public"."projects" FOR SELECT TO "authenticated" USING ((("status")::"text" = 'Active'::"text"));
 
-
-
 CREATE POLICY "Authenticated users can view approval audit log" ON "public"."approval_audit_log" FOR SELECT TO "authenticated" USING (true);
-
-
 
 CREATE POLICY "Authenticated users can view approval workflow steps" ON "public"."approval_workflow_steps" FOR SELECT TO "authenticated" USING (true);
 
-
-
 CREATE POLICY "Authenticated users can view notification queue" ON "public"."notification_queue" FOR SELECT TO "authenticated" USING (true);
-
-
 
 CREATE POLICY "Authenticated users can view system settings" ON "public"."system_settings" FOR SELECT TO "authenticated" USING (true);
 
-
-
 CREATE POLICY "Finance Admin can view finance transactions" ON "public"."transactions" FOR SELECT TO "authenticated" USING (("public"."is_finance_admin"("auth"."uid"()) AND ("type" = ANY (ARRAY['Payout'::"public"."transaction_type", 'Refund'::"public"."transaction_type", 'momo_topup'::"public"."transaction_type", 'card_topup'::"public"."transaction_type", 'momo_withdrawal'::"public"."transaction_type", 'bank_withdrawal'::"public"."transaction_type", 'payout_return'::"public"."transaction_type"]))));
-
-
 
 COMMENT ON POLICY "Finance Admin can view finance transactions" ON "public"."transactions" IS 'Allows Finance Admins to only view finance-related transactions (Payout, Refund, topups, withdrawals, etc.)';
 
-
-
 CREATE POLICY "Finance and Super Admins can view COMPANY wallets" ON "public"."wallets" FOR SELECT USING ((("auth"."uid"() = "profile_id") OR (("wallet_type" = 'COMPANY'::"text") AND "public"."is_finance_or_super_admin"("auth"."uid"()))));
-
-
 
 CREATE POLICY "Investment Admin can view investment transactions" ON "public"."transactions" FOR SELECT TO "authenticated" USING (("public"."is_investment_admin"("auth"."uid"()) AND ("type" = ANY (ARRAY['Payin'::"public"."transaction_type", 'investment'::"public"."transaction_type"]))));
 
-
-
 COMMENT ON POLICY "Investment Admin can view investment transactions" ON "public"."transactions" IS 'Allows Investment Admins to only view Payin and investment type transactions';
-
-
 
 CREATE POLICY "Only admins can delete project updates" ON "public"."project_updates" FOR DELETE TO "authenticated" USING ("public"."is_admin"("auth"."uid"()));
 
-
-
 CREATE POLICY "Only admins can insert project updates" ON "public"."project_updates" FOR INSERT TO "authenticated" WITH CHECK ("public"."is_admin"("auth"."uid"()));
-
-
 
 CREATE POLICY "Only admins can update project updates" ON "public"."project_updates" FOR UPDATE TO "authenticated" USING ("public"."is_admin"("auth"."uid"())) WITH CHECK ("public"."is_admin"("auth"."uid"()));
 
-
-
 CREATE POLICY "Public can view countries" ON "public"."countries" FOR SELECT USING (true);
-
-
 
 CREATE POLICY "Public can view latest updates" ON "public"."latest_updates" FOR SELECT TO "authenticated" USING (true);
 
-
-
 CREATE POLICY "Public can view project stages" ON "public"."project_stage" FOR SELECT TO "authenticated" USING (true);
-
-
 
 CREATE POLICY "Public can view published notifications" ON "public"."notifications" FOR SELECT USING (("status" = 'Published'::"public"."notification_status"));
 
-
-
 CREATE POLICY "Service role can manage reset tokens" ON "public"."pin_reset_tokens" USING (true);
-
-
 
 CREATE POLICY "Super Admin can view all transactions" ON "public"."transactions" FOR SELECT TO "authenticated" USING ("public"."is_super_admin"("auth"."uid"()));
 
-
-
 COMMENT ON POLICY "Super Admin can view all transactions" ON "public"."transactions" IS 'Allows Super Admins to view all transactions';
-
-
 
 CREATE POLICY "Super admins can manage all admins" ON "public"."admins" USING ("public"."is_super_admin"("auth"."uid"()));
 
-
-
 CREATE POLICY "Super admins can update all profiles" ON "public"."profile" FOR UPDATE USING ("public"."is_super_admin"("auth"."uid"()));
 
-
-
 CREATE POLICY "Super admins can view all profiles" ON "public"."profile" FOR SELECT USING ("public"."is_super_admin"("auth"."uid"()));
-
-
 
 CREATE POLICY "System can insert wallets" ON "public"."wallets" FOR INSERT TO "authenticated" WITH CHECK ((((( SELECT "auth"."uid"() AS "uid") IS NOT NULL) AND ("profile_id" = ( SELECT "auth"."uid"() AS "uid"))) OR (EXISTS ( SELECT 1
    FROM "public"."admins" "a"
   WHERE ((("a"."id" = ( SELECT "auth"."uid"() AS "uid")) OR (("a"."email")::"text" = ("auth"."jwt"() ->> 'email'::"text"))) AND ("a"."admin_type" = ANY (ARRAY['Super Admin'::"public"."admin_type_old", 'Finance Admin'::"public"."admin_type_old"])))))));
 
-
-
 CREATE POLICY "Users can create their own support tickets" ON "public"."support_tickets" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
-
-
 
 CREATE POLICY "Users can delete their own payment accounts" ON "public"."payment_accounts" FOR DELETE USING (("auth"."uid"() IN ( SELECT "profile"."user_id"
    FROM "public"."profile"
   WHERE ("profile"."id" = "payment_accounts"."profile_id"))));
 
-
-
 CREATE POLICY "Users can insert own profile" ON "public"."profile" FOR INSERT WITH CHECK (("auth"."uid"() = "id"));
 
-
-
 CREATE POLICY "Users can insert their own investments" ON "public"."investments" FOR INSERT WITH CHECK (("auth"."uid"() = "user_id"));
-
-
 
 CREATE POLICY "Users can insert their own payment accounts" ON "public"."payment_accounts" FOR INSERT WITH CHECK (("auth"."uid"() IN ( SELECT "profile"."user_id"
    FROM "public"."profile"
   WHERE ("profile"."id" = "payment_accounts"."profile_id"))));
 
-
-
 CREATE POLICY "Users can insert their own transactions" ON "public"."transactions" FOR INSERT TO "authenticated" WITH CHECK (((EXISTS ( SELECT 1
    FROM "public"."profile" "p"
   WHERE (("p"."id" = "transactions"."profile_id") AND ("p"."user_id" = "auth"."uid"())))) OR ("profile_id" = "auth"."uid"())));
 
-
-
 CREATE POLICY "Users can update own profile" ON "public"."profile" FOR UPDATE USING (("auth"."uid"() = "id"));
-
-
 
 CREATE POLICY "Users can update own wallet" ON "public"."wallets" FOR UPDATE USING (("auth"."uid"() = "profile_id"));
 
-
-
 CREATE POLICY "Users can update their own notifications" ON "public"."users_notifications" FOR UPDATE USING (("auth"."uid"() = "user_id")) WITH CHECK (("auth"."uid"() = "user_id"));
-
-
 
 CREATE POLICY "Users can update their own payment accounts" ON "public"."payment_accounts" FOR UPDATE USING (("auth"."uid"() IN ( SELECT "profile"."user_id"
    FROM "public"."profile"
   WHERE ("profile"."id" = "payment_accounts"."profile_id"))));
-
-
 
 CREATE POLICY "Users can update their own pending transactions" ON "public"."transactions" FOR UPDATE TO "authenticated" USING (((EXISTS ( SELECT 1
    FROM "public"."profile" "p"
@@ -4061,28 +3205,18 @@ CREATE POLICY "Users can update their own pending transactions" ON "public"."tra
    FROM "public"."profile" "p"
   WHERE (("p"."id" = "transactions"."profile_id") AND ("p"."user_id" = "auth"."uid"())))));
 
-
-
 CREATE POLICY "Users can update their own support tickets" ON "public"."support_tickets" FOR UPDATE USING ((("auth"."uid"() = "user_id") AND (("status" IS NULL) OR (("status")::"text" <> 'Resolved'::"text")))) WITH CHECK (("auth"."uid"() = "user_id"));
 
-
-
 CREATE POLICY "Users can update their own user record" ON "public"."users" FOR UPDATE USING (("auth"."uid"() = "id")) WITH CHECK (("auth"."uid"() = "id"));
-
-
 
 CREATE POLICY "Users can view completed projects they invested in" ON "public"."projects" FOR SELECT TO "authenticated" USING (((("status")::"text" = 'Active'::"text") OR (((("status")::"text" = 'Completed'::"text") OR (("status")::"text" = 'Complete'::"text") OR (("status")::"text" = 'Fully Funded'::"text") OR (("status")::"text" = 'Inactive'::"text")) AND (EXISTS ( SELECT 1
    FROM ("public"."transactions" "t"
      JOIN "public"."profile" "p" ON (("p"."id" = "t"."profile_id")))
   WHERE (("t"."project_id" = "projects"."id") AND ("p"."user_id" = "auth"."uid"()) AND ("t"."type" = ANY (ARRAY['Payin'::"public"."transaction_type", 'investment'::"public"."transaction_type"])) AND ("t"."status" = 'Complete'::"public"."transaction_status")))))));
 
-
-
 CREATE POLICY "Users can view own approval notifications" ON "public"."approval_notifications" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."profile"
   WHERE (("profile"."id" = "approval_notifications"."recipient_id") AND ("profile"."user_id" = "auth"."uid"())))));
-
-
 
 CREATE POLICY "Users can view own approval requests" ON "public"."approval_requests" FOR SELECT TO "authenticated" USING (((EXISTS ( SELECT 1
    FROM "public"."profile"
@@ -4092,712 +3226,471 @@ CREATE POLICY "Users can view own approval requests" ON "public"."approval_reque
    FROM "public"."admins"
   WHERE ((("admins"."email")::"text" = ("auth"."jwt"() ->> 'email'::"text")) AND ("admins"."role" = ANY (ARRAY['Super Admin'::"public"."admin_type_old", 'Finance Admin'::"public"."admin_type_old", 'Investment Admin'::"public"."admin_type_old"])))))));
 
-
-
 CREATE POLICY "Users can view own notification targets" ON "public"."notification_targets" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."profile"
   WHERE (("profile"."id" = "notification_targets"."profile_id") AND ("profile"."user_id" = "auth"."uid"())))));
-
-
 
 CREATE POLICY "Users can view own payouts" ON "public"."payouts" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."profile"
   WHERE (("profile"."id" = "payouts"."profile_id") AND ("profile"."user_id" = "auth"."uid"())))));
 
-
-
 CREATE POLICY "Users can view own profile" ON "public"."profile" FOR SELECT USING (("auth"."uid"() = "id"));
 
-
-
 CREATE POLICY "Users can view own wallet" ON "public"."wallets" FOR SELECT USING (("auth"."uid"() = "profile_id"));
-
-
 
 CREATE POLICY "Users can view reports for their invested projects" ON "public"."project_reports" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM ("public"."transactions"
      JOIN "public"."profile" ON (("transactions"."profile_id" = "profile"."id")))
   WHERE (("transactions"."project_id" = "project_reports"."project_id") AND ("profile"."user_id" = "auth"."uid"()) AND ("transactions"."type" = ANY (ARRAY['Payin'::"public"."transaction_type", 'investment'::"public"."transaction_type"])) AND ("transactions"."status" = 'Complete'::"public"."transaction_status")))));
 
-
-
 CREATE POLICY "Users can view their own high ticket investments" ON "public"."high_ticket_investments" FOR SELECT USING ((("auth"."uid"())::"text" = ("user_id")::"text"));
-
-
 
 CREATE POLICY "Users can view their own investments" ON "public"."investments" FOR SELECT USING (("auth"."uid"() = "user_id"));
 
-
-
 CREATE POLICY "Users can view their own notifications" ON "public"."users_notifications" FOR SELECT USING (("auth"."uid"() = "user_id"));
-
-
 
 CREATE POLICY "Users can view their own payment accounts" ON "public"."payment_accounts" FOR SELECT USING (("auth"."uid"() IN ( SELECT "profile"."user_id"
    FROM "public"."profile"
   WHERE ("profile"."id" = "payment_accounts"."profile_id"))));
 
-
-
 CREATE POLICY "Users can view their own reset tokens" ON "public"."pin_reset_tokens" FOR SELECT USING (("profile_id" IN ( SELECT "profile"."id"
    FROM "public"."profile"
   WHERE ("profile"."user_id" = "auth"."uid"()))));
 
-
-
 CREATE POLICY "Users can view their own support tickets" ON "public"."support_tickets" FOR SELECT USING (("auth"."uid"() = "user_id"));
-
-
 
 CREATE POLICY "Users can view their own transactions" ON "public"."transactions" FOR SELECT TO "authenticated" USING ((EXISTS ( SELECT 1
    FROM "public"."profile" "p"
   WHERE (("p"."id" = "transactions"."profile_id") AND ("p"."user_id" = "auth"."uid"())))));
 
-
-
 CREATE POLICY "Users can view their own user record" ON "public"."users" FOR SELECT USING (("auth"."uid"() = "id"));
-
-
 
 CREATE POLICY "Users can view their own wallet audit logs" ON "public"."wallet_audit_log" FOR SELECT USING ((EXISTS ( SELECT 1
    FROM "public"."wallets"
   WHERE (("wallets"."id" = "wallet_audit_log"."wallet_id") AND ("wallets"."profile_id" = "auth"."uid"())))));
 
-
-
 ALTER TABLE "public"."admins" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."approval_audit_log" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."approval_requests" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."approval_workflow_steps" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."countries" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."high_ticket_investments" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."investments" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."latest_updates" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."notification_queue" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."notification_targets" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."notifications" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."payment_accounts" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."payouts" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."pin_reset_tokens" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."profile" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."project_reports" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."project_stage" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."project_updates" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."projects" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."support_tickets" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."system_settings" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."transactions" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."users" ENABLE ROW LEVEL SECURITY;
-
 
 ALTER TABLE "public"."users_notifications" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."wallet_audit_log" ENABLE ROW LEVEL SECURITY;
 
-
 ALTER TABLE "public"."wallets" ENABLE ROW LEVEL SECURITY;
-
 
 GRANT USAGE ON SCHEMA "public" TO "postgres";
 GRANT USAGE ON SCHEMA "public" TO "anon";
 GRANT USAGE ON SCHEMA "public" TO "authenticated";
 GRANT USAGE ON SCHEMA "public" TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."approve_request"("p_request_id" "uuid", "p_reviewed_by" "uuid", "p_approval_notes" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."approve_request"("p_request_id" "uuid", "p_reviewed_by" "uuid", "p_approval_notes" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."approve_request"("p_request_id" "uuid", "p_reviewed_by" "uuid", "p_approval_notes" "text") TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."audit_wallet_changes"() TO "anon";
 GRANT ALL ON FUNCTION "public"."audit_wallet_changes"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."audit_wallet_changes"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."calc_full_months"("start_d" "date", "end_d" "date") TO "anon";
 GRANT ALL ON FUNCTION "public"."calc_full_months"("start_d" "date", "end_d" "date") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."calc_full_months"("start_d" "date", "end_d" "date") TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."calculate_investor_units"() TO "anon";
 GRANT ALL ON FUNCTION "public"."calculate_investor_units"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."calculate_investor_units"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."calculate_payout_amount"("base_amount" numeric, "payment_method" character varying) TO "anon";
 GRANT ALL ON FUNCTION "public"."calculate_payout_amount"("base_amount" numeric, "payment_method" character varying) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."calculate_payout_amount"("base_amount" numeric, "payment_method" character varying) TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."calculate_project_duration_months"() TO "anon";
 GRANT ALL ON FUNCTION "public"."calculate_project_duration_months"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."calculate_project_duration_months"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."create_approval_request"("p_request_type" character varying, "p_title" character varying, "p_description" "text", "p_request_data" "jsonb", "p_requested_by" "uuid", "p_priority" character varying, "p_expires_hours" integer, "p_related_project_id" "uuid", "p_related_payout_id" "uuid", "p_related_user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."create_approval_request"("p_request_type" character varying, "p_title" character varying, "p_description" "text", "p_request_data" "jsonb", "p_requested_by" "uuid", "p_priority" character varying, "p_expires_hours" integer, "p_related_project_id" "uuid", "p_related_payout_id" "uuid", "p_related_user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."create_approval_request"("p_request_type" character varying, "p_title" character varying, "p_description" "text", "p_request_data" "jsonb", "p_requested_by" "uuid", "p_priority" character varying, "p_expires_hours" integer, "p_related_project_id" "uuid", "p_related_payout_id" "uuid", "p_related_user_id" "uuid") TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."delete_project_safely"("p_project_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."delete_project_safely"("p_project_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."delete_project_safely"("p_project_id" "uuid") TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."find_blocking_triggers"() TO "anon";
 GRANT ALL ON FUNCTION "public"."find_blocking_triggers"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."find_blocking_triggers"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."generate_approval_request_id"() TO "anon";
 GRANT ALL ON FUNCTION "public"."generate_approval_request_id"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."generate_approval_request_id"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."generate_high_ticket_investment_id"() TO "anon";
 GRANT ALL ON FUNCTION "public"."generate_high_ticket_investment_id"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."generate_high_ticket_investment_id"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."generate_project_report_id"() TO "anon";
 GRANT ALL ON FUNCTION "public"."generate_project_report_id"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."generate_project_report_id"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."generate_project_update_id"() TO "anon";
 GRANT ALL ON FUNCTION "public"."generate_project_update_id"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."generate_project_update_id"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."generate_transaction_id"() TO "anon";
 GRANT ALL ON FUNCTION "public"."generate_transaction_id"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."generate_transaction_id"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."generate_user_invitation_id"() TO "anon";
 GRANT ALL ON FUNCTION "public"."generate_user_invitation_id"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."generate_user_invitation_id"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."get_current_user_email"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_current_user_email"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_current_user_email"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."get_dashboard_stats"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_dashboard_stats"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_dashboard_stats"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."get_investor_summary"("p_project_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."get_investor_summary"("p_project_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_investor_summary"("p_project_id" "uuid") TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."get_transaction_analytics"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_transaction_analytics"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_transaction_analytics"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."get_user_analytics"() TO "anon";
 GRANT ALL ON FUNCTION "public"."get_user_analytics"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."get_user_analytics"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "anon";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."handle_new_user"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."handle_new_user_signup"() TO "anon";
 GRANT ALL ON FUNCTION "public"."handle_new_user_signup"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."handle_new_user_signup"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."is_admin"("user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."is_admin"("user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_admin"("user_id" "uuid") TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."is_finance_admin"("user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."is_finance_admin"("user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_finance_admin"("user_id" "uuid") TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."is_finance_or_super_admin"("user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."is_finance_or_super_admin"("user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_finance_or_super_admin"("user_id" "uuid") TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."is_investment_admin"("user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."is_investment_admin"("user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_investment_admin"("user_id" "uuid") TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."is_super_admin"("user_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."is_super_admin"("user_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."is_super_admin"("user_id" "uuid") TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."process_wallet_transaction"("p_wallet_id" "uuid", "p_amount" numeric, "p_type" character varying, "p_description" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."process_wallet_transaction"("p_wallet_id" "uuid", "p_amount" numeric, "p_type" character varying, "p_description" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."process_wallet_transaction"("p_wallet_id" "uuid", "p_amount" numeric, "p_type" character varying, "p_description" "text") TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."projects_set_duration_months"() TO "anon";
 GRANT ALL ON FUNCTION "public"."projects_set_duration_months"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."projects_set_duration_months"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."recalculate_all_project_units"() TO "anon";
 GRANT ALL ON FUNCTION "public"."recalculate_all_project_units"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."recalculate_all_project_units"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."recalculate_project_units"("p_project_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."recalculate_project_units"("p_project_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."recalculate_project_units"("p_project_id" "uuid") TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."reject_request"("p_request_id" "uuid", "p_reviewed_by" "uuid", "p_rejection_reason" "text") TO "anon";
 GRANT ALL ON FUNCTION "public"."reject_request"("p_request_id" "uuid", "p_reviewed_by" "uuid", "p_rejection_reason" "text") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."reject_request"("p_request_id" "uuid", "p_reviewed_by" "uuid", "p_rejection_reason" "text") TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."sync_all_project_units"() TO "anon";
 GRANT ALL ON FUNCTION "public"."sync_all_project_units"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."sync_all_project_units"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."sync_available_units"() TO "anon";
 GRANT ALL ON FUNCTION "public"."sync_available_units"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."sync_available_units"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."sync_investor_from_auth"() TO "anon";
 GRANT ALL ON FUNCTION "public"."sync_investor_from_auth"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."sync_investor_from_auth"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."sync_project_units_comprehensive"() TO "anon";
 GRANT ALL ON FUNCTION "public"."sync_project_units_comprehensive"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."sync_project_units_comprehensive"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."sync_wallet_balances_for_payouts"() TO "anon";
 GRANT ALL ON FUNCTION "public"."sync_wallet_balances_for_payouts"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."sync_wallet_balances_for_payouts"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."update_approval_requests_updated_at"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_approval_requests_updated_at"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_approval_requests_updated_at"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."update_available_units_on_project_change"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_available_units_on_project_change"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_available_units_on_project_change"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."update_available_units_on_total_units_change"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_available_units_on_total_units_change"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_available_units_on_total_units_change"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."update_last_login"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_last_login"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_last_login"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."update_payment_accounts_updated_at"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_payment_accounts_updated_at"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_payment_accounts_updated_at"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."update_project_available_units"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_project_available_units"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_project_available_units"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."update_project_stock_after_transaction"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_project_stock_after_transaction"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_project_stock_after_transaction"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."update_project_stock_on_status_change"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_project_stock_on_status_change"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_project_stock_on_status_change"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."update_project_total_units"("p_project_id" "uuid", "p_new_total_units" integer) TO "anon";
 GRANT ALL ON FUNCTION "public"."update_project_total_units"("p_project_id" "uuid", "p_new_total_units" integer) TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_project_total_units"("p_project_id" "uuid", "p_new_total_units" integer) TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."update_project_units"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_project_units"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_project_units"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."update_project_units_for_project"("p_project_id" "uuid") TO "anon";
 GRANT ALL ON FUNCTION "public"."update_project_units_for_project"("p_project_id" "uuid") TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_project_units_for_project"("p_project_id" "uuid") TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."update_project_units_on_transaction_change"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_project_units_on_transaction_change"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_project_units_on_transaction_change"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."update_updated_at_column"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_updated_at_column"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_updated_at_column"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."update_user_investment_stats"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_user_investment_stats"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_user_investment_stats"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."update_wallet_on_topup_complete"() TO "anon";
 GRANT ALL ON FUNCTION "public"."update_wallet_on_topup_complete"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."update_wallet_on_topup_complete"() TO "service_role";
 
-
-
 GRANT ALL ON FUNCTION "public"."validate_unit_limits"() TO "anon";
 GRANT ALL ON FUNCTION "public"."validate_unit_limits"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."validate_unit_limits"() TO "service_role";
-
-
 
 GRANT ALL ON FUNCTION "public"."validate_unit_limits_before_transaction"() TO "anon";
 GRANT ALL ON FUNCTION "public"."validate_unit_limits_before_transaction"() TO "authenticated";
 GRANT ALL ON FUNCTION "public"."validate_unit_limits_before_transaction"() TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."_prisma_migrations" TO "anon";
 GRANT ALL ON TABLE "public"."_prisma_migrations" TO "authenticated";
 GRANT ALL ON TABLE "public"."_prisma_migrations" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."admins" TO "anon";
 GRANT ALL ON TABLE "public"."admins" TO "authenticated";
 GRANT ALL ON TABLE "public"."admins" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."approval_audit_log" TO "anon";
 GRANT ALL ON TABLE "public"."approval_audit_log" TO "authenticated";
 GRANT ALL ON TABLE "public"."approval_audit_log" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."approval_notifications" TO "anon";
 GRANT ALL ON TABLE "public"."approval_notifications" TO "authenticated";
 GRANT ALL ON TABLE "public"."approval_notifications" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."approval_requests" TO "anon";
 GRANT ALL ON TABLE "public"."approval_requests" TO "authenticated";
 GRANT ALL ON TABLE "public"."approval_requests" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."approval_workflow_steps" TO "anon";
 GRANT ALL ON TABLE "public"."approval_workflow_steps" TO "authenticated";
 GRANT ALL ON TABLE "public"."approval_workflow_steps" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."countries" TO "anon";
 GRANT ALL ON TABLE "public"."countries" TO "authenticated";
 GRANT ALL ON TABLE "public"."countries" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."users" TO "anon";
 GRANT ALL ON TABLE "public"."users" TO "authenticated";
 GRANT ALL ON TABLE "public"."users" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."country_analytics" TO "anon";
 GRANT ALL ON TABLE "public"."country_analytics" TO "authenticated";
 GRANT ALL ON TABLE "public"."country_analytics" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."high_ticket_investments" TO "anon";
 GRANT ALL ON TABLE "public"."high_ticket_investments" TO "authenticated";
 GRANT ALL ON TABLE "public"."high_ticket_investments" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."projects" TO "anon";
 GRANT ALL ON TABLE "public"."projects" TO "authenticated";
 GRANT ALL ON TABLE "public"."projects" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."high_ticket_investment_analytics" TO "anon";
 GRANT ALL ON TABLE "public"."high_ticket_investment_analytics" TO "authenticated";
 GRANT ALL ON TABLE "public"."high_ticket_investment_analytics" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."high_ticket_investment_analytics_v2" TO "anon";
 GRANT ALL ON TABLE "public"."high_ticket_investment_analytics_v2" TO "authenticated";
 GRANT ALL ON TABLE "public"."high_ticket_investment_analytics_v2" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."investments" TO "anon";
 GRANT ALL ON TABLE "public"."investments" TO "authenticated";
 GRANT ALL ON TABLE "public"."investments" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."latest_updates" TO "anon";
 GRANT ALL ON TABLE "public"."latest_updates" TO "authenticated";
 GRANT ALL ON TABLE "public"."latest_updates" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."notification_queue" TO "anon";
 GRANT ALL ON TABLE "public"."notification_queue" TO "authenticated";
 GRANT ALL ON TABLE "public"."notification_queue" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."notification_targets" TO "anon";
 GRANT ALL ON TABLE "public"."notification_targets" TO "authenticated";
 GRANT ALL ON TABLE "public"."notification_targets" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."notifications" TO "anon";
 GRANT ALL ON TABLE "public"."notifications" TO "authenticated";
 GRANT ALL ON TABLE "public"."notifications" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."payment_accounts" TO "anon";
 GRANT ALL ON TABLE "public"."payment_accounts" TO "authenticated";
 GRANT ALL ON TABLE "public"."payment_accounts" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."payouts" TO "anon";
 GRANT ALL ON TABLE "public"."payouts" TO "authenticated";
 GRANT ALL ON TABLE "public"."payouts" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."payout_calculations" TO "anon";
 GRANT ALL ON TABLE "public"."payout_calculations" TO "authenticated";
 GRANT ALL ON TABLE "public"."payout_calculations" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."payout_calculations_v2" TO "anon";
 GRANT ALL ON TABLE "public"."payout_calculations_v2" TO "authenticated";
 GRANT ALL ON TABLE "public"."payout_calculations_v2" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."pin_reset_tokens" TO "anon";
 GRANT ALL ON TABLE "public"."pin_reset_tokens" TO "authenticated";
 GRANT ALL ON TABLE "public"."pin_reset_tokens" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."profile" TO "anon";
 GRANT ALL ON TABLE "public"."profile" TO "authenticated";
 GRANT ALL ON TABLE "public"."profile" TO "service_role";
 
-
-
 GRANT ALL ON SEQUENCE "public"."project_report_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."project_report_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."project_report_seq" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."project_reports" TO "anon";
 GRANT ALL ON TABLE "public"."project_reports" TO "authenticated";
 GRANT ALL ON TABLE "public"."project_reports" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."project_reports_summary_v2" TO "anon";
 GRANT ALL ON TABLE "public"."project_reports_summary_v2" TO "authenticated";
 GRANT ALL ON TABLE "public"."project_reports_summary_v2" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."project_stage" TO "anon";
 GRANT ALL ON TABLE "public"."project_stage" TO "authenticated";
 GRANT ALL ON TABLE "public"."project_stage" TO "service_role";
 
-
-
 GRANT ALL ON SEQUENCE "public"."project_stage_id_seq" TO "anon";
 GRANT ALL ON SEQUENCE "public"."project_stage_id_seq" TO "authenticated";
 GRANT ALL ON SEQUENCE "public"."project_stage_id_seq" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."project_updates" TO "anon";
 GRANT ALL ON TABLE "public"."project_updates" TO "authenticated";
 GRANT ALL ON TABLE "public"."project_updates" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."project_updates_summary_v2" TO "anon";
 GRANT ALL ON TABLE "public"."project_updates_summary_v2" TO "authenticated";
 GRANT ALL ON TABLE "public"."project_updates_summary_v2" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."support_tickets" TO "anon";
 GRANT ALL ON TABLE "public"."support_tickets" TO "authenticated";
 GRANT ALL ON TABLE "public"."support_tickets" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."system_settings" TO "anon";
 GRANT ALL ON TABLE "public"."system_settings" TO "authenticated";
 GRANT ALL ON TABLE "public"."system_settings" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."transactions" TO "anon";
 GRANT ALL ON TABLE "public"."transactions" TO "authenticated";
 GRANT ALL ON TABLE "public"."transactions" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."transaction_analytics" TO "anon";
 GRANT ALL ON TABLE "public"."transaction_analytics" TO "authenticated";
 GRANT ALL ON TABLE "public"."transaction_analytics" TO "service_role";
-
-
 
 GRANT ALL ON TABLE "public"."users_notifications" TO "anon";
 GRANT ALL ON TABLE "public"."users_notifications" TO "authenticated";
 GRANT ALL ON TABLE "public"."users_notifications" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."wallet_audit_log" TO "anon";
 GRANT ALL ON TABLE "public"."wallet_audit_log" TO "authenticated";
 GRANT ALL ON TABLE "public"."wallet_audit_log" TO "service_role";
 
-
-
 GRANT ALL ON TABLE "public"."wallets" TO "anon";
 GRANT ALL ON TABLE "public"."wallets" TO "authenticated";
 GRANT ALL ON TABLE "public"."wallets" TO "service_role";
-
 
