@@ -7,33 +7,6 @@
 --
 -- Generated: 2025-11-22
 -- Total migrations: 62
---
--- NOTE: This migration was created from supabase db dump.
--- It includes the full schema except base tables which are in 20251101000000_base_schema.sql
-
-
-
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-SET idle_in_transaction_session_timeout = 0;
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
-
-CREATE SCHEMA IF NOT EXISTS "public";
-
-
-ALTER SCHEMA "public" OWNER TO "pg_database_owner";
-
-
-COMMENT ON SCHEMA "public" IS 'standard public schema';
-
-
 
 CREATE TYPE "public"."PAYOUT_CHANNEL" AS ENUM (
     'MOMO',
@@ -152,12 +125,6 @@ COMMENT ON TYPE "public"."audience_type" IS 'notification audience types';
 
 
 
-CREATE TYPE "public"."channel" AS ENUM (
-    'momo',
-    'bank',
-    'card',
-    'wallet'
-);
 
 
 ALTER TYPE "public"."channel" OWNER TO "postgres";
@@ -256,11 +223,6 @@ COMMENT ON TYPE "public"."payout_types" IS 'type of payouts';
 
 
 
-CREATE TYPE "public"."transaction_status" AS ENUM (
-    'Complete',
-    'Pending',
-    'Failed'
-);
 
 
 ALTER TYPE "public"."transaction_status" OWNER TO "postgres";
@@ -270,17 +232,6 @@ COMMENT ON TYPE "public"."transaction_status" IS 'status of transactions';
 
 
 
-CREATE TYPE "public"."transaction_type" AS ENUM (
-    'Payin',
-    'Payout',
-    'Refund',
-    'momo_topup',
-    'card_topup',
-    'momo_withdrawal',
-    'bank_withdrawal',
-    'payout_return',
-    'investment'
-);
 
 
 ALTER TYPE "public"."transaction_type" OWNER TO "postgres";
@@ -587,7 +538,6 @@ CREATE OR REPLACE FUNCTION "public"."delete_project_safely"("p_project_id" "uuid
 BEGIN
   -- Step 1: Set related_project_id to NULL for all approval requests
   UPDATE approval_requests
-  SET related_project_id = NULL
   WHERE related_project_id = p_project_id;
 
   -- Step 2: Delete records with NO ACTION constraints
@@ -730,7 +680,6 @@ ALTER FUNCTION "public"."generate_user_invitation_id"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."get_current_user_email"() RETURNS "text"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
   user_email text;
@@ -945,7 +894,6 @@ ALTER FUNCTION "public"."handle_new_user_signup"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."is_admin"("user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 BEGIN
   RETURN EXISTS (
@@ -964,7 +912,6 @@ ALTER FUNCTION "public"."is_admin"("user_id" "uuid") OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."is_finance_admin"("user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
   user_email text;
@@ -999,7 +946,6 @@ COMMENT ON FUNCTION "public"."is_finance_admin"("user_id" "uuid") IS 'Checks if 
 
 CREATE OR REPLACE FUNCTION "public"."is_finance_or_super_admin"("user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 BEGIN
   RETURN EXISTS (
@@ -1019,7 +965,6 @@ ALTER FUNCTION "public"."is_finance_or_super_admin"("user_id" "uuid") OWNER TO "
 
 CREATE OR REPLACE FUNCTION "public"."is_investment_admin"("user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
   user_email text;
@@ -1057,7 +1002,6 @@ COMMENT ON FUNCTION "public"."is_investment_admin"("user_id" "uuid") IS 'Checks 
 
 CREATE OR REPLACE FUNCTION "public"."is_super_admin"("user_id" "uuid") RETURNS boolean
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
   user_email text;
@@ -1126,7 +1070,6 @@ BEGIN
   
   -- Update wallet balance
   UPDATE public.wallets 
-  SET balance = balance + p_amount,
       updated_at = NOW()
   WHERE id = p_wallet_id;
   
@@ -1174,7 +1117,6 @@ ALTER FUNCTION "public"."projects_set_duration_months"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."recalculate_all_project_units"() RETURNS TABLE("project_id" "uuid", "project_name" character varying, "total_units" integer, "old_purchased_units" bigint, "new_purchased_units" bigint, "old_available_units" bigint, "new_available_units" bigint, "status" "text")
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
     v_project_record RECORD;
@@ -1208,7 +1150,6 @@ BEGIN
         
         -- Update the project
         UPDATE projects
-        SET 
             purchased_unit = v_calculated_purchased_units,
             available_unit = v_calculated_available_units,
             updated_at = NOW()
@@ -1242,7 +1183,6 @@ ALTER FUNCTION "public"."recalculate_all_project_units"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."recalculate_project_units"("p_project_id" "uuid") RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
     v_project_record RECORD;
@@ -1286,7 +1226,6 @@ BEGIN
     
     -- Update the project
     UPDATE projects
-    SET 
         purchased_unit = v_calculated_purchased_units,
         available_unit = v_calculated_available_units,
         updated_at = NOW()
@@ -1368,7 +1307,6 @@ BEGIN
   -- If this is a project approval request, update the project status to REJECTED
   IF v_related_project_id IS NOT NULL THEN
     UPDATE projects 
-    SET status = 'REJECTED', updated_at = NOW()
     WHERE id = v_related_project_id;
   END IF;
   
@@ -1427,7 +1365,6 @@ ALTER FUNCTION "public"."sync_available_units"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."sync_investor_from_auth"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 begin
   insert into public.users (
@@ -1464,7 +1401,6 @@ ALTER FUNCTION "public"."sync_investor_from_auth"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."sync_project_units_comprehensive"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
     v_calculated_purchased_units BIGINT;
@@ -1572,7 +1508,6 @@ ALTER FUNCTION "public"."sync_project_units_comprehensive"() OWNER TO "postgres"
 
 CREATE OR REPLACE FUNCTION "public"."sync_wallet_balances_for_payouts"() RETURNS TABLE("profile_id" "uuid", "wallet_id" "uuid", "old_balance" numeric, "new_balance" numeric, "total_payouts" numeric, "transactions_count" bigint)
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
   profile_uuid uuid;
@@ -1612,7 +1547,6 @@ BEGIN
       
       -- Update wallet balance (add payouts)
       UPDATE wallets
-      SET balance = old_balance_val + payout_sum,
           updated_at = NOW()
       WHERE id = wallet_rec.id;
       
@@ -1684,11 +1618,9 @@ ALTER FUNCTION "public"."update_available_units_on_total_units_change"() OWNER T
 
 CREATE OR REPLACE FUNCTION "public"."update_last_login"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO ''
     AS $$
 BEGIN
   UPDATE public.users
-  SET last_login = NEW.last_sign_in_at,
       updated_at = NOW()
   WHERE id = NEW.id;
   RETURN NEW;
@@ -1734,7 +1666,6 @@ ALTER FUNCTION "public"."update_project_available_units"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."update_project_stock_after_transaction"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
     current_available INTEGER;
@@ -1790,7 +1721,6 @@ BEGIN
     IF NEW.unit IS NOT NULL AND NEW.unit > 0 THEN
         -- Update the project stock and total_value in REAL-TIME
         UPDATE projects
-        SET 
             available_unit = GREATEST(0, new_available), -- Ensure it doesn't go negative
             purchased_unit = new_purchased,
             total_value = COALESCE(total_value, 0) + COALESCE(NEW.amount, 0), -- Increment total raised
@@ -1813,7 +1743,6 @@ ALTER FUNCTION "public"."update_project_stock_after_transaction"() OWNER TO "pos
 
 CREATE OR REPLACE FUNCTION "public"."update_project_stock_on_status_change"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
     current_available INTEGER;
@@ -1859,7 +1788,6 @@ BEGIN
         -- Update project if unit is valid (REAL-TIME update)
         IF NEW.unit IS NOT NULL AND NEW.unit > 0 THEN
             UPDATE projects
-            SET 
                 available_unit = GREATEST(0, new_available),
                 purchased_unit = new_purchased,
                 total_value = COALESCE(total_value, 0) + COALESCE(NEW.amount, 0), -- Increment total raised
@@ -1882,7 +1810,6 @@ BEGIN
         IF project_exists AND OLD.unit IS NOT NULL AND OLD.unit > 0 THEN
             -- Reverse the unit and amount changes (REAL-TIME reversal)
             UPDATE projects
-            SET 
                 available_unit = available_unit + OLD.unit,
                 purchased_unit = GREATEST(0, purchased_unit - OLD.unit),
                 total_value = GREATEST(0, COALESCE(total_value, 0) - COALESCE(OLD.amount, 0)), -- Decrement total raised
@@ -1901,7 +1828,6 @@ ALTER FUNCTION "public"."update_project_stock_on_status_change"() OWNER TO "post
 
 CREATE OR REPLACE FUNCTION "public"."update_project_total_units"("p_project_id" "uuid", "p_new_total_units" integer) RETURNS "jsonb"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
     v_project_record RECORD;
@@ -1959,7 +1885,6 @@ BEGIN
     
     -- Update the project
     UPDATE projects
-    SET 
         total_units = p_new_total_units,
         available_unit = v_new_available_units,
         purchased_unit = v_current_purchased_units,
@@ -1997,7 +1922,6 @@ BEGIN
     -- Only update for investment transactions with Complete status
     IF NEW.type = 'investment' AND NEW.status = 'Complete' THEN
       UPDATE projects 
-      SET 
         purchased_unit = purchased_unit + NEW.unit,
         available_unit = GREATEST(0, total_units - (purchased_unit + NEW.unit))
       WHERE id = NEW.project_id;
@@ -2010,7 +1934,6 @@ BEGIN
     -- If status changed from Complete to something else, subtract the units
     IF OLD.status = 'Complete' AND NEW.status != 'Complete' AND OLD.type = 'investment' THEN
       UPDATE projects 
-      SET 
         purchased_unit = purchased_unit - OLD.unit,
         available_unit = GREATEST(0, total_units - (purchased_unit - OLD.unit))
       WHERE id = OLD.project_id;
@@ -2019,7 +1942,6 @@ BEGIN
     -- If status changed to Complete, add the units
     IF OLD.status != 'Complete' AND NEW.status = 'Complete' AND NEW.type = 'investment' THEN
       UPDATE projects 
-      SET 
         purchased_unit = purchased_unit + NEW.unit,
         available_unit = GREATEST(0, total_units - (purchased_unit + NEW.unit))
       WHERE id = NEW.project_id;
@@ -2028,7 +1950,6 @@ BEGIN
     -- If unit amount changed and status is Complete
     IF OLD.unit != NEW.unit AND NEW.status = 'Complete' AND NEW.type = 'investment' THEN
       UPDATE projects 
-      SET 
         purchased_unit = purchased_unit - OLD.unit + NEW.unit,
         available_unit = GREATEST(0, total_units - (purchased_unit - OLD.unit + NEW.unit))
       WHERE id = NEW.project_id;
@@ -2042,7 +1963,6 @@ BEGIN
     -- Only update for investment transactions with Complete status
     IF OLD.type = 'investment' AND OLD.status = 'Complete' THEN
       UPDATE projects 
-      SET 
         purchased_unit = purchased_unit - OLD.unit,
         available_unit = GREATEST(0, total_units - (purchased_unit - OLD.unit))
       WHERE id = OLD.project_id;
@@ -2092,7 +2012,6 @@ BEGIN
     
     -- Update the project with new unit counts
     UPDATE projects 
-    SET 
         purchased_unit = total_purchased_units,
         available_unit = total_available_units,
         updated_at = NOW()
@@ -2117,14 +2036,12 @@ CREATE OR REPLACE FUNCTION "public"."update_project_units_on_transaction_change"
 BEGIN
   IF (TG_OP = 'INSERT') THEN
     UPDATE projects
-    SET 
       purchased_unit = COALESCE(purchased_unit, 0) + NEW.unit,
       available_unit = COALESCE(total_units, 0) - (COALESCE(purchased_unit, 0) + NEW.unit)
     WHERE id = NEW.project_id;
 
   ELSIF (TG_OP = 'DELETE') THEN
     UPDATE projects
-    SET 
       purchased_unit = COALESCE(purchased_unit, 0) - OLD.unit,
       available_unit = COALESCE(total_units, 0) - (COALESCE(purchased_unit, 0) - OLD.unit)
     WHERE id = OLD.project_id;
@@ -2156,7 +2073,6 @@ CREATE OR REPLACE FUNCTION "public"."update_user_investment_stats"() RETURNS "tr
     AS $$
 BEGIN
     UPDATE users 
-    SET total_invested = (
         SELECT COALESCE(SUM(amount), 0)
         FROM transactions 
         WHERE profile_id = NEW.profile_id AND status = 'Complete'
@@ -2183,7 +2099,6 @@ ALTER FUNCTION "public"."update_user_investment_stats"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."update_wallet_on_topup_complete"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 BEGIN
   -- DISABLED: All wallet updates are now handled by the backend API
@@ -2256,7 +2171,6 @@ ALTER FUNCTION "public"."validate_unit_limits"() OWNER TO "postgres";
 
 CREATE OR REPLACE FUNCTION "public"."validate_unit_limits_before_transaction"() RETURNS "trigger"
     LANGUAGE "plpgsql" SECURITY DEFINER
-    SET "search_path" TO 'public'
     AS $$
 DECLARE
   project_record RECORD;
@@ -2297,9 +2211,7 @@ ALTER FUNCTION "public"."validate_unit_limits_before_transaction"() OWNER TO "po
 COMMENT ON FUNCTION "public"."validate_unit_limits_before_transaction"() IS 'Validates that sufficient units are available before allowing a new investment transaction';
 
 
-SET default_tablespace = '';
 
-SET default_table_access_method = "heap";
 
 
 CREATE TABLE IF NOT EXISTS "public"."_prisma_migrations" (
@@ -2564,41 +2476,6 @@ CREATE TABLE IF NOT EXISTS "public"."high_ticket_investments" (
 ALTER TABLE "public"."high_ticket_investments" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."projects" (
-    "id" "uuid" DEFAULT "extensions"."uuid_generate_v4"() NOT NULL,
-    "project_code" character varying(50),
-    "project_name" character varying(255) NOT NULL,
-    "description" "text",
-    "project_type" "public"."PROJECT_TYPES" DEFAULT 'CROP'::"public"."PROJECT_TYPES" NOT NULL,
-    "farm_location" character varying(255),
-    "total_units" integer NOT NULL,
-    "unit_price" numeric(15,2) NOT NULL,
-    "expected_return_rate" numeric(5,2) NOT NULL,
-    "duration_months" integer,
-    "status" character varying(50) DEFAULT 'Active'::character varying,
-    "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"(),
-    "image" "text",
-    "start_date" "date",
-    "end_date" "date",
-    "cover_image_url" character varying(500),
-    "max_expected_return_rate" double precision DEFAULT '0'::double precision NOT NULL,
-    "available_unit" bigint DEFAULT '0'::bigint,
-    "purchased_unit" bigint DEFAULT '0'::bigint,
-    "project_stages" "public"."PROJECT_STAGE",
-    "is_high_ticket" boolean DEFAULT false,
-    "min_investment_amount" numeric(15,2) DEFAULT 0.00,
-    "max_investment_amount" numeric(15,2) DEFAULT 0.00,
-    "payout_type" "public"."payout_types",
-    "created_by" "text",
-    "total_value" numeric,
-    "payout_completed" boolean DEFAULT false,
-    "payout_completed_at" timestamp with time zone,
-    "risk_level" character varying(20),
-    CONSTRAINT "chk_projects_available_nonnegative" CHECK (("available_unit" >= 0)),
-    CONSTRAINT "projects_available_unit_check" CHECK (("available_unit" >= 0)),
-    CONSTRAINT "projects_risk_level_check" CHECK ((("risk_level")::"text" = ANY ((ARRAY['Low'::character varying, 'Medium'::character varying, 'High'::character varying])::"text"[])))
-);
 
 
 ALTER TABLE "public"."projects" OWNER TO "postgres";
@@ -2864,26 +2741,6 @@ CREATE TABLE IF NOT EXISTS "public"."pin_reset_tokens" (
 ALTER TABLE "public"."pin_reset_tokens" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."profile" (
-    "id" "uuid" NOT NULL,
-    "first_name" "text",
-    "last_name" "text",
-    "country" "text",
-    "phone_number" "text",
-    "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"(),
-    "pin" "text",
-    "kyc_status" "text",
-    "kyc_documents" "jsonb",
-    "user_id" "uuid",
-    "email" "text",
-    "notifications_id" "uuid" DEFAULT "gen_random_uuid"(),
-    "last_login" timestamp with time zone DEFAULT "now"(),
-    "email_preferences" "public"."notification_channel"[] DEFAULT ARRAY[]::"public"."notification_channel"[],
-    "push_preferences" "public"."notification_channel"[] DEFAULT ARRAY[]::"public"."notification_channel"[],
-    "avatar_url" "text",
-    CONSTRAINT "profiles_kyc_status_check" CHECK (("kyc_status" = ANY (ARRAY['pending'::"text", 'verified'::"text", 'rejected'::"text", 'complete'::"text"])))
-);
 
 
 ALTER TABLE "public"."profile" OWNER TO "postgres";
@@ -3069,29 +2926,6 @@ CREATE TABLE IF NOT EXISTS "public"."system_settings" (
 ALTER TABLE "public"."system_settings" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."transactions" (
-    "transaction_id" character varying NOT NULL,
-    "project_id" "uuid",
-    "type" "public"."transaction_type" NOT NULL,
-    "amount" numeric(15,2) NOT NULL,
-    "unit" integer,
-    "status" "public"."transaction_status" DEFAULT 'Pending'::"public"."transaction_status" NOT NULL,
-    "fees" numeric(15,2) DEFAULT 0.00,
-    "net_amount" numeric(15,2) NOT NULL,
-    "description" "text",
-    "processed_at" timestamp with time zone,
-    "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"(),
-    "channel" "public"."channel" DEFAULT 'momo'::"public"."channel" NOT NULL,
-    "external_id" "text",
-    "network" "text",
-    "account_number" "text" NOT NULL,
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "wallet_id" "uuid",
-    "profile_id" "uuid" NOT NULL,
-    "failure_reason" character varying,
-    "metadata" json
-);
 
 
 ALTER TABLE "public"."transactions" OWNER TO "postgres";
@@ -3189,18 +3023,6 @@ CREATE TABLE IF NOT EXISTS "public"."wallet_audit_log" (
 ALTER TABLE "public"."wallet_audit_log" OWNER TO "postgres";
 
 
-CREATE TABLE IF NOT EXISTS "public"."wallets" (
-    "id" "uuid" DEFAULT "gen_random_uuid"() NOT NULL,
-    "profile_id" "uuid",
-    "balance" numeric(15,2) DEFAULT 0.00,
-    "currency" character varying(3) DEFAULT 'GHS'::character varying,
-    "status" character varying(20) DEFAULT 'active'::character varying,
-    "created_at" timestamp with time zone DEFAULT "now"(),
-    "updated_at" timestamp with time zone DEFAULT "now"(),
-    "wallet_type" "text" DEFAULT 'user'::"text",
-    "pending_balance" numeric DEFAULT 0.00,
-    "float_account_id" "text"
-);
 
 
 ALTER TABLE "public"."wallets" OWNER TO "postgres";
