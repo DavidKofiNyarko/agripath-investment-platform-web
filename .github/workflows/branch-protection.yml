@@ -1,0 +1,27 @@
+name: Branch Protection Check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  protect-main:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check if pushing to main
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          echo "❌ Direct pushes to main branch are not allowed!"
+          echo "Please create a pull request from a feature branch."
+          exit 1
+      
+      - name: Validate PR to main
+        if: github.event_name == 'pull_request' && github.base_ref == 'main'
+        run: |
+          echo "✅ Pull request to main - this is allowed"
+          echo "Make sure the PR has at least 1 approval before merging."
+
