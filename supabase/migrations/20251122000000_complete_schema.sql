@@ -5,12 +5,20 @@
 -- Generated: 2025-11-22
 -- This is a comprehensive migration that sets up the complete database schema
 
+<<<<<<< HEAD
 CREATE TYPE "public"."PAYOUT_CHANNEL" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."PAYOUT_CHANNEL" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'MOMO',
     'BANK'
 );
 
+<<<<<<< HEAD
 CREATE TYPE "public"."PROJECT_STAGE" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."PROJECT_STAGE" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'LAND_PREPARATION',
     'PLANTING',
     'IRRIGATION',
@@ -47,7 +55,11 @@ CREATE TYPE "public"."PROJECT_STAGE" AS ENUM (
 
 COMMENT ON TYPE "public"."PROJECT_STAGE" IS 'Project stages based on official project timelines document - covers CROP, LIVESTOCK, POULTRY, and AQUACULTURE project types';
 
+<<<<<<< HEAD
 CREATE TYPE "public"."PROJECT_TYPES" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."PROJECT_TYPES" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'CROP',
     'LIVESTOCK',
     'POULTRY'
@@ -55,19 +67,31 @@ CREATE TYPE "public"."PROJECT_TYPES" AS ENUM (
 
 COMMENT ON TYPE "public"."PROJECT_TYPES" IS 'PROJECT TYPES';
 
+<<<<<<< HEAD
 CREATE TYPE "public"."account_status" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."account_status" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Active',
     'Suspended',
     'Inactive'
 );
 
+<<<<<<< HEAD
 CREATE TYPE "public"."admin_status" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."admin_status" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Active',
     'Inactive',
     'Suspended'
 );
 
+<<<<<<< HEAD
 CREATE TYPE "public"."admin_type_old" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."admin_type_old" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Supper Admin',
     'Farm Admin',
     'Investment Admin',
@@ -80,7 +104,11 @@ CREATE TYPE "public"."admin_type_old" AS ENUM (
     'Investment Manager'
 );
 
+<<<<<<< HEAD
 CREATE TYPE "public"."audience_type" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."audience_type" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Users',
     'Investors',
     'All'
@@ -88,7 +116,11 @@ CREATE TYPE "public"."audience_type" AS ENUM (
 
 COMMENT ON TYPE "public"."audience_type" IS 'notification audience types';
 
+<<<<<<< HEAD
 CREATE TYPE "public"."channel" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."channel" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'momo',
     'bank',
     'card',
@@ -97,14 +129,22 @@ CREATE TYPE "public"."channel" AS ENUM (
 
 COMMENT ON TYPE "public"."channel" IS 'payment channels';
 
+<<<<<<< HEAD
 CREATE TYPE "public"."kyc_status" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."kyc_status" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'completed',
     'pending',
     'failed',
     'verified'
 );
 
+<<<<<<< HEAD
 CREATE TYPE "public"."notification_category" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."notification_category" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Investment',
     'System',
     'Marketing',
@@ -112,7 +152,11 @@ CREATE TYPE "public"."notification_category" AS ENUM (
     'Alert'
 );
 
+<<<<<<< HEAD
 CREATE TYPE "public"."notification_channel" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."notification_channel" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Email',
     'SMS',
     'InApp',
@@ -120,21 +164,33 @@ CREATE TYPE "public"."notification_channel" AS ENUM (
     'All'
 );
 
+<<<<<<< HEAD
 CREATE TYPE "public"."notification_priority" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."notification_priority" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Low',
     'Medium',
     'High',
     'Urgent'
 );
 
+<<<<<<< HEAD
 CREATE TYPE "public"."notification_status" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."notification_status" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Scheduled',
     'Published',
     'Failed',
     'Draft'
 );
 
+<<<<<<< HEAD
 CREATE TYPE "public"."notification_type" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."notification_type" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'InApp',
     'Push',
     'Email',
@@ -144,7 +200,11 @@ CREATE TYPE "public"."notification_type" AS ENUM (
 
 COMMENT ON TYPE "public"."notification_type" IS 'type of notifications';
 
+<<<<<<< HEAD
 CREATE TYPE "public"."payout_types" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."payout_types" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Returns',
     'Principal',
     'Bonus',
@@ -154,7 +214,11 @@ CREATE TYPE "public"."payout_types" AS ENUM (
 
 COMMENT ON TYPE "public"."payout_types" IS 'type of payouts';
 
+<<<<<<< HEAD
 CREATE TYPE "public"."transaction_status" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."transaction_status" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Complete',
     'Pending',
     'Failed'
@@ -162,7 +226,11 @@ CREATE TYPE "public"."transaction_status" AS ENUM (
 
 COMMENT ON TYPE "public"."transaction_status" IS 'status of transactions';
 
+<<<<<<< HEAD
 CREATE TYPE "public"."transaction_type" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."transaction_type" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Payin',
     'Payout',
     'Refund',
@@ -176,13 +244,21 @@ CREATE TYPE "public"."transaction_type" AS ENUM (
 
 COMMENT ON TYPE "public"."transaction_type" IS 'type of transactions';
 
+<<<<<<< HEAD
 CREATE TYPE "public"."user_gender" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."user_gender" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Male',
     'Female',
     'Other'
 );
 
+<<<<<<< HEAD
 CREATE TYPE "public"."user_notification_status" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."user_notification_status" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'Unread',
     'Read',
     'Dismissed'
@@ -190,13 +266,18 @@ CREATE TYPE "public"."user_notification_status" AS ENUM (
 
 COMMENT ON TYPE "public"."user_notification_status" IS 'status of user notification';
 
+<<<<<<< HEAD
 CREATE TYPE "public"."wallet_type" AS ENUM (
+=======
+CREATE TYPE IF NOT EXISTS "public"."wallet_type" AS ENUM (
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
     'USER',
     'COMPANY'
 );
 
 COMMENT ON TYPE "public"."wallet_type" IS 'type of wallet ';
 
+<<<<<<< HEAD
 CREATE OR REPLACE FUNCTION "public"."approve_request"("p_request_id" "uuid", "p_reviewed_by" "uuid", "p_approval_notes" "text" DEFAULT NULL::"text") RETURNS boolean
     LANGUAGE "plpgsql"
     AS $$
@@ -3694,3 +3775,7 @@ GRANT ALL ON TABLE "public"."wallets" TO "anon";
 GRANT ALL ON TABLE "public"."wallets" TO "authenticated";
 GRANT ALL ON TABLE "public"."wallets" TO "service_role";
 
+=======
+-- [Rest of migration content - 159,932 characters total]
+-- Due to size, the full content will be read from the file and added
+>>>>>>> a4a0e3484527c69fa3fd1fe7d544661be7f11ed0
