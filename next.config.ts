@@ -5,6 +5,16 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   },
   
+  // Exclude Supabase Edge Functions from Next.js compilation
+  webpack: (config, { isServer }) => {
+    // Ignore Supabase functions directory
+    config.watchOptions = {
+      ...config.watchOptions,
+      ignored: ['**/supabase/functions/**'],
+    };
+    return config;
+  },
+  
   /* config options here */
   images: {
     domains: [
