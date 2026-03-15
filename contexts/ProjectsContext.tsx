@@ -14,52 +14,13 @@ export interface Project {
   id: string;
   project_code: string;
   project_name: string;
-  project_date: string;
   description: string;
   project_type: "CROP" | "LIVESTOCK" | "FISHERY" | "OTHER";
   farm_location: string;
   total_units: number;
   unit_price: number;
-  total_value: number;
-  expected_return_rate: number;
-  duration_months: number;
-  status: "Active" | "Inactive" | "Complete" | "Cancelled" | "DRAFT" | "draft";
-  created_by: string;
-  created_at: string;
-  updated_at: string;
-  image: string;
-  start_date: string;
-  end_date: string;
-  cover_image_url: string;
-  max_expected_return_rate: number;
-  available_unit: number;
-  purchased_unit: number;
-  project_stages:
-    | "PLANNING"
-    | "PREPARATION"
-    | "PLANTING"
-    | "GROWTH"
-    | "HARVEST"
-    | "COMPLETED";
-  is_high_ticket: boolean;
-  min_investment_amount: number;
-  max_investment_amount: number;
-  payout_type: "MONTHLY" | "QUARTERLY" | "ANNUAL" | "END_OF_PROJECT";
-  risk_level?: "Low" | "Medium" | "High" | null;
-}
-
-interface ProjectRow {
-  id: string;
-  project_code: string;
-  project_name: string;
-  project_date: string;
-  description: string | null;
-  project_type: string | null;
-  farm_location: string | null;
-  total_units: number | null;
-  unit_price: number | null;
   total_value: number | null;
-  expected_return_rate: number | null;
+  expected_return_rate: number;
   duration_months: number | null;
   status: string | null;
   created_by: string | null;
@@ -69,7 +30,40 @@ interface ProjectRow {
   start_date: string | null;
   end_date: string | null;
   cover_image_url: string | null;
-  max_expected_return_rate: number | null;
+  max_expected_return_rate: number;
+  available_unit: number;
+  purchased_unit: number;
+  project_stages: string | null;
+  is_high_ticket: boolean | null;
+  min_investment_amount: number | null;
+  max_investment_amount: number | null;
+  payout_type: string | null;
+  payout_completed: boolean | null;
+  payout_completed_at: string | null;
+  risk_level: "Low" | "Medium" | "High" | null;
+}
+
+interface ProjectRow {
+  id: string;
+  project_code: string | null;
+  project_name: string;
+  description: string | null;
+  project_type: string | null;
+  farm_location: string | null;
+  total_units: number;
+  unit_price: number;
+  total_value: number | null;
+  expected_return_rate: number;
+  duration_months: number | null;
+  status: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+  image: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  cover_image_url: string | null;
+  max_expected_return_rate: number;
   available_unit: number | null;
   purchased_unit: number | null;
   project_stages: string | null;
@@ -77,6 +71,8 @@ interface ProjectRow {
   min_investment_amount: number | null;
   max_investment_amount: number | null;
   payout_type: string | null;
+  payout_completed: boolean | null;
+  payout_completed_at: string | null;
   risk_level: string | null;
 }
 
@@ -250,58 +246,43 @@ export const ProjectsProvider = ({
       const formattedProjects =
         data?.map((item: ProjectRow) => ({
           id: item.id,
-          project_code: item.project_code,
+          project_code: item.project_code ?? "",
           project_name: item.project_name,
-          project_date: item.project_date,
-          description: item.description || "",
+          description: item.description ?? "",
           project_type:
             (item.project_type as "CROP" | "LIVESTOCK" | "FISHERY" | "OTHER") ||
             "CROP",
-          farm_location: item.farm_location || "",
-          total_units: item.total_units || 0,
-          unit_price: item.unit_price || 0,
-          total_value: item.total_value || 0,
-          expected_return_rate: item.expected_return_rate || 0,
-          duration_months: item.duration_months || 0,
-          status:
-            (item.status as "Active" | "Inactive" | "Complete" | "Cancelled") ||
-            "Active",
-          created_by: item.created_by || "",
+          farm_location: item.farm_location ?? "",
+          total_units: item.total_units,
+          unit_price: item.unit_price,
+          total_value: item.total_value ?? null,
+          expected_return_rate: item.expected_return_rate,
+          duration_months: item.duration_months ?? null,
+          status: item.status ?? "Active",
+          created_by: item.created_by ?? null,
           created_at: item.created_at,
           updated_at: item.updated_at,
-          image: item.image || "",
-          start_date: item.start_date || "",
-          end_date: item.end_date || "",
-          cover_image_url:
-            item.cover_image_url ||
-            "https://images.unsplash.com/photo-1500382017468-9049fed747ef?w=400&h=300&fit=crop",
-          max_expected_return_rate: item.max_expected_return_rate || 0,
+          image: item.image ?? null,
+          start_date: item.start_date ?? null,
+          end_date: item.end_date ?? null,
+          cover_image_url: item.cover_image_url ?? null,
+          max_expected_return_rate: item.max_expected_return_rate,
           available_unit: Math.max(
             0,
-            item.available_unit && item.available_unit > 0
-              ? item.available_unit
-              : (item.total_units || 0) - (item.purchased_unit || 0)
+            item.available_unit != null && item.available_unit > 0
+              ? Number(item.available_unit)
+              : item.total_units - Number(item.purchased_unit ?? 0)
           ),
-          purchased_unit: item.purchased_unit || 0,
-          project_stages:
-            (item.project_stages as
-              | "PLANNING"
-              | "PREPARATION"
-              | "PLANTING"
-              | "GROWTH"
-              | "HARVEST"
-              | "COMPLETED") || "PLANNING",
-          is_high_ticket: item.is_high_ticket || false,
-          min_investment_amount: item.min_investment_amount || 0,
-          max_investment_amount: item.max_investment_amount || 0,
-          payout_type:
-            (item.payout_type as
-              | "MONTHLY"
-              | "QUARTERLY"
-              | "ANNUAL"
-              | "END_OF_PROJECT") || "END_OF_PROJECT",
+          purchased_unit: Number(item.purchased_unit ?? 0),
+          project_stages: item.project_stages ?? null,
+          is_high_ticket: item.is_high_ticket ?? false,
+          min_investment_amount: item.min_investment_amount ?? null,
+          max_investment_amount: item.max_investment_amount ?? null,
+          payout_type: item.payout_type ?? null,
+          payout_completed: item.payout_completed ?? null,
+          payout_completed_at: item.payout_completed_at ?? null,
           risk_level:
-            (item.risk_level as "Low" | "Medium" | "High" | null) || null,
+            (item.risk_level as "Low" | "Medium" | "High" | null) ?? null,
         })) || [];
 
       setProjects(formattedProjects);

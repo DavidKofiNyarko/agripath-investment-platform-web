@@ -124,7 +124,7 @@ const InvestmentsPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   const [selectedInvestment, setSelectedInvestment] =
-    useState<Investment | null>(null);
+    useState<Project | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [showAbout, setShowAbout] = useState(false);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -153,7 +153,7 @@ const InvestmentsPage = () => {
 
   // Store investment details for success screen and receipt
   const [successInvestmentDetails, setSuccessInvestmentDetails] = useState<{
-    investment: Investment | null;
+    investment: Project | null;
     quantity: number;
     totalAmount: number;
   }>({
@@ -418,7 +418,7 @@ const InvestmentsPage = () => {
       status: project.status,
       riskLevel: project.risk_level || null,
     };
-    setSelectedInvestment(investment);
+    setSelectedInvestment(project);
     setQuantity(1);
     setShowAbout(false);
     setCurrentStep("details");
@@ -461,7 +461,7 @@ const InvestmentsPage = () => {
       return successInvestmentDetails.totalAmount;
     }
     // Otherwise use current form values
-    return selectedInvestment ? selectedInvestment.price * quantity : 0;
+    return selectedInvestment ? selectedInvestment.unit_price * quantity : 0;
   };
 
   const calculateExpectedReturn = () => {
@@ -471,21 +471,13 @@ const InvestmentsPage = () => {
     if (!investment) return "0 - 0";
 
     const total = calculateTotal();
-
-    // Handle both "15-25%" and "15%" formats
-    if (investment.roi.includes("-")) {
-      const [minROI, maxROI] = investment.roi
-        .split("-")
-        .map((r: string) => parseFloat(r.replace("%", "")));
-      const minReturn = Math.round(total * (minROI / 100) * 100) / 100; // Round to 2 decimal places
-      const maxReturn = Math.round(total * (maxROI / 100) * 100) / 100; // Round to 2 decimal places
-      return `${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)}`;
-    } else {
-      // Single ROI value
-      const roi = parseFloat(investment.roi.replace("%", ""));
-      const expectedReturn = Math.round(total * (roi / 100) * 100) / 100; // Round to 2 decimal places
-      return `${expectedReturn.toFixed(2)}`;
-    }
+    const minRate = Number(investment.expected_return_rate) || 0;
+    const maxRate = Number(investment.max_expected_return_rate) ?? minRate;
+    const minReturn = Math.round(total * (minRate / 100) * 100) / 100;
+    const maxReturn = Math.round(total * (maxRate / 100) * 100) / 100;
+    return minRate !== maxRate
+      ? `${minReturn.toFixed(2)} - ${maxReturn.toFixed(2)}`
+      : `${minReturn.toFixed(2)}`;
   };
 
   // Generate and download receipt
@@ -512,12 +504,12 @@ const InvestmentsPage = () => {
         phone: profile.phone_number,
       },
       investment: {
-        project: investment.name,
+        project: investment.project_name,
         amount: calculateTotal(),
         units: receiptQuantity,
         expectedReturn: calculateExpectedReturn(),
-        duration: investment.duration,
-        startDate: "November 2025",
+        duration: `${investment.duration_months ?? 0} months`,
+        startDate: investment.start_date ?? investment.created_at ?? "",
       },
     };
 
@@ -804,7 +796,7 @@ const InvestmentsPage = () => {
     } else if (selectedPaymentMethod === "agripath") {
       // Validate wallet balance
       const totalAmount = selectedInvestment
-        ? selectedInvestment.price * quantity
+        ? selectedInvestment.unit_price * quantity
         : 0;
       if (!wallet?.balance || wallet.balance < totalAmount) {
         showAlert(
@@ -835,7 +827,7 @@ const InvestmentsPage = () => {
     setIsProcessing(true);
 
     try {
-      const totalAmount = selectedInvestment.price * quantity;
+      const totalAmount = selectedInvestment.unit_price * quantity;
       const projectId = selectedInvestment.id;
 
       // Debug logging
@@ -873,8 +865,8 @@ const InvestmentsPage = () => {
             profile.phone_number !== "0000000000"
               ? profile.phone_number
               : undefined,
-          description: `Investment in ${selectedInvestment.name}`,
-          user_email: user?.email || "user@example.com",
+          description: `Investment in ${selectedInvestment.project_name}`,
+          user_email: user?.email ?? "",
           // Use localhost callback URL for local testing, production URL for production
           redirect_url: `${window.location.origin}/callback`,
         });
@@ -885,13 +877,13 @@ const InvestmentsPage = () => {
           project_id: projectId,
           amount: totalAmount,
           unit: quantity,
-          desc: `Investment in ${selectedInvestment.name}`,
+          desc: `Investment in ${selectedInvestment.project_name}`,
           pan: paymentDetails.cardNumber.replace(/\s/g, ""),
           exp_month: paymentDetails.expiryDate.split("/")[0],
           exp_year: paymentDetails.expiryDate.split("/")[1],
           cvv: paymentDetails.cvv,
           card_holder: paymentDetails.cardName,
-          user_email: user?.email || "user@example.com",
+          user_email: user?.email ?? "",
           redirect_url: `${window.location.origin}/investments`,
         });
       } else if (selectedPaymentMethod === "agripath") {
@@ -901,7 +893,7 @@ const InvestmentsPage = () => {
           project_id: projectId,
           amount: totalAmount,
           unit: quantity,
-          description: `Investment in ${selectedInvestment.name}`,
+          description: `Investment in ${selectedInvestment.project_name}`,
         });
       } else {
         throw new Error("Invalid payment method selected");
@@ -1577,7 +1569,7 @@ const InvestmentsPage = () => {
                               Return (ROI)
                             </div>
                             <div className="text-yellow-500 text-md font-bold leading-none tracking-tight">
-                              {project.expected_return_rate}% -{" "}
+                              {project.expected_return_rate.toString()}% -{" "}
                               {project.max_expected_return_rate}%
                             </div>
                           </div>
@@ -1586,7 +1578,7 @@ const InvestmentsPage = () => {
                               Duration
                             </div>
                             <div className="text-yellow-500 text-md font-bold leading-none tracking-tight">
-                              {project.duration_months} months
+                              {project.duration_months ?? 0} months
                             </div>
                           </div>
                         </div>
@@ -1739,7 +1731,7 @@ const InvestmentsPage = () => {
                       <SheetHeader className="p-6 border-b">
                         <div className="flex items-center justify-between">
                           <div className="justify-start text-green-950 text-2xl font-extrabold  tracking-tight">
-                            {selectedInvestment.name}
+                            {selectedInvestment.project_name}
                           </div>
                           <div className="px-2 py-1.5 bg-green-800 rounded-xl inline-flex justify-center items-center gap-1">
                             <div className="px-1 flex justify-start items-start gap-2.5">
@@ -1753,8 +1745,8 @@ const InvestmentsPage = () => {
 
                       <div className="flex-1 p-6 space-y-8">
                         <img
-                          src={selectedInvestment.image}
-                          alt={selectedInvestment.name}
+                          src={selectedInvestment.cover_image_url ?? selectedInvestment.image ?? ""}
+                          alt={selectedInvestment.project_name}
                           className="w-full h-48 object-cover rounded-lg"
                         />
 
@@ -1765,7 +1757,7 @@ const InvestmentsPage = () => {
                               Price per Unit
                             </p>
                             <p className="font-bold text-lg">
-                              GHS {selectedInvestment.price.toLocaleString()}
+                              GHS {selectedInvestment.unit_price.toLocaleString()}
                             </p>
                           </div>
                           <div className="w-px h-12 bg-gray-300"></div>
@@ -1774,7 +1766,8 @@ const InvestmentsPage = () => {
                               Return (ROI)
                             </p>
                             <p className="font-bold text-lg text-orange-600">
-                              {selectedInvestment.roi}
+                              {selectedInvestment.expected_return_rate.toString()}% -{" "}
+                              {selectedInvestment.max_expected_return_rate.toString()}%
                             </p>
                           </div>
                           <div className="w-px h-12 bg-gray-300"></div>
@@ -1783,25 +1776,25 @@ const InvestmentsPage = () => {
                               Duration
                             </p>
                             <p className="font-bold text-lg text-orange-600">
-                              {selectedInvestment.duration}
+                              {selectedInvestment.duration_months ?? 0} months
                             </p>
                           </div>
                         </div>
 
                         <div>
-                          {(selectedInvestment.unitsAvailable || 0) > 0 && (
+                          {(selectedInvestment.available_unit || 0) > 0 && (
                             <Progress
                               value={
-                                (selectedInvestment.unitsAvailable /
-                                  selectedInvestment.totalUnits) *
+                                (selectedInvestment.purchased_unit /
+                                  selectedInvestment.total_units) *
                                 100
                               }
                               className="h-2"
                             />
                           )}
                           <p className="text-sm text-green-600 font-medium mt-1">
-                            {(selectedInvestment.unitsAvailable || 0) > 0
-                              ? `${selectedInvestment.unitsAvailable} Units Available`
+                            {(selectedInvestment.available_unit || 0) > 0
+                              ? `${selectedInvestment.available_unit} Units Available`
                               : "Sold Out"}
                           </p>
                         </div>
@@ -1823,26 +1816,30 @@ const InvestmentsPage = () => {
                           </Button>
                           {showAbout && (
                             <div className="self-stretch justify-start text-zinc-900 text-sm font-normal leading-tight mt-3 space-y-3">
-                              {selectedInvestment.riskLevel && (
+                              {selectedInvestment.risk_level && (
                                 <div className="flex items-center gap-2 mb-2">
                                   <span className="text-zinc-600 font-medium">
                                     Risk Level:
                                   </span>
                                   <span
                                     className={`px-2 py-1 rounded-md text-xs font-semibold ${
-                                      selectedInvestment.riskLevel === "Low"
+                                      selectedInvestment.risk_level === "Low"
                                         ? "bg-green-100 text-green-700"
-                                        : selectedInvestment.riskLevel ===
+                                        : selectedInvestment.risk_level ===
                                           "Medium"
                                         ? "bg-yellow-100 text-yellow-700"
-                                        : "bg-red-100 text-red-700"
-                                    }`}
-                                  >
-                                    {selectedInvestment.riskLevel}
-                                  </span>
-                                </div>
+                                        : selectedInvestment.risk_level === null
+                                        ? "bg-gray-100 text-gray-700"
+                                        : selectedInvestment.risk_level !== null && selectedInvestment.risk_level ===
+                                          "High"
+                                      ? "bg-red-100 text-red-700"
+                                      : "bg-gray-100 text-gray-700"
+                                  }`}
+                                >
+                                  {selectedInvestment.risk_level}
+                                </span>
+                              </div>
                               )}
-                              <div>{selectedInvestment.description}</div>
                             </div>
                           )}
                         </div>
@@ -1874,13 +1871,13 @@ const InvestmentsPage = () => {
                                 onClick={() =>
                                   setQuantity(
                                     Math.min(
-                                      selectedInvestment.unitsAvailable,
+                                      selectedInvestment.available_unit,
                                       quantity + 1
                                     )
                                   )
                                 }
                                 disabled={
-                                  quantity >= selectedInvestment.unitsAvailable
+                                  quantity >= selectedInvestment.available_unit
                                 }
                               >
                                 <Plus className="h-4 w-4" />
@@ -2018,7 +2015,7 @@ const InvestmentsPage = () => {
                               Project
                             </span>
                             <div className="text-right justify-center text-green-950 text-sm font-semibold leading-tight">
-                              {selectedInvestment.name}
+                              {selectedInvestment.project_name}
                             </div>
                           </div>
                           <div className="border-t border-gray-200"></div>
@@ -2026,7 +2023,8 @@ const InvestmentsPage = () => {
                           <div className="flex justify-between items-center py-3">
                             <span className="text-gray-600 text-sm">ROI</span>
                             <span className="font-semibold text-sm">
-                              {selectedInvestment.roi}
+                              {selectedInvestment.expected_return_rate}% -{" "}
+                              {selectedInvestment.max_expected_return_rate}%
                             </span>
                           </div>
                           <div className="border-t border-gray-200"></div>
@@ -2036,7 +2034,8 @@ const InvestmentsPage = () => {
                               Expected Return
                             </span>
                             <span className="font-semibold text-sm">
-                              GHS {calculateExpectedReturn()}
+                              GHS {selectedInvestment.expected_return_rate}% -{" "}
+                              {selectedInvestment.max_expected_return_rate}%
                             </span>
                           </div>
                           <div className="border-t border-gray-200"></div>
@@ -2066,7 +2065,7 @@ const InvestmentsPage = () => {
                               Duration
                             </span>
                             <span className="font-semibold text-sm">
-                              {selectedInvestment.duration}
+                              {selectedInvestment.duration_months} months
                             </span>
                           </div>
                           <div className="border-t border-gray-200"></div>
@@ -2076,7 +2075,7 @@ const InvestmentsPage = () => {
                               Starting
                             </span>
                             <span className="font-semibold text-sm">
-                              November 2025
+                              {selectedInvestment.start_date ?? selectedInvestment.created_at ?? ""}
                             </span>
                           </div>
                         </div>
@@ -2252,7 +2251,7 @@ const InvestmentsPage = () => {
                               : wallet?.balance &&
                                 selectedInvestment &&
                                 wallet.balance <
-                                  selectedInvestment.price * quantity
+                                  selectedInvestment.unit_price * quantity
                               ? "border-red-200 bg-red-50"
                               : "border-gray-200 hover:border-gray-300"
                           }`}
@@ -2267,7 +2266,7 @@ const InvestmentsPage = () => {
                                 (wallet?.balance &&
                                   selectedInvestment &&
                                   wallet.balance <
-                                    selectedInvestment.price * quantity)
+                                    selectedInvestment.unit_price * quantity)
                               )
                             }
                           />
@@ -2285,7 +2284,7 @@ const InvestmentsPage = () => {
                                 wallet?.balance &&
                                 selectedInvestment &&
                                 wallet.balance <
-                                  selectedInvestment.price * quantity && (
+                                  selectedInvestment.unit_price * quantity && (
                                   <span className="block text-xs text-red-500 mt-1">
                                     Insufficient balance for this investment
                                   </span>
@@ -2719,8 +2718,8 @@ const InvestmentsPage = () => {
                           <p className="text-gray-600">
                             Your investment in{" "}
                             <span className="font-medium">
-                              {successInvestmentDetails.investment?.name ||
-                                selectedInvestment?.name}
+                              {successInvestmentDetails.investment?.project_name ||
+                                selectedInvestment?.project_name}
                             </span>{" "}
                             is confirmed.
                           </p>
@@ -2742,8 +2741,8 @@ const InvestmentsPage = () => {
                             <div className="flex justify-between">
                               <span className="text-gray-600">Project</span>
                               <span className="font-medium">
-                                {successInvestmentDetails.investment?.name ||
-                                  selectedInvestment?.name}
+                                {successInvestmentDetails.investment?.project_name ||
+                                  selectedInvestment?.project_name}
                               </span>
                             </div>
                             <div className="flex justify-between">
@@ -2767,12 +2766,21 @@ const InvestmentsPage = () => {
                               <span className="text-gray-600">Duration</span>
                               <span className="font-medium">
                                 {successInvestmentDetails.investment
-                                  ?.duration || selectedInvestment?.duration}
+                                  ? `${successInvestmentDetails.investment.duration_months ?? 0} months`
+                                  : selectedInvestment
+                                  ? `${selectedInvestment.duration_months ?? 0} months`
+                                  : ""}
                               </span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-600">Starting</span>
-                              <span className="font-medium">November 2025</span>
+                              <span className="font-medium">
+                                {successInvestmentDetails.investment?.start_date ??
+                                  selectedInvestment?.start_date ??
+                                  successInvestmentDetails.investment?.created_at ??
+                                  selectedInvestment?.created_at ??
+                                  ""}
+                              </span>
                             </div>
                           </div>
                         </div>
