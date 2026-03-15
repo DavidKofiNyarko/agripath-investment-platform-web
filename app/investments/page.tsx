@@ -357,6 +357,14 @@ const InvestmentsPage = () => {
     setFilters({ ...filters, [key]: value });
   };
 
+  // Format date as "Month Year" for display
+  const formatMonthYear = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    if (Number.isNaN(d.getTime())) return dateStr;
+    return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -509,7 +517,7 @@ const InvestmentsPage = () => {
         units: receiptQuantity,
         expectedReturn: calculateExpectedReturn(),
         duration: `${investment.duration_months ?? 0} months`,
-        startDate: investment.start_date ?? investment.created_at ?? "",
+        startDate: formatMonthYear(investment.start_date ?? investment.created_at ?? undefined),
       },
     };
 
@@ -2075,7 +2083,7 @@ const InvestmentsPage = () => {
                               Starting
                             </span>
                             <span className="font-semibold text-sm">
-                              {selectedInvestment.start_date ?? selectedInvestment.created_at ?? ""}
+                              {formatMonthYear(selectedInvestment.start_date ?? selectedInvestment.created_at ?? undefined)}
                             </span>
                           </div>
                         </div>
@@ -2775,11 +2783,12 @@ const InvestmentsPage = () => {
                             <div className="flex justify-between">
                               <span className="text-gray-600">Starting</span>
                               <span className="font-medium">
-                                {successInvestmentDetails.investment?.start_date ??
-                                  selectedInvestment?.start_date ??
-                                  successInvestmentDetails.investment?.created_at ??
-                                  selectedInvestment?.created_at ??
-                                  ""}
+                                {formatMonthYear(
+                                  successInvestmentDetails.investment?.start_date ??
+                                    selectedInvestment?.start_date ??
+                                    successInvestmentDetails.investment?.created_at ??
+                                    selectedInvestment?.created_at
+                                )}
                               </span>
                             </div>
                           </div>
