@@ -32,6 +32,14 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+
+# local MCP tool configs (machine-specific)
+.mcp.json
+
+# cursor local state (keep .cursor/mcp.json tracked)
+.cursor/*
+!.cursor/mcp.json
 
 # vercel
 .vercel

@@ -1,13 +1,15 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  // eslint:{
-  //   ignoreDuringBuilds: true,
-  // },
+// Supabase Storage host used for image optimization.
+// Priority: NEXT_PUBLIC_SUPABASE_STORAGE_HOST > host of NEXT_PUBLIC_SUPABASE_URL > production default
+const storageHost =
+  process.env.NEXT_PUBLIC_SUPABASE_STORAGE_HOST ??
+  (process.env.NEXT_PUBLIC_SUPABASE_URL
+    ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname
+    : "gbeqqboxlflpgehyqlld.supabase.co");
 
-  /* config options here */
+const nextConfig: NextConfig = {
   images: {
-    // domains: ["images.unsplash.com", "gbeqqboxlflpgehyqlld.supabase.co"],
     remotePatterns: [
       {
         protocol: "https",
@@ -15,7 +17,7 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "gbeqqboxlflpgehyqlld.supabase.co",
+        hostname: storageHost,
         pathname: "/storage/v1/object/public/**",
       },
     ],

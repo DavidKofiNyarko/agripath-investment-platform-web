@@ -1,38 +1,17 @@
-
-// import { createServerClient } from "@supabase/ssr"; // Unused import
 import { type NextRequest, NextResponse } from "next/server";
 
-// const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL; // Unused
-// const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY; // Unused
-
+/**
+ * Supabase middleware client factory.
+ *
+ * Creates an unmodified response. Supabase auth middleware can be layered on
+ * top by callers that need to refresh sessions on the edge.
+ */
 export const createClient = (request: NextRequest) => {
-  // Create an unmodified response
   const supabaseResponse = NextResponse.next({
     request: {
       headers: request.headers,
     },
   });
 
-  // const supabase = createServerClient( // Unused variable
-  //   supabaseUrl!,
-  //   supabaseKey!,
-  //   {
-  //     cookies: {
-  //       getAll() {
-  //         return request.cookies.getAll()
-  //       },
-  //       setAll(cookiesToSet) {
-  //         cookiesToSet.forEach(({ name, value, options: _options }) => request.cookies.set(name, value))
-  //         supabaseResponse = NextResponse.next({
-  //           request,
-  //         })
-  //         cookiesToSet.forEach(({ name, value, options }) =>
-  //           supabaseResponse.cookies.set(name, value, options)
-  //         )
-  //       },
-  //     },
-  //   },
-  // );
-
-  return supabaseResponse
+  return supabaseResponse;
 };
