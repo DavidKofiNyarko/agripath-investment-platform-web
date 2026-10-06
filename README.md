@@ -1,5 +1,9 @@
 # AgriPath — Smart Agricultural Investment Platform
 
+<p align="center">
+  <img src="public/logo.png" alt="AgriPath" width="203" />
+</p>
+
 AgriPath is a web platform that connects investors with verified agricultural projects in Ghana. Investors can browse farming projects (crops, livestock, poultry, and aquaculture), fund them through a secure wallet, track growth stages in real time, and earn returns at harvest.
 
 - **Live app:** [https://agripath.co](https://agripath.co)
